@@ -112,6 +112,26 @@ export interface Arbitre {
   matchsArbitres: number
 }
 
+export interface Medecin {
+  id: string
+  nom: string
+  prenom: string
+  genre: "M" | "F"
+  dateNaissance: string
+  ligue: string
+  province: string
+  specialite: "Médecine du sport" | "Traumatologie" | "Kinésithérapie" | "Médecine générale"
+  numeroOrdre: string
+  telephone: string
+  email: string
+  adresse: string
+  hopital: string
+  photo?: string
+  statut: "actif" | "inactif"
+  dateAffiliation: string
+  athletesSuivis: number
+}
+
 export interface RecentActivity {
   id: string
   type: "club" | "athlete" | "ligue" | "entente"
@@ -181,6 +201,15 @@ export const arbitres: Arbitre[] = [
   { id: "ar3", nom: "Katanga", prenom: "Pierre", genre: "M", dateNaissance: "1978-02-08", ligue: "Ligue du Haut-Katanga", province: "Haut-Katanga", grade: "National", specialite: "Premier arbitre", telephone: "+243 833 800 800", email: "p.katanga@fevoco.cd", adresse: "Commune Kampemba, Lubumbashi", statut: "actif", dateObtentionGrade: "2016-11-15", matchsArbitres: 186 },
   { id: "ar4", nom: "Bahati", prenom: "Esperance", genre: "F", dateNaissance: "1990-12-03", ligue: "Ligue du Nord-Kivu", province: "Nord-Kivu", grade: "Provincial", specialite: "Marqueur", telephone: "+243 844 900 900", email: "e.bahati@fevoco.cd", adresse: "Quartier Virunga, Goma", statut: "actif", dateObtentionGrade: "2020-05-25", matchsArbitres: 67 },
   { id: "ar5", nom: "Nsimba", prenom: "Alain", genre: "M", dateNaissance: "1982-04-18", ligue: "Ligue du Kongo Central", province: "Kongo Central", grade: "Local", specialite: "Juge de ligne", telephone: "+243 855 100 100", email: "a.nsimba@fevoco.cd", adresse: "Avenue Lumumba, Matadi", statut: "suspendu", dateObtentionGrade: "2021-02-10", matchsArbitres: 42 },
+]
+
+// --- MEDECINS (5 max) ---
+export const medecins: Medecin[] = [
+  { id: "me1", nom: "Tshimanga", prenom: "Olivier", genre: "M", dateNaissance: "1972-05-18", ligue: "Ligue de Kinshasa", province: "Kinshasa", specialite: "Médecine du sport", numeroOrdre: "OM-KIN-2345", telephone: "+243 811 700 700", email: "o.tshimanga@fevoco.cd", adresse: "Avenue des Cliniques 12, Gombe", hopital: "Clinique Ngaliema", statut: "actif", dateAffiliation: "2016-04-15", athletesSuivis: 85 },
+  { id: "me2", nom: "Mwanza", prenom: "Elisabeth", genre: "F", dateNaissance: "1980-11-25", ligue: "Ligue de Kinshasa", province: "Kinshasa", specialite: "Traumatologie", numeroOrdre: "OM-KIN-3456", telephone: "+243 822 800 800", email: "e.mwanza@fevoco.cd", adresse: "Boulevard Lumumba 78, Limete", hopital: "Hopital Général de Kinshasa", statut: "actif", dateAffiliation: "2018-09-20", athletesSuivis: 62 },
+  { id: "me3", nom: "Kabila", prenom: "Jacques", genre: "M", dateNaissance: "1975-03-10", ligue: "Ligue du Haut-Katanga", province: "Haut-Katanga", specialite: "Kinésithérapie", numeroOrdre: "OM-KAT-1234", telephone: "+243 833 900 900", email: "j.kabila@fevoco.cd", adresse: "Avenue Kasavubu 45, Lubumbashi", hopital: "Clinique Sendwe", statut: "actif", dateAffiliation: "2017-06-10", athletesSuivis: 48 },
+  { id: "me4", nom: "Furaha", prenom: "Marie", genre: "F", dateNaissance: "1985-08-14", ligue: "Ligue du Nord-Kivu", province: "Nord-Kivu", specialite: "Médecine du sport", numeroOrdre: "OM-NKV-5678", telephone: "+243 844 100 100", email: "m.furaha@fevoco.cd", adresse: "Rue du Lac 34, Goma", hopital: "Hopital CBCA Ndosho", statut: "actif", dateAffiliation: "2020-01-25", athletesSuivis: 35 },
+  { id: "me5", nom: "Lukusa", prenom: "Paul", genre: "M", dateNaissance: "1978-12-02", ligue: "Ligue du Kongo Central", province: "Kongo Central", specialite: "Médecine générale", numeroOrdre: "OM-KGC-7890", telephone: "+243 855 200 200", email: "p.lukusa@fevoco.cd", adresse: "Avenue du Port 23, Matadi", hopital: "Hopital Général de Matadi", statut: "inactif", dateAffiliation: "2019-03-15", athletesSuivis: 22 },
 ]
 
 // --- ACTIVITÉS RÉCENTES (5 max) ---
