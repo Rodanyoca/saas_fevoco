@@ -74,6 +74,25 @@ export interface Entente {
   statut: "active" | "inactive"
 }
 
+export interface Coach {
+  id: string
+  nom: string
+  prenom: string
+  genre: "M" | "F"
+  dateNaissance: string
+  club: string
+  ligue: string
+  specialite: string
+  niveauCertification: "National" | "Provincial" | "Local"
+  telephone: string
+  email: string
+  adresse: string
+  photo?: string
+  statut: "actif" | "inactif"
+  dateEmbauche: string
+  experience: number
+}
+
 export interface RecentActivity {
   id: string
   type: "club" | "athlete" | "ligue" | "entente"
@@ -125,6 +144,15 @@ export const athletes: Athlete[] = [
   { id: "a3", nom: "Kalala", prenom: "David", genre: "M", dateNaissance: "1999-02-14", club: "TP Mazembe", version: "Masculin", ligue: "Ligue du Haut-Katanga", selectionNationale: false, poste: "Central", taille: 198, poids: 92, telephone: "+243 833 003 003", email: "d.kalala@fevoco.cd", adresse: "Commune Kenya, Lubumbashi", statut: "actif", dateInscription: "2019-08-10" },
   { id: "a4", nom: "Ngoy", prenom: "Blessing", genre: "F", dateNaissance: "2000-11-30", club: "BC Goma", version: "Féminin", ligue: "Ligue du Nord-Kivu", selectionNationale: true, poste: "Passeuse", taille: 175, poids: 65, telephone: "+243 844 004 004", email: "b.ngoy@fevoco.cd", adresse: "Centre-ville, Goma", statut: "blesse", dateInscription: "2020-06-05" },
   { id: "a5", nom: "Lumumba", prenom: "Jean", genre: "M", dateNaissance: "1997-07-08", club: "VC Renaissance", version: "Mixte", ligue: "Ligue du Kongo Central", selectionNationale: false, poste: "Receptionniste", taille: 185, poids: 78, telephone: "+243 855 005 005", email: "j.lumumba@fevoco.cd", adresse: "Port de Matadi", statut: "inactif", dateInscription: "2018-02-28" },
+]
+
+// --- COACHS (5 max) ---
+export const coachs: Coach[] = [
+  { id: "co1", nom: "Mbala", prenom: "Joseph", genre: "M", dateNaissance: "1975-03-20", club: "AS Vita Club", ligue: "Ligue de Kinshasa", specialite: "Attaque", niveauCertification: "National", telephone: "+243 811 100 100", email: "j.mbala@fevoco.cd", adresse: "Quartier Bandalungwa, Kinshasa", statut: "actif", dateEmbauche: "2015-01-10", experience: 15 },
+  { id: "co2", nom: "Kayembe", prenom: "Francine", genre: "F", dateNaissance: "1982-07-15", club: "VC Espoir", ligue: "Ligue de Kinshasa", specialite: "Defense", niveauCertification: "National", telephone: "+243 822 200 200", email: "f.kayembe@fevoco.cd", adresse: "Quartier Limete, Kinshasa", statut: "actif", dateEmbauche: "2018-03-20", experience: 10 },
+  { id: "co3", nom: "Tshibangu", prenom: "Robert", genre: "M", dateNaissance: "1978-11-08", club: "TP Mazembe", ligue: "Ligue du Haut-Katanga", specialite: "Preparation physique", niveauCertification: "Provincial", telephone: "+243 833 300 300", email: "r.tshibangu@fevoco.cd", adresse: "Commune Annexe, Lubumbashi", statut: "actif", dateEmbauche: "2016-06-15", experience: 12 },
+  { id: "co4", nom: "Amisi", prenom: "Beatrice", genre: "F", dateNaissance: "1985-04-25", club: "BC Goma", ligue: "Ligue du Nord-Kivu", specialite: "Technique", niveauCertification: "Provincial", telephone: "+243 844 400 400", email: "b.amisi@fevoco.cd", adresse: "Quartier Himbi, Goma", statut: "actif", dateEmbauche: "2019-09-01", experience: 8 },
+  { id: "co5", nom: "Konde", prenom: "Michel", genre: "M", dateNaissance: "1980-09-12", club: "VC Renaissance", ligue: "Ligue du Kongo Central", specialite: "Strategie", niveauCertification: "Local", telephone: "+243 855 500 500", email: "m.konde@fevoco.cd", adresse: "Centre-ville, Matadi", statut: "inactif", dateEmbauche: "2020-02-15", experience: 6 },
 ]
 
 // --- ACTIVITÉS RÉCENTES (5 max) ---

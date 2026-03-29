@@ -5,12 +5,10 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { AthletesStats } from "@/components/athletes/athletes-stats"
 import { AthletesFilters } from "@/components/athletes/athletes-filters"
 import { AthletesTable } from "@/components/athletes/athletes-table"
-import { AthletesGrid } from "@/components/athletes/athletes-grid"
 import { AthleteDetail } from "@/components/athletes/athlete-detail"
-import { athletes, type Athlete } from "@/lib/data/demo-data"
+import { type Athlete } from "@/lib/data/demo-data"
 
 export default function AthletesPage() {
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list")
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null)
 
   const handleViewAthlete = (athlete: Athlete) => {
@@ -36,13 +34,8 @@ export default function AthletesPage() {
             </div>
             
             <AthletesStats />
-            <AthletesFilters viewMode={viewMode} onViewModeChange={setViewMode} />
-            
-            {viewMode === "list" ? (
-              <AthletesTable onViewAthlete={handleViewAthlete} />
-            ) : (
-              <AthletesGrid onViewAthlete={handleViewAthlete} />
-            )}
+            <AthletesFilters />
+            <AthletesTable onViewAthlete={handleViewAthlete} />
           </>
         )}
       </div>

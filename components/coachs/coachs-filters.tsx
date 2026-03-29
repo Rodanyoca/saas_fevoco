@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Search, Download, Plus } from "lucide-react"
 import { ligues, clubs } from "@/lib/data/demo-data"
 
-export function AthletesFilters() {
+export function CoachsFilters() {
   return (
     <Card>
       <CardContent className="pt-6">
@@ -26,7 +26,7 @@ export function AthletesFilters() {
             </Button>
             <Button size="sm">
               <Plus className="h-4 w-4 mr-2" />
-              Nouvel Athlète
+              Nouveau Coach
             </Button>
           </div>
 
@@ -35,7 +35,7 @@ export function AthletesFilters() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un athlète..."
+                placeholder="Rechercher un coach..."
                 className="pl-9"
               />
             </div>
@@ -53,13 +53,14 @@ export function AthletesFilters() {
               </SelectContent>
             </Select>
             <Select>
-              <SelectTrigger className="w-full sm:w-[140px]">
-                <SelectValue placeholder="Genre" />
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Certification" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="M">Masculin</SelectItem>
-                <SelectItem value="F">Féminin</SelectItem>
+                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="National">National</SelectItem>
+                <SelectItem value="Provincial">Provincial</SelectItem>
+                <SelectItem value="Local">Local</SelectItem>
               </SelectContent>
             </Select>
             <Select>
@@ -70,17 +71,6 @@ export function AthletesFilters() {
                 <SelectItem value="all">Tous</SelectItem>
                 <SelectItem value="actif">Actif</SelectItem>
                 <SelectItem value="inactif">Inactif</SelectItem>
-                <SelectItem value="blesse">Blessé</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Sélection" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="true">Sélection nationale</SelectItem>
-                <SelectItem value="false">Non sélectionné</SelectItem>
               </SelectContent>
             </Select>
           </div>
