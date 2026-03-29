@@ -13,7 +13,7 @@ import {
   Shield,
   Users,
   UserCheck,
-  Whistle,
+  Flag,
   Target,
   CheckCircle,
 } from "lucide-react"
@@ -63,7 +63,7 @@ export default function DashboardPage() {
           <KpiCard
             title="Arbitres"
             value={statsGlobales.totalArbitres}
-            icon={Whistle}
+            icon={Flag}
           />
           <KpiCard
             title="Sélection Nationale"

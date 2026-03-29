@@ -10,7 +10,7 @@ import {
   Building2,
   Users,
   UserCheck,
-  Whistle,
+  Flag,
   Shield,
   Stethoscope,
   ClipboardCheck,
@@ -29,7 +29,7 @@ const navigation = [
   { name: "Clubs", href: "/clubs", icon: Shield },
   { name: "Athlètes", href: "/athletes", icon: Users },
   { name: "Coachs", href: "/coachs", icon: UserCheck },
-  { name: "Arbitres", href: "/arbitres", icon: Whistle },
+  { name: "Arbitres", href: "/arbitres", icon: Flag },
   { name: "Médecins", href: "/medecins", icon: Stethoscope },
   { name: "Qualité données", href: "/qualite", icon: ClipboardCheck },
 ]
