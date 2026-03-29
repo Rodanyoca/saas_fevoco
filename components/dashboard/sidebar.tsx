@@ -14,7 +14,6 @@ import {
   Shield,
   Stethoscope,
   ClipboardCheck,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Network,
@@ -27,15 +26,11 @@ const navigation = [
   { name: "Ligues", href: "/ligues", icon: Building2 },
   { name: "Ententes", href: "/ententes", icon: Network },
   { name: "Clubs", href: "/clubs", icon: Shield },
-  { name: "Athlètes", href: "/athletes", icon: Users },
+  { name: "Athletes", href: "/athletes", icon: Users },
   { name: "Coachs", href: "/coachs", icon: UserCheck },
   { name: "Arbitres", href: "/arbitres", icon: Flag },
-  { name: "Médecins", href: "/medecins", icon: Stethoscope },
-  { name: "Qualité données", href: "/qualite", icon: ClipboardCheck },
-]
-
-const bottomNavigation = [
-  { name: "Paramètres", href: "/parametres", icon: Settings },
+  { name: "Medecins", href: "/medecins", icon: Stethoscope },
+  { name: "Qualite donnees", href: "/qualite", icon: ClipboardCheck },
 ]
 
 export function Sidebar() {
@@ -62,7 +57,7 @@ export function Sidebar() {
           <div className="flex flex-col min-w-0">
             <span className="font-bold text-sm tracking-wide text-sidebar-foreground">FEVOCO</span>
             <span className="text-[10px] text-sidebar-foreground/70 truncate">
-              Fédération de Volleyball du Congo
+              Federation de Volleyball du Congo
             </span>
           </div>
         )}
@@ -91,34 +86,11 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Navigation bas */}
-      <div className="p-2 border-t border-sidebar-border">
-        {bottomNavigation.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
-              title={collapsed ? item.name : undefined}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>{item.name}</span>}
-            </Link>
-          )
-        })}
-      </div>
-
       {/* Footer - Signature DS Concept */}
       <div className="p-3 border-t border-sidebar-border">
         {!collapsed ? (
           <p className="text-[10px] text-sidebar-foreground/50 text-center">
-            Propulsé par <span className="font-semibold">DS Concept</span>
+            Propulse par <span className="font-semibold">DS Concept</span>
           </p>
         ) : (
           <p className="text-[8px] text-sidebar-foreground/50 text-center">DS</p>

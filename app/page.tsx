@@ -1,4 +1,4 @@
-// FEVOCO Dashboard
+// FEVOCO Dashboard - Systeme de Gestion
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { KpiCard } from "@/components/dashboard/kpi-card"
@@ -17,6 +17,8 @@ import {
   Flag,
   Target,
   CheckCircle,
+  Stethoscope,
+  Network,
 } from "lucide-react"
 
 export default function DashboardPage() {
@@ -24,12 +26,24 @@ export default function DashboardPage() {
     <DashboardLayout>
       <Header
         title="Tableau de Bord"
-        subtitle="Vue globale du système national de volleyball"
+        subtitle="Vue globale du systeme national de volleyball"
       />
 
       <div className="p-6 space-y-6">
-        {/* KPI Cards - Row 1 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Section Titre */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Statistiques Generales</h2>
+            <p className="text-sm text-muted-foreground">Donnees consolidees de la federation</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Derniere mise a jour</p>
+            <p className="text-sm font-medium text-foreground">29 Mars 2024</p>
+          </div>
+        </div>
+
+        {/* KPI Cards - Structure organisationnelle */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <KpiCard
             title="Provinces"
             value={statsGlobales.totalProvinces}
@@ -41,21 +55,26 @@ export default function DashboardPage() {
             icon={Building2}
           />
           <KpiCard
+            title="Ententes"
+            value={statsGlobales.totalEntentes}
+            icon={Network}
+          />
+          <KpiCard
             title="Clubs"
             value={statsGlobales.totalClubs}
             icon={Shield}
             variant="primary"
           />
           <KpiCard
-            title="Athlètes"
+            title="Athletes"
             value={statsGlobales.totalAthletes}
             icon={Users}
             variant="secondary"
           />
         </div>
 
-        {/* KPI Cards - Row 2 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* KPI Cards - Personnel technique */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <KpiCard
             title="Coachs"
             value={statsGlobales.totalCoachs}
@@ -67,13 +86,18 @@ export default function DashboardPage() {
             icon={Flag}
           />
           <KpiCard
-            title="Sélection Nationale"
+            title="Medecins"
+            value={statsGlobales.totalMedecins}
+            icon={Stethoscope}
+          />
+          <KpiCard
+            title="Selection Nationale"
             value={statsGlobales.selectionNationale}
             icon={Target}
             variant="accent"
           />
           <KpiCard
-            title="Taux Complétude"
+            title="Taux Completude"
             value={`${statsGlobales.tauxCompletude}%`}
             icon={CheckCircle}
           />
