@@ -1,6 +1,6 @@
 "use client"
 
-// FEVOCO Sidebar Navigation Component
+// FEVOCO Sidebar Navigation Component v2
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"

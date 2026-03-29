@@ -51,6 +51,15 @@ export interface Athlete {
   version: string
   ligue: string
   selectionNationale: boolean
+  poste: string
+  taille: number
+  poids: number
+  telephone: string
+  email: string
+  adresse: string
+  photo?: string
+  statut: "actif" | "inactif" | "blesse"
+  dateInscription: string
 }
 
 export interface Entente {
@@ -111,11 +120,11 @@ export const clubs: Club[] = [
 
 // --- ATHLETES (5 max) ---
 export const athletes: Athlete[] = [
-  { id: "a1", nom: "Kabongo", prenom: "Patrick", genre: "M", dateNaissance: "1998-05-12", club: "AS Vita Club", version: "Masculin", ligue: "Ligue de Kinshasa", selectionNationale: true },
-  { id: "a2", nom: "Mutombo", prenom: "Grace", genre: "F", dateNaissance: "2001-08-23", club: "VC Espoir", version: "Féminin", ligue: "Ligue de Kinshasa", selectionNationale: true },
-  { id: "a3", nom: "Kalala", prenom: "David", genre: "M", dateNaissance: "1999-02-14", club: "TP Mazembe", version: "Masculin", ligue: "Ligue du Haut-Katanga", selectionNationale: false },
-  { id: "a4", nom: "Ngoy", prenom: "Blessing", genre: "F", dateNaissance: "2000-11-30", club: "BC Goma", version: "Féminin", ligue: "Ligue du Nord-Kivu", selectionNationale: true },
-  { id: "a5", nom: "Lumumba", prenom: "Jean", genre: "M", dateNaissance: "1997-07-08", club: "VC Renaissance", version: "Mixte", ligue: "Ligue du Kongo Central", selectionNationale: false },
+  { id: "a1", nom: "Kabongo", prenom: "Patrick", genre: "M", dateNaissance: "1998-05-12", club: "AS Vita Club", version: "Masculin", ligue: "Ligue de Kinshasa", selectionNationale: true, poste: "Pointu", taille: 192, poids: 85, telephone: "+243 811 001 001", email: "p.kabongo@fevoco.cd", adresse: "Quartier Binza, Kinshasa", statut: "actif", dateInscription: "2020-01-15" },
+  { id: "a2", nom: "Mutombo", prenom: "Grace", genre: "F", dateNaissance: "2001-08-23", club: "VC Espoir", version: "Féminin", ligue: "Ligue de Kinshasa", selectionNationale: true, poste: "Libero", taille: 168, poids: 58, telephone: "+243 822 002 002", email: "g.mutombo@fevoco.cd", adresse: "Quartier Gombe, Kinshasa", statut: "actif", dateInscription: "2021-03-20" },
+  { id: "a3", nom: "Kalala", prenom: "David", genre: "M", dateNaissance: "1999-02-14", club: "TP Mazembe", version: "Masculin", ligue: "Ligue du Haut-Katanga", selectionNationale: false, poste: "Central", taille: 198, poids: 92, telephone: "+243 833 003 003", email: "d.kalala@fevoco.cd", adresse: "Commune Kenya, Lubumbashi", statut: "actif", dateInscription: "2019-08-10" },
+  { id: "a4", nom: "Ngoy", prenom: "Blessing", genre: "F", dateNaissance: "2000-11-30", club: "BC Goma", version: "Féminin", ligue: "Ligue du Nord-Kivu", selectionNationale: true, poste: "Passeuse", taille: 175, poids: 65, telephone: "+243 844 004 004", email: "b.ngoy@fevoco.cd", adresse: "Centre-ville, Goma", statut: "blesse", dateInscription: "2020-06-05" },
+  { id: "a5", nom: "Lumumba", prenom: "Jean", genre: "M", dateNaissance: "1997-07-08", club: "VC Renaissance", version: "Mixte", ligue: "Ligue du Kongo Central", selectionNationale: false, poste: "Receptionniste", taille: 185, poids: 78, telephone: "+243 855 005 005", email: "j.lumumba@fevoco.cd", adresse: "Port de Matadi", statut: "inactif", dateInscription: "2018-02-28" },
 ]
 
 // --- ACTIVITÉS RÉCENTES (5 max) ---
