@@ -33,6 +33,12 @@ export interface Club {
   province: string
   athletes: number
   statut: "actif" | "inactif"
+  dateCreation: string
+  responsable: string
+  telephone: string
+  email: string
+  adresse: string
+  logo?: string
 }
 
 export interface Athlete {
@@ -96,11 +102,11 @@ export const ententes: Entente[] = [
 
 // --- CLUBS (5 max) ---
 export const clubs: Club[] = [
-  { id: "c1", nom: "VC Espoir", version: "Féminin", genre: "Féminin", entente: "Entente Gombe", ligue: "Ligue de Kinshasa", province: "Kinshasa", athletes: 18, statut: "actif" },
-  { id: "c2", nom: "AS Vita Club", version: "Masculin", genre: "Masculin", entente: "Entente Ngaliema", ligue: "Ligue de Kinshasa", province: "Kinshasa", athletes: 22, statut: "actif" },
-  { id: "c3", nom: "TP Mazembe", version: "Masculin", genre: "Masculin", entente: "Entente Lubumbashi", ligue: "Ligue du Haut-Katanga", province: "Haut-Katanga", athletes: 20, statut: "actif" },
-  { id: "c4", nom: "BC Goma", version: "Féminin", genre: "Féminin", entente: "Entente Goma", ligue: "Ligue du Nord-Kivu", province: "Nord-Kivu", athletes: 15, statut: "actif" },
-  { id: "c5", nom: "VC Renaissance", version: "Mixte", genre: "Mixte", entente: "Entente Matadi", ligue: "Ligue du Kongo Central", province: "Kongo Central", athletes: 12, statut: "inactif" },
+  { id: "c1", nom: "VC Espoir", version: "Féminin", genre: "Féminin", entente: "Entente Gombe", ligue: "Ligue de Kinshasa", province: "Kinshasa", athletes: 18, statut: "actif", dateCreation: "2018-03-15", responsable: "Alice Mbuyi", telephone: "+243 811 111 111", email: "espoir@fevoco.cd", adresse: "Avenue de la Paix 45, Gombe, Kinshasa" },
+  { id: "c2", nom: "AS Vita Club", version: "Masculin", genre: "Masculin", entente: "Entente Ngaliema", ligue: "Ligue de Kinshasa", province: "Kinshasa", athletes: 22, statut: "actif", dateCreation: "1995-06-20", responsable: "Bernard Kasa", telephone: "+243 822 222 222", email: "vita@fevoco.cd", adresse: "Boulevard du 30 Juin 120, Ngaliema, Kinshasa" },
+  { id: "c3", nom: "TP Mazembe", version: "Masculin", genre: "Masculin", entente: "Entente Lubumbashi", ligue: "Ligue du Haut-Katanga", province: "Haut-Katanga", athletes: 20, statut: "actif", dateCreation: "1999-01-10", responsable: "Charles Mwamba", telephone: "+243 833 333 333", email: "mazembe@fevoco.cd", adresse: "Avenue Mobutu 78, Lubumbashi" },
+  { id: "c4", nom: "BC Goma", version: "Féminin", genre: "Féminin", entente: "Entente Goma", ligue: "Ligue du Nord-Kivu", province: "Nord-Kivu", athletes: 15, statut: "actif", dateCreation: "2015-09-05", responsable: "Diana Furaha", telephone: "+243 844 444 444", email: "bcgoma@fevoco.cd", adresse: "Rue du Lac 23, Goma" },
+  { id: "c5", nom: "VC Renaissance", version: "Mixte", genre: "Mixte", entente: "Entente Matadi", ligue: "Ligue du Kongo Central", province: "Kongo Central", athletes: 12, statut: "inactif", dateCreation: "2020-02-28", responsable: "Emmanuel Nsimba", telephone: "+243 855 555 555", email: "renaissance@fevoco.cd", adresse: "Avenue du Port 56, Matadi" },
 ]
 
 // --- ATHLETES (5 max) ---
