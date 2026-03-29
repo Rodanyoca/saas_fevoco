@@ -1,4 +1,5 @@
-// FEVOCO Dashboard - Systeme de Gestion v4
+// FEVOCO Dashboard - Systeme de Gestion - Version 5.0
+// Last updated: 2024
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { KpiCard } from "@/components/dashboard/kpi-card"

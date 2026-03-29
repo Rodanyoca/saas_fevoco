@@ -1,6 +1,7 @@
 "use client"
 
-// FEVOCO Sidebar Navigation v4
+// FEVOCO Sidebar Navigation - Version 5.0
+// Last updated: 2024
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"

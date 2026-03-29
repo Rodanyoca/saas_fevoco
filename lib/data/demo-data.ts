@@ -11,6 +11,14 @@ export interface Province {
   clubs: number
   athletes: number
   completude: number
+  coachs: number
+  arbitres: number
+  medecins: number
+  chefLieu: string
+  responsable: string
+  telephone: string
+  email: string
+  statut: "active" | "inactive"
 }
 
 export interface Ligue {
@@ -142,11 +150,11 @@ export interface RecentActivity {
 
 // --- PROVINCES (5 max) ---
 export const provinces: Province[] = [
-  { id: "p1", nom: "Kinshasa", ligues: 1, ententes: 4, clubs: 12, athletes: 180, completude: 92 },
-  { id: "p2", nom: "Haut-Katanga", ligues: 1, ententes: 3, clubs: 8, athletes: 95, completude: 78 },
-  { id: "p3", nom: "Nord-Kivu", ligues: 1, ententes: 2, clubs: 6, athletes: 72, completude: 85 },
-  { id: "p4", nom: "Kongo Central", ligues: 1, ententes: 2, clubs: 5, athletes: 58, completude: 70 },
-  { id: "p5", nom: "Sud-Kivu", ligues: 1, ententes: 2, clubs: 4, athletes: 45, completude: 65 },
+  { id: "p1", nom: "Kinshasa", ligues: 1, ententes: 4, clubs: 12, athletes: 180, completude: 92, coachs: 12, arbitres: 8, medecins: 4, chefLieu: "Kinshasa", responsable: "André Mbemba", telephone: "+243 811 000 001", email: "kinshasa@fevoco.cd", statut: "active" },
+  { id: "p2", nom: "Haut-Katanga", ligues: 1, ententes: 3, clubs: 8, athletes: 95, completude: 78, coachs: 8, arbitres: 5, medecins: 2, chefLieu: "Lubumbashi", responsable: "Pierre Mwamba", telephone: "+243 822 000 002", email: "hkatanga@fevoco.cd", statut: "active" },
+  { id: "p3", nom: "Nord-Kivu", ligues: 1, ententes: 2, clubs: 6, athletes: 72, completude: 85, coachs: 6, arbitres: 4, medecins: 2, chefLieu: "Goma", responsable: "Innocent Bahati", telephone: "+243 833 000 003", email: "nkivu@fevoco.cd", statut: "active" },
+  { id: "p4", nom: "Kongo Central", ligues: 1, ententes: 2, clubs: 5, athletes: 58, completude: 70, coachs: 4, arbitres: 3, medecins: 1, chefLieu: "Matadi", responsable: "Joseph Nsimba", telephone: "+243 844 000 004", email: "kcentral@fevoco.cd", statut: "active" },
+  { id: "p5", nom: "Sud-Kivu", ligues: 1, ententes: 2, clubs: 4, athletes: 45, completude: 65, coachs: 3, arbitres: 2, medecins: 1, chefLieu: "Bukavu", responsable: "Marie Lwango", telephone: "+243 855 000 005", email: "skivu@fevoco.cd", statut: "inactive" },
 ]
 
 // --- LIGUES (5 max) ---
