@@ -140,6 +140,27 @@ export interface Medecin {
   athletesSuivis: number
 }
 
+export interface DataQualityIssue {
+  id: string
+  entite: "athlete" | "club" | "coach" | "arbitre" | "medecin"
+  entiteId: string
+  entiteNom: string
+  champManquant: string
+  province: string
+  ligue: string
+  dateDetection: string
+  priorite: "haute" | "moyenne" | "basse"
+  statut: "non_resolu" | "en_cours" | "resolu"
+}
+
+export interface DataQualityStats {
+  entite: string
+  total: number
+  complets: number
+  incomplets: number
+  tauxCompletude: number
+}
+
 export interface RecentActivity {
   id: string
   type: "club" | "athlete" | "ligue" | "entente"
@@ -218,6 +239,23 @@ export const medecins: Medecin[] = [
   { id: "me3", nom: "Kabila", prenom: "Jacques", genre: "M", dateNaissance: "1975-03-10", ligue: "Ligue du Haut-Katanga", province: "Haut-Katanga", specialite: "Kinésithérapie", numeroOrdre: "OM-KAT-1234", telephone: "+243 833 900 900", email: "j.kabila@fevoco.cd", adresse: "Avenue Kasavubu 45, Lubumbashi", hopital: "Clinique Sendwe", statut: "actif", dateAffiliation: "2017-06-10", athletesSuivis: 48 },
   { id: "me4", nom: "Furaha", prenom: "Marie", genre: "F", dateNaissance: "1985-08-14", ligue: "Ligue du Nord-Kivu", province: "Nord-Kivu", specialite: "Médecine du sport", numeroOrdre: "OM-NKV-5678", telephone: "+243 844 100 100", email: "m.furaha@fevoco.cd", adresse: "Rue du Lac 34, Goma", hopital: "Hopital CBCA Ndosho", statut: "actif", dateAffiliation: "2020-01-25", athletesSuivis: 35 },
   { id: "me5", nom: "Lukusa", prenom: "Paul", genre: "M", dateNaissance: "1978-12-02", ligue: "Ligue du Kongo Central", province: "Kongo Central", specialite: "Médecine générale", numeroOrdre: "OM-KGC-7890", telephone: "+243 855 200 200", email: "p.lukusa@fevoco.cd", adresse: "Avenue du Port 23, Matadi", hopital: "Hopital Général de Matadi", statut: "inactif", dateAffiliation: "2019-03-15", athletesSuivis: 22 },
+]
+
+// --- QUALITÉ DES DONNÉES (5 max) ---
+export const dataQualityIssues: DataQualityIssue[] = [
+  { id: "dq1", entite: "athlete", entiteId: "a5", entiteNom: "Jean Lumumba", champManquant: "Photo", province: "Kongo Central", ligue: "Ligue du Kongo Central", dateDetection: "2024-01-10", priorite: "basse", statut: "non_resolu" },
+  { id: "dq2", entite: "club", entiteId: "c5", entiteNom: "VC Renaissance", champManquant: "Logo", province: "Kongo Central", ligue: "Ligue du Kongo Central", dateDetection: "2024-01-08", priorite: "moyenne", statut: "non_resolu" },
+  { id: "dq3", entite: "athlete", entiteId: "a3", entiteNom: "David Kalala", champManquant: "Email", province: "Haut-Katanga", ligue: "Ligue du Haut-Katanga", dateDetection: "2024-01-05", priorite: "haute", statut: "en_cours" },
+  { id: "dq4", entite: "coach", entiteId: "co5", entiteNom: "Michel Konde", champManquant: "Photo", province: "Kongo Central", ligue: "Ligue du Kongo Central", dateDetection: "2024-01-03", priorite: "basse", statut: "non_resolu" },
+  { id: "dq5", entite: "arbitre", entiteId: "ar5", entiteNom: "Alain Nsimba", champManquant: "Photo", province: "Kongo Central", ligue: "Ligue du Kongo Central", dateDetection: "2024-01-02", priorite: "basse", statut: "resolu" },
+]
+
+export const dataQualityStats: DataQualityStats[] = [
+  { entite: "Athletes", total: 450, complets: 412, incomplets: 38, tauxCompletude: 92 },
+  { entite: "Clubs", total: 35, complets: 31, incomplets: 4, tauxCompletude: 89 },
+  { entite: "Coachs", total: 42, complets: 38, incomplets: 4, tauxCompletude: 90 },
+  { entite: "Arbitres", total: 28, complets: 25, incomplets: 3, tauxCompletude: 89 },
+  { entite: "Médecins", total: 8, complets: 7, incomplets: 1, tauxCompletude: 88 },
 ]
 
 // --- ACTIVITÉS RÉCENTES (5 max) ---
