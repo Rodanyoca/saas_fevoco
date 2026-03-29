@@ -93,6 +93,25 @@ export interface Coach {
   experience: number
 }
 
+export interface Arbitre {
+  id: string
+  nom: string
+  prenom: string
+  genre: "M" | "F"
+  dateNaissance: string
+  ligue: string
+  province: string
+  grade: "International" | "National" | "Provincial" | "Local"
+  specialite: "Premier arbitre" | "Second arbitre" | "Marqueur" | "Juge de ligne"
+  telephone: string
+  email: string
+  adresse: string
+  photo?: string
+  statut: "actif" | "inactif" | "suspendu"
+  dateObtentionGrade: string
+  matchsArbitres: number
+}
+
 export interface RecentActivity {
   id: string
   type: "club" | "athlete" | "ligue" | "entente"
@@ -153,6 +172,15 @@ export const coachs: Coach[] = [
   { id: "co3", nom: "Tshibangu", prenom: "Robert", genre: "M", dateNaissance: "1978-11-08", club: "TP Mazembe", ligue: "Ligue du Haut-Katanga", specialite: "Preparation physique", niveauCertification: "Provincial", telephone: "+243 833 300 300", email: "r.tshibangu@fevoco.cd", adresse: "Commune Annexe, Lubumbashi", statut: "actif", dateEmbauche: "2016-06-15", experience: 12 },
   { id: "co4", nom: "Amisi", prenom: "Beatrice", genre: "F", dateNaissance: "1985-04-25", club: "BC Goma", ligue: "Ligue du Nord-Kivu", specialite: "Technique", niveauCertification: "Provincial", telephone: "+243 844 400 400", email: "b.amisi@fevoco.cd", adresse: "Quartier Himbi, Goma", statut: "actif", dateEmbauche: "2019-09-01", experience: 8 },
   { id: "co5", nom: "Konde", prenom: "Michel", genre: "M", dateNaissance: "1980-09-12", club: "VC Renaissance", ligue: "Ligue du Kongo Central", specialite: "Strategie", niveauCertification: "Local", telephone: "+243 855 500 500", email: "m.konde@fevoco.cd", adresse: "Centre-ville, Matadi", statut: "inactif", dateEmbauche: "2020-02-15", experience: 6 },
+]
+
+// --- ARBITRES (5 max) ---
+export const arbitres: Arbitre[] = [
+  { id: "ar1", nom: "Mukeba", prenom: "Simon", genre: "M", dateNaissance: "1980-06-15", ligue: "Ligue de Kinshasa", province: "Kinshasa", grade: "International", specialite: "Premier arbitre", telephone: "+243 811 600 600", email: "s.mukeba@fevoco.cd", adresse: "Quartier Kintambo, Kinshasa", statut: "actif", dateObtentionGrade: "2015-03-20", matchsArbitres: 245 },
+  { id: "ar2", nom: "Ilunga", prenom: "Jeanne", genre: "F", dateNaissance: "1985-09-22", ligue: "Ligue de Kinshasa", province: "Kinshasa", grade: "National", specialite: "Second arbitre", telephone: "+243 822 700 700", email: "j.ilunga@fevoco.cd", adresse: "Quartier Masina, Kinshasa", statut: "actif", dateObtentionGrade: "2018-07-10", matchsArbitres: 128 },
+  { id: "ar3", nom: "Katanga", prenom: "Pierre", genre: "M", dateNaissance: "1978-02-08", ligue: "Ligue du Haut-Katanga", province: "Haut-Katanga", grade: "National", specialite: "Premier arbitre", telephone: "+243 833 800 800", email: "p.katanga@fevoco.cd", adresse: "Commune Kampemba, Lubumbashi", statut: "actif", dateObtentionGrade: "2016-11-15", matchsArbitres: 186 },
+  { id: "ar4", nom: "Bahati", prenom: "Esperance", genre: "F", dateNaissance: "1990-12-03", ligue: "Ligue du Nord-Kivu", province: "Nord-Kivu", grade: "Provincial", specialite: "Marqueur", telephone: "+243 844 900 900", email: "e.bahati@fevoco.cd", adresse: "Quartier Virunga, Goma", statut: "actif", dateObtentionGrade: "2020-05-25", matchsArbitres: 67 },
+  { id: "ar5", nom: "Nsimba", prenom: "Alain", genre: "M", dateNaissance: "1982-04-18", ligue: "Ligue du Kongo Central", province: "Kongo Central", grade: "Local", specialite: "Juge de ligne", telephone: "+243 855 100 100", email: "a.nsimba@fevoco.cd", adresse: "Avenue Lumumba, Matadi", statut: "suspendu", dateObtentionGrade: "2021-02-10", matchsArbitres: 42 },
 ]
 
 // --- ACTIVITÉS RÉCENTES (5 max) ---

@@ -1,4 +1,4 @@
-// FEVOCO Dashboard - Système de Gestion
+// FEVOCO Dashboard - Systeme de Gestion v3
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { KpiCard } from "@/components/dashboard/kpi-card"
