@@ -47,6 +47,18 @@ export interface Athlete {
   selectionNationale: boolean
 }
 
+export interface Entente {
+  id: string
+  nom: string
+  ligue: string
+  province: string
+  clubs: number
+  athletes: number
+  responsable: string
+  telephone: string
+  statut: "active" | "inactive"
+}
+
 export interface RecentActivity {
   id: string
   type: "club" | "athlete" | "ligue" | "entente"
@@ -71,6 +83,15 @@ export const ligues: Ligue[] = [
   { id: "l3", nom: "Ligue du Nord-Kivu", province: "Nord-Kivu", ententes: 2, clubs: 6, athletes: 72, statut: "active" },
   { id: "l4", nom: "Ligue du Kongo Central", province: "Kongo Central", ententes: 2, clubs: 5, athletes: 58, statut: "active" },
   { id: "l5", nom: "Ligue du Sud-Kivu", province: "Sud-Kivu", ententes: 2, clubs: 4, athletes: 45, statut: "inactive" },
+]
+
+// --- ENTENTES (5 max) ---
+export const ententes: Entente[] = [
+  { id: "e1", nom: "Entente Gombe", ligue: "Ligue de Kinshasa", province: "Kinshasa", clubs: 4, athletes: 52, responsable: "Jean Mukendi", telephone: "+243 812 345 678", statut: "active" },
+  { id: "e2", nom: "Entente Ngaliema", ligue: "Ligue de Kinshasa", province: "Kinshasa", clubs: 3, athletes: 45, responsable: "Marie Kalala", telephone: "+243 823 456 789", statut: "active" },
+  { id: "e3", nom: "Entente Lubumbashi", ligue: "Ligue du Haut-Katanga", province: "Haut-Katanga", clubs: 4, athletes: 48, responsable: "Patrick Ilunga", telephone: "+243 834 567 890", statut: "active" },
+  { id: "e4", nom: "Entente Goma", ligue: "Ligue du Nord-Kivu", province: "Nord-Kivu", clubs: 3, athletes: 38, responsable: "Grace Bahati", telephone: "+243 845 678 901", statut: "active" },
+  { id: "e5", nom: "Entente Matadi", ligue: "Ligue du Kongo Central", province: "Kongo Central", clubs: 2, athletes: 25, responsable: "David Nsimba", telephone: "+243 856 789 012", statut: "inactive" },
 ]
 
 // --- CLUBS (5 max) ---
