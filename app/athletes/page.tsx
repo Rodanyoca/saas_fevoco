@@ -21,7 +21,7 @@ export default function AthletesPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
+      <div className="p-6 space-y-6">
         {selectedAthlete ? (
           <AthleteDetail athlete={selectedAthlete} onBack={handleBack} />
         ) : (
@@ -32,7 +32,7 @@ export default function AthletesPage() {
                 Gérez les athlètes inscrits à la FEVOCO
               </p>
             </div>
-            
+
             <AthletesStats />
             <AthletesFilters />
             <AthletesTable onViewAthlete={handleViewAthlete} />

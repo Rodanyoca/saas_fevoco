@@ -7,8 +7,11 @@ import { athletes, statsGlobales } from "@/lib/data/demo-data"
 export function AthletesStats() {
   const totalAthletes = statsGlobales.totalAthletes
   const actifs = athletes.filter(a => a.statut === "actif").length
-  const selection = athletes.filter(a => a.selectionNationale).length
-  const blesses = athletes.filter(a => a.statut === "blesse").length
+  const inactifs = athletes.filter(a => a.statut === "inactif").length
+  const masculins = athletes.filter((a) => a.genre === "M").length
+  const feminins = athletes.filter((a) => a.genre === "F").length
+  const selectionMasculins = athletes.filter((a) => a.selectionNationale && a.genre === "M").length
+  const selectionFeminins = athletes.filter((a) => a.selectionNationale && a.genre === "F").length
 
   const stats = [
     {
@@ -25,7 +28,7 @@ export function AthletesStats() {
       icon: UserCheck,
       description: "En activité",
       color: "text-green-600",
-      bgColor: "bg-green-50",
+      bgColor: "bg-green-500/10",
     },
     {
       title: "Sélection Nationale",
@@ -36,19 +39,19 @@ export function AthletesStats() {
       bgColor: "bg-accent/10",
     },
     {
-      title: "Blessés",
-      value: blesses.toString(),
+      title: "Inactifs",
+      value: inactifs.toString(),
       icon: UserX,
-      description: "En indisponibilité",
-      color: "text-destructive",
-      bgColor: "bg-destructive/10",
+      description: "Non actifs",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted",
     },
   ]
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => (
-        <Card key={stat.title}>
+        <Card key={stat.title} className="border-border/50 bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {stat.title}
@@ -60,6 +63,12 @@ export function AthletesStats() {
           <CardContent>
             <div className="text-2xl font-bold">{stat.value}</div>
             <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
+            {stat.title === "Total Athlètes" && (
+              <p className="text-xs text-muted-foreground mt-1">Masculin: {masculins} • Féminin: {feminins}</p>
+            )}
+            {stat.title === "Sélection Nationale" && (
+              <p className="text-xs text-muted-foreground mt-1">Masculin: {selectionMasculins} • Féminin: {selectionFeminins}</p>
+            )}
           </CardContent>
         </Card>
       ))}

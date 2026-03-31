@@ -140,6 +140,21 @@ export interface Medecin {
   athletesSuivis: number
 }
 
+export interface Officiel {
+  id: string
+  nom: string
+  prenom: string
+  genre: "M" | "F"
+  poste: "Secrétaire" | "Trésorier" | "Chargé des compétitions" | "Responsable administratif"
+  province: string
+  entite: string
+  dateNaissance: string
+  nationalite: string
+  telephone: string
+  email: string
+  statut: "actif" | "inactif"
+}
+
 export interface DataQualityIssue {
   id: string
   entite: "athlete" | "club" | "coach" | "arbitre" | "medecin"
@@ -241,6 +256,15 @@ export const medecins: Medecin[] = [
   { id: "me5", nom: "Lukusa", prenom: "Paul", genre: "M", dateNaissance: "1978-12-02", ligue: "Ligue du Kongo Central", province: "Kongo Central", specialite: "Médecine générale", numeroOrdre: "OM-KGC-7890", telephone: "+243 855 200 200", email: "p.lukusa@fevoco.cd", adresse: "Avenue du Port 23, Matadi", hopital: "Hopital Général de Matadi", statut: "inactif", dateAffiliation: "2019-03-15", athletesSuivis: 22 },
 ]
 
+// --- OFFICIELS (5 max) ---
+export const officiels: Officiel[] = [
+  { id: "of1", nom: "Mbemba", prenom: "André", genre: "M", poste: "Responsable administratif", province: "Kinshasa", entite: "FEVOCO", dateNaissance: "1979-04-12", nationalite: "Congolaise", telephone: "+243 811 000 010", email: "a.mbemba@fevoco.cd", statut: "actif" },
+  { id: "of2", nom: "Mwamba", prenom: "Pierre", genre: "M", poste: "Chargé des compétitions", province: "Haut-Katanga", entite: "Ligue du Haut-Katanga", dateNaissance: "1984-09-03", nationalite: "Congolaise", telephone: "+243 822 000 020", email: "p.mwamba@fevoco.cd", statut: "actif" },
+  { id: "of3", nom: "Bahati", prenom: "Innocent", genre: "M", poste: "Secrétaire", province: "Nord-Kivu", entite: "Ligue du Nord-Kivu", dateNaissance: "1988-01-19", nationalite: "Congolaise", telephone: "+243 833 000 030", email: "i.bahati@fevoco.cd", statut: "actif" },
+  { id: "of4", nom: "Nsimba", prenom: "Joseph", genre: "M", poste: "Trésorier", province: "Kongo Central", entite: "Ligue du Kongo Central", dateNaissance: "1976-06-27", nationalite: "Congolaise", telephone: "+243 844 000 040", email: "j.nsimba@fevoco.cd", statut: "inactif" },
+  { id: "of5", nom: "Lwango", prenom: "Marie", genre: "F", poste: "Secrétaire", province: "Sud-Kivu", entite: "Ligue du Sud-Kivu", dateNaissance: "1990-11-08", nationalite: "Congolaise", telephone: "+243 855 000 050", email: "m.lwango@fevoco.cd", statut: "actif" },
+]
+
 // --- QUALITÉ DES DONNÉES (5 max) ---
 export const dataQualityIssues: DataQualityIssue[] = [
   { id: "dq1", entite: "athlete", entiteId: "a5", entiteNom: "Jean Lumumba", champManquant: "Photo", province: "Kongo Central", ligue: "Ligue du Kongo Central", dateDetection: "2024-01-10", priorite: "basse", statut: "non_resolu" },
@@ -252,6 +276,8 @@ export const dataQualityIssues: DataQualityIssue[] = [
 
 export const dataQualityStats: DataQualityStats[] = [
   { entite: "Athletes", total: 450, complets: 412, incomplets: 38, tauxCompletude: 92 },
+  { entite: "Ligues", total: 5, complets: 5, incomplets: 0, tauxCompletude: 100 },
+  { entite: "Ententes", total: 13, complets: 12, incomplets: 1, tauxCompletude: 92 },
   { entite: "Clubs", total: 35, complets: 31, incomplets: 4, tauxCompletude: 89 },
   { entite: "Coachs", total: 42, complets: 38, incomplets: 4, tauxCompletude: 90 },
   { entite: "Arbitres", total: 28, complets: 25, incomplets: 3, tauxCompletude: 89 },
@@ -271,25 +297,25 @@ export const recentActivities: RecentActivity[] = [
 export const statsGlobales = {
   totalProvinces: 5,
   totalLigues: 5,
-  totalEntentes: 13,
-  totalClubs: 35,
-  totalAthletes: 450,
-  totalCoachs: 42,
-  totalArbitres: 28,
-  totalOfficiels: 15,
-  totalMedecins: 8,
-  athletesMasculins: 268,
-  athletesFeminins: 182,
-  selectionNationale: 24,
+  totalEntentes: 5,
+  totalClubs: 5,
+  totalAthletes: 5,
+  totalCoachs: 5,
+  totalArbitres: 5,
+  totalOfficiels: 5,
+  totalMedecins: 5,
+  athletesMasculins: 3,
+  athletesFeminins: 2,
+  selectionNationale: 3,
   tauxCompletude: 82,
-  clubsActifs: 31,
-  clubsInactifs: 4,
+  clubsActifs: 4,
+  clubsInactifs: 1,
 }
 
 // --- RÉPARTITION PAR GENRE (pour graphiques) ---
 export const repartitionGenre = [
-  { genre: "Masculin", count: 268 },
-  { genre: "Féminin", count: 182 },
+  { genre: "Masculin", count: 3 },
+  { genre: "Féminin", count: 2 },
 ]
 
 // --- TOP PROVINCES (pour graphiques) ---

@@ -4,6 +4,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Network, Shield, Users, CheckCircle } from "lucide-react"
 import { ententes, statsGlobales } from "@/lib/data/demo-data"
 
+const ententesActives = ententes.filter((e) => e.statut === "active").length
+const ententesInactives = ententes.filter((e) => e.statut === "inactive").length
+
 const stats = [
   {
     title: "Total Ententes",
@@ -14,7 +17,7 @@ const stats = [
   },
   {
     title: "Ententes Actives",
-    value: ententes.filter(e => e.statut === "active").length,
+    value: ententesActives,
     icon: CheckCircle,
     color: "text-green-600",
     bgColor: "bg-green-100",
@@ -31,7 +34,7 @@ const stats = [
     value: ententes.reduce((acc, e) => acc + e.athletes, 0),
     icon: Users,
     color: "text-accent-foreground",
-    bgColor: "bg-accent",
+    bgColor: "bg-accent/10",
   },
 ]
 
@@ -39,7 +42,7 @@ export function EntentesStats() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {stats.map((stat) => (
-        <Card key={stat.title} className="border-border">
+        <Card key={stat.title} className="border-border/50 bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-lg ${stat.bgColor}`}>
@@ -48,6 +51,11 @@ export function EntentesStats() {
               <div>
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-xs text-muted-foreground">{stat.title}</p>
+                {stat.title === "Total Ententes" && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Actives: {ententesActives} • Inactives: {ententesInactives}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>

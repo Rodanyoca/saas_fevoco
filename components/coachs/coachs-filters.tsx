@@ -1,6 +1,5 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -10,26 +9,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
-import { Search, Download, Plus } from "lucide-react"
-import { ligues, clubs } from "@/lib/data/demo-data"
+import { Search } from "lucide-react"
+import { clubs } from "@/lib/data/demo-data"
 
 export function CoachsFilters() {
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="flex flex-col gap-4">
-          {/* Première ligne: Actions */}
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Exporter
-            </Button>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau Coach
-            </Button>
-          </div>
-
           {/* Deuxième ligne: Filtres */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">

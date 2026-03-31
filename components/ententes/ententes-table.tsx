@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -11,17 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { ententes } from "@/lib/data/demo-data"
-import { MoreHorizontal, Eye, Pencil, Trash2, Network, Phone, User } from "lucide-react"
+import { Network, Phone, User } from "lucide-react"
 
 export function EntentesTable() {
+  const formatEntenteId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(4, "0")
+  }
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -40,23 +37,22 @@ export function EntentesTable() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[90px]">ID</TableHead>
                 <TableHead>Nom de l&apos;Entente</TableHead>
-                <TableHead>Ligue</TableHead>
                 <TableHead>Province</TableHead>
                 <TableHead className="text-center">Clubs</TableHead>
                 <TableHead className="text-center">Athlètes</TableHead>
                 <TableHead>Responsable</TableHead>
                 <TableHead className="text-center">Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {ententes.map((entente) => (
                 <TableRow key={entente.id}>
-                  <TableCell className="font-medium">{entente.nom}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {entente.ligue}
+                  <TableCell className="font-mono text-muted-foreground">
+                    {formatEntenteId(entente.id)}
                   </TableCell>
+                  <TableCell className="font-medium">{entente.nom}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {entente.province}
                   </TableCell>
@@ -85,31 +81,6 @@ export function EntentesTable() {
                     >
                       {entente.statut === "active" ? "Active" : "Inactive"}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Voir détails
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Modifier
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

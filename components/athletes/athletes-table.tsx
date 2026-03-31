@@ -11,21 +11,23 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Eye, Edit, Trash2, Award } from "lucide-react"
-import { athletes, type Athlete } from "@/lib/data/demo-data"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Eye, Award } from "lucide-react"
+import { athletes, clubs, type Athlete } from "@/lib/data/demo-data"
 
 interface AthletesTableProps {
   onViewAthlete: (athlete: Athlete) => void
 }
 
 export function AthletesTable({ onViewAthlete }: AthletesTableProps) {
+  const formatAthleteId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(10, "0")
+  }
+
+  const getEntenteByClubName = (clubName: string) => {
+    return clubs.find((c) => c.nom === clubName)?.entente
+  }
+
   const getStatusBadge = (statut: string) => {
     switch (statut) {
       case "actif":
@@ -67,66 +69,49 @@ export function AthletesTable({ onViewAthlete }: AthletesTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[120px]">ID</TableHead>
               <TableHead>Athlète</TableHead>
-              <TableHead>Genre</TableHead>
-              <TableHead>Age</TableHead>
-              <TableHead>Poste</TableHead>
-              <TableHead>Club</TableHead>
-              <TableHead>Ligue</TableHead>
+              <TableHead>Profil</TableHead>
+              <TableHead>Affiliation</TableHead>
               <TableHead>Statut</TableHead>
-              <TableHead>Sélection</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {athletes.map((athlete) => (
               <TableRow key={athlete.id}>
+                <TableCell className="font-mono text-muted-foreground">
+                  {formatAthleteId(athlete.id)}
+                </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                        {athlete.prenom[0]}{athlete.nom[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{athlete.prenom} {athlete.nom}</div>
-                      <div className="text-xs text-muted-foreground">{athlete.email}</div>
-                    </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-medium">{athlete.prenom} {athlete.nom}</span>
+                    <span className="flex items-center gap-2">
+                      {getGenreBadge(athlete.genre)}
+                      {athlete.selectionNationale && <Award className="h-4 w-4 text-accent" />}
+                    </span>
                   </div>
                 </TableCell>
-                <TableCell>{getGenreBadge(athlete.genre)}</TableCell>
-                <TableCell>{calculateAge(athlete.dateNaissance)} ans</TableCell>
-                <TableCell>{athlete.poste}</TableCell>
-                <TableCell>{athlete.club}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{athlete.ligue}</TableCell>
-                <TableCell>{getStatusBadge(athlete.statut)}</TableCell>
                 <TableCell>
-                  {athlete.selectionNationale && (
-                    <Award className="h-4 w-4 text-accent" />
-                  )}
+                  <div className="flex flex-col gap-1">
+                    <span>{calculateAge(athlete.dateNaissance)} ans</span>
+                    <span className="text-sm text-muted-foreground">{athlete.poste}</span>
+                  </div>
                 </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <span>{athlete.club}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {getEntenteByClubName(athlete.club)}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>{getStatusBadge(athlete.statut)}</TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onViewAthlete(athlete)}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        Voir détails
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Modifier
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button variant="ghost" size="icon" onClick={() => onViewAthlete(athlete)}>
+                    <Eye className="h-4 w-4" />
+                    <span className="sr-only">Voir détails</span>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

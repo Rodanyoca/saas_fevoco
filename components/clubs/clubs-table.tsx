@@ -11,20 +11,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { clubs, type Club } from "@/lib/data/demo-data"
-import { MoreHorizontal, Eye, Pencil, Trash2, Shield } from "lucide-react"
+import { Eye, Shield } from "lucide-react"
 
 interface ClubsTableProps {
   onViewClub: (club: Club) => void
 }
 
 export function ClubsTable({ onViewClub }: ClubsTableProps) {
+  const formatClubId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(7, "0")
+  }
+
   const getGenreBadgeColor = (genre: string) => {
     switch (genre) {
       case "Masculin":
@@ -56,8 +55,8 @@ export function ClubsTable({ onViewClub }: ClubsTableProps) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[110px]">ID</TableHead>
                 <TableHead>Nom du Club</TableHead>
-                <TableHead>Genre</TableHead>
                 <TableHead>Entente</TableHead>
                 <TableHead>Ligue</TableHead>
                 <TableHead className="text-center">Athlètes</TableHead>
@@ -68,16 +67,21 @@ export function ClubsTable({ onViewClub }: ClubsTableProps) {
             <TableBody>
               {clubs.map((club) => (
                 <TableRow key={club.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableCell className="font-mono text-muted-foreground">
+                    {formatClubId(club.id)}
+                  </TableCell>
                   <TableCell 
                     className="font-medium"
                     onClick={() => onViewClub(club)}
                   >
-                    {club.nom}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className={getGenreBadgeColor(club.genre)}>
-                      {club.genre}
-                    </Badge>
+                    <div className="flex flex-col gap-1">
+                      <span>{club.nom}</span>
+                      <span>
+                        <Badge variant="secondary" className={getGenreBadgeColor(club.genre)}>
+                          {club.genre}
+                        </Badge>
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {club.entente}
@@ -99,28 +103,15 @@ export function ClubsTable({ onViewClub }: ClubsTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onViewClub(club)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Voir détails
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Modifier
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => onViewClub(club)}
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span className="sr-only">Voir détails</span>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

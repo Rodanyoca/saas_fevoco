@@ -7,8 +7,10 @@ import { Stethoscope, UserCheck, Activity, Users } from "lucide-react"
 export function MedecinsStats() {
   const totalMedecins = medecins.length
   const medecinsActifs = medecins.filter(m => m.statut === "actif").length
-  const medecinsSport = medecins.filter(m => m.specialite === "Médecine du sport").length
-  const totalAthletesReferrals = medecins.reduce((acc, m) => acc + m.athletesSuivis, 0)
+  const medecinsInactifs = medecins.filter(m => m.statut === "inactif").length
+  const totalClubsSuivis = medecins.reduce((acc, m) => acc + m.athletesSuivis, 0)
+  const masculins = medecins.filter((m) => m.genre === "M").length
+  const feminins = medecins.filter((m) => m.genre === "F").length
 
   const stats = [
     {
@@ -23,18 +25,18 @@ export function MedecinsStats() {
       value: medecinsActifs,
       icon: UserCheck,
       color: "text-green-600",
-      bgColor: "bg-green-100",
+      bgColor: "bg-green-500/10",
     },
     {
-      title: "Médecine du Sport",
-      value: medecinsSport,
+      title: "Médecins inactifs",
+      value: medecinsInactifs,
       icon: Activity,
       color: "text-accent",
       bgColor: "bg-accent/20",
     },
     {
-      title: "Athlètes Suivis",
-      value: totalAthletesReferrals,
+      title: "Clubs suivis",
+      value: totalClubsSuivis,
       icon: Users,
       color: "text-secondary",
       bgColor: "bg-secondary/10",
@@ -44,7 +46,7 @@ export function MedecinsStats() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat) => (
-        <Card key={stat.title} className="border-border">
+        <Card key={stat.title} className="border-border/50 bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-lg ${stat.bgColor}`}>
@@ -53,6 +55,9 @@ export function MedecinsStats() {
               <div>
                 <p className="text-sm text-muted-foreground">{stat.title}</p>
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                {stat.title === "Total Médecins" && (
+                  <p className="text-xs text-muted-foreground mt-1">Masculin: {masculins} • Féminin: {feminins}</p>
+                )}
               </div>
             </div>
           </CardContent>

@@ -11,14 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react"
+import { Eye } from "lucide-react"
 import { coachs, type Coach } from "@/lib/data/demo-data"
 
 interface CoachsTableProps {
@@ -26,6 +19,11 @@ interface CoachsTableProps {
 }
 
 export function CoachsTable({ onViewCoach }: CoachsTableProps) {
+  const formatCoachId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(9, "0")
+  }
+
   const getStatutBadge = (statut: string) => {
     switch (statut) {
       case "actif":
@@ -50,8 +48,15 @@ export function CoachsTable({ onViewCoach }: CoachsTableProps) {
     }
   }
 
-  const getInitials = (nom: string, prenom: string) => {
-    return `${prenom.charAt(0)}${nom.charAt(0)}`
+  const calculateAge = (dateNaissance: string) => {
+    const today = new Date()
+    const birthDate = new Date(dateNaissance)
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const m = today.getMonth() - birthDate.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age
   }
 
   return (
@@ -63,9 +68,10 @@ export function CoachsTable({ onViewCoach }: CoachsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[120px]">ID</TableHead>
               <TableHead>Coach</TableHead>
+              <TableHead>Profil</TableHead>
               <TableHead>Club</TableHead>
-              <TableHead>Spécialité</TableHead>
               <TableHead>Certification</TableHead>
               <TableHead>Expérience</TableHead>
               <TableHead>Statut</TableHead>
@@ -75,47 +81,30 @@ export function CoachsTable({ onViewCoach }: CoachsTableProps) {
           <TableBody>
             {coachs.map((coach) => (
               <TableRow key={coach.id} className="cursor-pointer hover:bg-muted/50">
+                <TableCell className="font-mono text-muted-foreground">{formatCoachId(coach.id)}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className={coach.genre === "F" ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"}>
-                        {getInitials(coach.nom, coach.prenom)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{coach.prenom} {coach.nom}</p>
-                      <p className="text-sm text-muted-foreground">{coach.email}</p>
-                    </div>
+                  <div className="flex flex-col">
+                    <p className="font-medium">{coach.prenom} {coach.nom}</p>
+                    <p className="text-sm text-muted-foreground">{coach.email}</p>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <span>{coach.genre === "F" ? "F" : "M"}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {calculateAge(coach.dateNaissance)} ans
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>{coach.club}</TableCell>
-                <TableCell>{coach.specialite}</TableCell>
                 <TableCell>{getCertificationBadge(coach.niveauCertification)}</TableCell>
                 <TableCell>{coach.experience} ans</TableCell>
                 <TableCell>{getStatutBadge(coach.statut)}</TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onViewCoach(coach)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Voir détails
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Modifier
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button variant="ghost" size="icon" onClick={() => onViewCoach(coach)}>
+                    <Eye className="h-4 w-4" />
+                    <span className="sr-only">Voir détails</span>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

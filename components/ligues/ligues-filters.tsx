@@ -1,6 +1,5 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -9,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, Plus, Download } from "lucide-react"
+import { Search } from "lucide-react"
 import { provinces } from "@/lib/data/demo-data"
 
 export function LiguesFilters() {
@@ -51,17 +50,6 @@ export function LiguesFilters() {
             <SelectItem value="inactive">Inactives</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="flex gap-2 w-full sm:w-auto">
-        <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
-          <Download className="h-4 w-4 mr-2" />
-          Exporter
-        </Button>
-        <Button size="sm" className="flex-1 sm:flex-none">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle Ligue
-        </Button>
       </div>
     </div>
   )

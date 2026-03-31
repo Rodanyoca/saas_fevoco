@@ -15,7 +15,6 @@ import {
   Award,
   User,
   Ruler,
-  Weight,
   Building2,
   FileText,
   Activity,
@@ -37,6 +36,11 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
       age--
     }
     return age
+  }
+
+  const formatAthleteId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(10, "0")
   }
 
   const formatDate = (date: string) => {
@@ -93,6 +97,7 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
               </Avatar>
               <h2 className="text-xl font-semibold">{athlete.prenom} {athlete.nom}</h2>
               <p className="text-muted-foreground">{athlete.poste}</p>
+              <p className="text-xs text-muted-foreground font-mono mt-1">{formatAthleteId(athlete.id)}</p>
               <div className="flex items-center gap-2 mt-3">
                 {getStatusBadge(athlete.statut)}
                 {athlete.selectionNationale && (
@@ -236,23 +241,9 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="text-center p-4 bg-muted/50 rounded-lg">
-                      <p className="text-3xl font-bold text-primary">24</p>
-                      <p className="text-sm text-muted-foreground">Matchs joués</p>
-                    </div>
-                    <div className="text-center p-4 bg-muted/50 rounded-lg">
-                      <p className="text-3xl font-bold text-primary">156</p>
-                      <p className="text-sm text-muted-foreground">Points marqués</p>
-                    </div>
-                    <div className="text-center p-4 bg-muted/50 rounded-lg">
-                      <p className="text-3xl font-bold text-primary">87%</p>
-                      <p className="text-sm text-muted-foreground">Efficacité</p>
-                    </div>
+                  <div className="text-center text-muted-foreground text-sm py-10">
+                    Coming soon
                   </div>
-                  <p className="text-center text-muted-foreground mt-4 text-sm">
-                    Les statistiques détaillées seront disponibles avec la connexion à la base de données.
-                  </p>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -266,26 +257,8 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4 pb-4 border-b">
-                      <div className="h-2 w-2 rounded-full bg-primary mt-2" />
-                      <div>
-                        <p className="font-medium">Inscription au club {athlete.club}</p>
-                        <p className="text-sm text-muted-foreground">{formatDate(athlete.dateInscription)}</p>
-                      </div>
-                    </div>
-                    {athlete.selectionNationale && (
-                      <div className="flex items-start gap-4 pb-4 border-b">
-                        <div className="h-2 w-2 rounded-full bg-accent mt-2" />
-                        <div>
-                          <p className="font-medium">Sélection en équipe nationale</p>
-                          <p className="text-sm text-muted-foreground">Janvier 2024</p>
-                        </div>
-                      </div>
-                    )}
-                    <p className="text-center text-muted-foreground text-sm">
-                      L&apos;historique complet sera disponible avec la connexion à la base de données.
-                    </p>
+                  <div className="text-center text-muted-foreground text-sm py-10">
+                    Coming soon
                   </div>
                 </CardContent>
               </Card>

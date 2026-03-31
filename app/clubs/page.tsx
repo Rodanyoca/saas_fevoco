@@ -5,12 +5,10 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { ClubsStats } from "@/components/clubs/clubs-stats"
 import { ClubsFilters } from "@/components/clubs/clubs-filters"
 import { ClubsTable } from "@/components/clubs/clubs-table"
-import { ClubsGrid } from "@/components/clubs/clubs-grid"
 import { ClubDetail } from "@/components/clubs/club-detail"
-import { clubs, type Club } from "@/lib/data/demo-data"
+import { type Club } from "@/lib/data/demo-data"
 
 export default function ClubsPage() {
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list")
   const [selectedClub, setSelectedClub] = useState<Club | null>(null)
 
   const handleViewClub = (club: Club) => {
@@ -23,7 +21,7 @@ export default function ClubsPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
+      <div className="p-6 space-y-6">
         {selectedClub ? (
           <ClubDetail club={selectedClub} onBack={handleBack} />
         ) : (
@@ -34,15 +32,12 @@ export default function ClubsPage() {
                 Gérez les clubs affiliés à la FEVOCO
               </p>
             </div>
-            
+
             <ClubsStats />
-            <ClubsFilters viewMode={viewMode} onViewModeChange={setViewMode} />
-            
-            {viewMode === "list" ? (
-              <ClubsTable onViewClub={handleViewClub} />
-            ) : (
-              <ClubsGrid onViewClub={handleViewClub} />
-            )}
+
+            <ClubsFilters />
+
+            <ClubsTable onViewClub={handleViewClub} />
           </>
         )}
       </div>

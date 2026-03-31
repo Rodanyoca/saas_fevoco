@@ -1,7 +1,6 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -9,8 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, Download, Plus } from "lucide-react"
-import { ligues } from "@/lib/data/demo-data"
+import { Search } from "lucide-react"
+import { clubs, ligues } from "@/lib/data/demo-data"
 
 export function MedecinsFilters() {
   return (
@@ -40,14 +39,15 @@ export function MedecinsFilters() {
 
         <Select>
           <SelectTrigger className="w-full sm:w-[180px] bg-background border-border">
-            <SelectValue placeholder="Spécialité" />
+            <SelectValue placeholder="Club" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes spécialités</SelectItem>
-            <SelectItem value="sport">Médecine du sport</SelectItem>
-            <SelectItem value="trauma">Traumatologie</SelectItem>
-            <SelectItem value="kine">Kinésithérapie</SelectItem>
-            <SelectItem value="general">Médecine générale</SelectItem>
+            <SelectItem value="all">Tous les clubs</SelectItem>
+            {clubs.map((club) => (
+              <SelectItem key={club.id} value={club.id}>
+                {club.nom}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -61,17 +61,6 @@ export function MedecinsFilters() {
             <SelectItem value="inactif">Inactif</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="flex gap-2 w-full sm:w-auto">
-        <Button variant="outline" className="flex-1 sm:flex-none border-border">
-          <Download className="h-4 w-4 mr-2" />
-          Exporter
-        </Button>
-        <Button className="flex-1 sm:flex-none bg-primary hover:bg-primary/90">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau Médecin
-        </Button>
       </div>
     </div>
   )

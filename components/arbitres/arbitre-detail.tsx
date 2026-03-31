@@ -26,6 +26,11 @@ interface ArbitreDetailProps {
 }
 
 export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
+  const formatArbitreId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(9, "0")
+  }
+
   const calculateAge = (dateNaissance: string) => {
     const today = new Date()
     const birthDate = new Date(dateNaissance)
@@ -88,6 +93,7 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
               {arbitre.prenom} {arbitre.nom}
             </h1>
             <p className="text-muted-foreground">Fiche arbitre</p>
+            <p className="text-xs text-muted-foreground font-mono mt-1">{formatArbitreId(arbitre.id)}</p>
           </div>
         </div>
         <Button className="bg-primary hover:bg-primary/90">
@@ -270,34 +276,8 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
               <CardTitle className="text-lg">Statistiques de carriere</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-4 bg-muted/30 rounded-lg text-center">
-                  <p className="text-3xl font-bold text-primary">{arbitre.matchsArbitres}</p>
-                  <p className="text-sm text-muted-foreground">Total matchs arbitres</p>
-                </div>
-                <div className="p-4 bg-muted/30 rounded-lg text-center">
-                  <p className="text-3xl font-bold text-green-600">{Math.round(arbitre.matchsArbitres * 0.85)}</p>
-                  <p className="text-sm text-muted-foreground">Matchs sans incident</p>
-                </div>
-                <div className="p-4 bg-muted/30 rounded-lg text-center">
-                  <p className="text-3xl font-bold text-accent-foreground">{yearsOfExperience()}</p>
-                  <p className="text-sm text-muted-foreground">Annees d&apos;experience</p>
-                </div>
-              </div>
-              
-              <Separator className="my-6" />
-              
-              <div>
-                <h4 className="font-medium mb-4">Progression de grade</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full bg-primary"></div>
-                      <span className="font-medium">{arbitre.grade}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">{formatDate(arbitre.dateObtentionGrade)}</span>
-                  </div>
-                </div>
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Coming soon</p>
               </div>
             </CardContent>
           </Card>
@@ -309,28 +289,8 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
               <CardTitle className="text-lg">Historique des activites</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4 p-3 bg-muted/30 rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
-                  <div>
-                    <p className="font-medium">Obtention du grade {arbitre.grade}</p>
-                    <p className="text-sm text-muted-foreground">{formatDate(arbitre.dateObtentionGrade)}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 p-3 bg-muted/30 rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
-                  <div>
-                    <p className="font-medium">Affectation a {arbitre.ligue}</p>
-                    <p className="text-sm text-muted-foreground">Province de {arbitre.province}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 p-3 bg-muted/30 rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-accent mt-2"></div>
-                  <div>
-                    <p className="font-medium">Specialisation en {arbitre.specialite}</p>
-                    <p className="text-sm text-muted-foreground">Formation completee</p>
-                  </div>
-                </div>
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Coming soon</p>
               </div>
             </CardContent>
           </Card>

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { type Club, athletes } from "@/lib/data/demo-data"
+import { type Athlete, type Club, athletes } from "@/lib/data/demo-data"
+import { AthleteDetail } from "@/components/athletes/athlete-detail"
 import { 
   ArrowLeft, 
   Shield, 
@@ -23,7 +25,8 @@ import {
   Calendar,
   Building2,
   Pencil,
-  UserPlus
+  UserPlus,
+  Eye
 } from "lucide-react"
 
 interface ClubDetailProps {
@@ -32,8 +35,18 @@ interface ClubDetailProps {
 }
 
 export function ClubDetail({ club, onBack }: ClubDetailProps) {
+  const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null)
+
   // Filtrer les athlètes de ce club
   const clubAthletes = athletes.filter(a => a.club === club.nom)
+
+  const handleViewAthlete = (athlete: Athlete) => {
+    setSelectedAthlete(athlete)
+  }
+
+  const handleBackToClub = () => {
+    setSelectedAthlete(null)
+  }
 
   const getGenreBadgeColor = (genre: string) => {
     switch (genre) {
@@ -46,6 +59,10 @@ export function ClubDetail({ club, onBack }: ClubDetailProps) {
       default:
         return "bg-gray-100 text-gray-800"
     }
+  }
+
+  if (selectedAthlete) {
+    return <AthleteDetail athlete={selectedAthlete} onBack={handleBackToClub} />
   }
 
   return (
@@ -231,6 +248,7 @@ export function ClubDetail({ club, onBack }: ClubDetailProps) {
                     <TableHead>Genre</TableHead>
                     <TableHead>Date de Naissance</TableHead>
                     <TableHead className="text-center">Sélection Nationale</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -250,6 +268,17 @@ export function ClubDetail({ club, onBack }: ClubDetailProps) {
                         ) : (
                           <Badge variant="outline">Non</Badge>
                         )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleViewAthlete(athlete)}
+                        >
+                          <Eye className="h-4 w-4" />
+                          <span className="sr-only">Voir détails</span>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

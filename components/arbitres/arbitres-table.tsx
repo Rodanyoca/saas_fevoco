@@ -10,15 +10,8 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react"
+import { Eye } from "lucide-react"
 import { arbitres, type Arbitre } from "@/lib/data/demo-data"
 
 interface ArbitresTableProps {
@@ -26,6 +19,11 @@ interface ArbitresTableProps {
 }
 
 export function ArbitresTable({ onViewArbitre }: ArbitresTableProps) {
+  const formatArbitreId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(9, "0")
+  }
+
   const getStatutBadge = (statut: Arbitre["statut"]) => {
     switch (statut) {
       case "actif":
@@ -50,6 +48,12 @@ export function ArbitresTable({ onViewArbitre }: ArbitresTableProps) {
     }
   }
 
+  const yearsOfExperience = (dateObtentionGrade: string) => {
+    const gradeDate = new Date(dateObtentionGrade)
+    const today = new Date()
+    return today.getFullYear() - gradeDate.getFullYear()
+  }
+
   const calculateAge = (dateNaissance: string) => {
     const today = new Date()
     const birthDate = new Date(dateNaissance)
@@ -70,69 +74,42 @@ export function ArbitresTable({ onViewArbitre }: ArbitresTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30">
+              <TableHead className="w-[120px]">ID</TableHead>
               <TableHead>Arbitre</TableHead>
               <TableHead>Grade</TableHead>
-              <TableHead>Specialite</TableHead>
               <TableHead>Ligue</TableHead>
-              <TableHead className="text-center">Matchs</TableHead>
+              <TableHead className="text-center">Experience</TableHead>
               <TableHead>Statut</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[60px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {arbitres.map((arbitre) => (
-              <TableRow 
-                key={arbitre.id} 
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => onViewArbitre(arbitre)}
-              >
+              <TableRow key={arbitre.id} className="hover:bg-muted/50">
+                <TableCell className="font-mono text-muted-foreground">{formatArbitreId(arbitre.id)}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                        {arbitre.prenom[0]}{arbitre.nom[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {arbitre.prenom} {arbitre.nom}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {calculateAge(arbitre.dateNaissance)} ans - {arbitre.genre === "M" ? "Homme" : "Femme"}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {arbitre.prenom} {arbitre.nom}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {calculateAge(arbitre.dateNaissance)} ans - {arbitre.genre === "M" ? "Homme" : "Femme"}
+                    </p>
                   </div>
                 </TableCell>
                 <TableCell>{getGradeBadge(arbitre.grade)}</TableCell>
-                <TableCell className="text-muted-foreground">{arbitre.specialite}</TableCell>
                 <TableCell className="text-muted-foreground">{arbitre.ligue}</TableCell>
-                <TableCell className="text-center font-medium">{arbitre.matchsArbitres}</TableCell>
+                <TableCell className="text-center font-medium">{yearsOfExperience(arbitre.dateObtentionGrade)}</TableCell>
                 <TableCell>{getStatutBadge(arbitre.statut)}</TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewArbitre(arbitre); }}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        Voir details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Modifier
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-destructive"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onViewArbitre(arbitre)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

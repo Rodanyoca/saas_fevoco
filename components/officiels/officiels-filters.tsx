@@ -9,29 +9,26 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
-import { ligues } from "@/lib/data/demo-data"
+import { provinces } from "@/lib/data/demo-data"
 
-export function ArbitresFilters() {
+export function OfficielsFilters() {
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full sm:w-auto">
         <div className="relative flex-1 sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un arbitre..."
-            className="pl-9"
-          />
+          <Input placeholder="Rechercher un officiel..." className="pl-9" />
         </div>
-        
+
         <Select>
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Ligue" />
+            <SelectValue placeholder="Province" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes les ligues</SelectItem>
-            {ligues.map((ligue) => (
-              <SelectItem key={ligue.id} value={ligue.id}>
-                {ligue.nom}
+            <SelectItem value="all">Toutes les provinces</SelectItem>
+            {provinces.map((province) => (
+              <SelectItem key={province.id} value={province.id}>
+                {province.nom}
               </SelectItem>
             ))}
           </SelectContent>
@@ -39,14 +36,14 @@ export function ArbitresFilters() {
 
         <Select>
           <SelectTrigger className="w-full sm:w-[160px]">
-            <SelectValue placeholder="Grade" />
+            <SelectValue placeholder="Poste" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous les grades</SelectItem>
-            <SelectItem value="international">International</SelectItem>
-            <SelectItem value="national">National</SelectItem>
-            <SelectItem value="provincial">Provincial</SelectItem>
-            <SelectItem value="local">Local</SelectItem>
+            <SelectItem value="all">Tous les postes</SelectItem>
+            <SelectItem value="secretaire">Secrétaire</SelectItem>
+            <SelectItem value="tresorier">Trésorier</SelectItem>
+            <SelectItem value="competitions">Chargé des compétitions</SelectItem>
+            <SelectItem value="administratif">Responsable administratif</SelectItem>
           </SelectContent>
         </Select>
 
@@ -58,7 +55,6 @@ export function ArbitresFilters() {
             <SelectItem value="all">Tous</SelectItem>
             <SelectItem value="actif">Actif</SelectItem>
             <SelectItem value="inactif">Inactif</SelectItem>
-            <SelectItem value="suspendu">Suspendu</SelectItem>
           </SelectContent>
         </Select>
       </div>

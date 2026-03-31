@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -10,15 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, Download, Plus, List, LayoutGrid } from "lucide-react"
+import { Search } from "lucide-react"
 import { ligues } from "@/lib/data/demo-data"
 
-interface ClubsFiltersProps {
-  viewMode: "list" | "grid"
-  onViewModeChange: (mode: "list" | "grid") => void
-}
-
-export function ClubsFilters({ viewMode, onViewModeChange }: ClubsFiltersProps) {
+export function ClubsFilters() {
   return (
     <Card>
       <CardContent className="p-4">
@@ -68,36 +62,6 @@ export function ClubsFilters({ viewMode, onViewModeChange }: ClubsFiltersProps) 
                 <SelectItem value="inactif">Inactif</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="flex gap-2 w-full lg:w-auto">
-            <div className="flex border rounded-lg overflow-hidden">
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="sm"
-                className="rounded-none"
-                onClick={() => onViewModeChange("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="sm"
-                className="rounded-none"
-                onClick={() => onViewModeChange("grid")}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Exporter
-            </Button>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau Club
-            </Button>
           </div>
         </div>
       </CardContent>

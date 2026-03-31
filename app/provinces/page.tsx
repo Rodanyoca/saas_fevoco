@@ -21,7 +21,7 @@ export default function ProvincesPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 p-6">
         {selectedProvince ? (
           <ProvinceDetail province={selectedProvince} onBack={handleBack} />
         ) : (

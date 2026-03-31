@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -11,16 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { ligues } from "@/lib/data/demo-data"
-import { MoreHorizontal, Eye, Pencil, Trash2, Building2 } from "lucide-react"
+import { Building2 } from "lucide-react"
 
 export function LiguesTable() {
+  const formatLigueId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(2, "0")
+  }
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -39,18 +37,21 @@ export function LiguesTable() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[80px]">ID</TableHead>
                 <TableHead>Nom de la Ligue</TableHead>
                 <TableHead>Province</TableHead>
                 <TableHead className="text-center">Ententes</TableHead>
                 <TableHead className="text-center">Clubs</TableHead>
                 <TableHead className="text-center">Athlètes</TableHead>
                 <TableHead className="text-center">Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {ligues.map((ligue) => (
                 <TableRow key={ligue.id}>
+                  <TableCell className="font-mono text-muted-foreground">
+                    {formatLigueId(ligue.id)}
+                  </TableCell>
                   <TableCell className="font-medium">{ligue.nom}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {ligue.province}
@@ -69,30 +70,6 @@ export function LiguesTable() {
                     >
                       {ligue.statut === "active" ? "Active" : "Inactive"}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Voir détails
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Modifier
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

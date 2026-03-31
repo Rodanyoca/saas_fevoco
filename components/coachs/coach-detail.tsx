@@ -26,6 +26,11 @@ interface CoachDetailProps {
 }
 
 export function CoachDetail({ coach, onBack }: CoachDetailProps) {
+  const formatCoachId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(9, "0")
+  }
+
   const getInitials = (nom: string, prenom: string) => {
     return `${prenom.charAt(0)}${nom.charAt(0)}`
   }
@@ -110,6 +115,9 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
               <div className="text-center md:text-left">
                 <h2 className="text-xl font-bold">{coach.prenom} {coach.nom}</h2>
                 <p className="text-muted-foreground">{coach.specialite}</p>
+                <div className="mt-1 space-y-1">
+                  <p className="text-xs text-muted-foreground font-mono">{formatCoachId(coach.id)}</p>
+                </div>
                 <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
                   {getStatutBadge(coach.statut)}
                   {getCertificationBadge(coach.niveauCertification)}
@@ -153,6 +161,15 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
                 <div>
                   <p className="text-sm text-muted-foreground">Âge</p>
                   <p className="font-medium">{getAge(coach.dateNaissance)} ans</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-muted">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Date de naissance</p>
+                  <p className="font-medium">{formatDate(coach.dateNaissance)}</p>
                 </div>
               </div>
             </div>
@@ -270,37 +287,8 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
               <CardTitle>Historique</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4 pb-4 border-b">
-                  <div className="p-2 rounded-full bg-green-100">
-                    <Award className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Certification {coach.niveauCertification}</p>
-                    <p className="text-sm text-muted-foreground">Obtention du diplôme de niveau {coach.niveauCertification}</p>
-                    <p className="text-xs text-muted-foreground mt-1">2020</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 pb-4 border-b">
-                  <div className="p-2 rounded-full bg-primary/10">
-                    <Building2 className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Embauche - {coach.club}</p>
-                    <p className="text-sm text-muted-foreground">Début de fonction comme entraîneur</p>
-                    <p className="text-xs text-muted-foreground mt-1">{formatDate(coach.dateEmbauche)}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="p-2 rounded-full bg-blue-100">
-                    <Users className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Début de carrière</p>
-                    <p className="text-sm text-muted-foreground">{coach.experience} ans d&apos;expérience dans le volleyball</p>
-                    <p className="text-xs text-muted-foreground mt-1">{2024 - coach.experience}</p>
-                  </div>
-                </div>
+              <div className="text-center text-muted-foreground text-sm py-10">
+                Coming soon
               </div>
             </CardContent>
           </Card>

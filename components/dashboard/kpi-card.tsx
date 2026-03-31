@@ -6,6 +6,7 @@ interface KpiCardProps {
   title: string
   value: string | number
   icon: LucideIcon
+  subIndicators?: { label: string; value: string | number }[]
   trend?: {
     value: number
     positive: boolean
@@ -13,19 +14,19 @@ interface KpiCardProps {
   variant?: "default" | "primary" | "secondary" | "accent"
 }
 
-export function KpiCard({ title, value, icon: Icon, trend, variant = "default" }: KpiCardProps) {
+export function KpiCard({ title, value, icon: Icon, subIndicators, trend, variant = "default" }: KpiCardProps) {
   const variantStyles = {
     default: "bg-card text-card-foreground",
-    primary: "bg-primary text-primary-foreground",
-    secondary: "bg-secondary text-secondary-foreground",
-    accent: "bg-accent text-accent-foreground",
+    primary: "bg-card text-card-foreground",
+    secondary: "bg-card text-card-foreground",
+    accent: "bg-card text-card-foreground",
   }
 
   const iconStyles = {
     default: "bg-muted text-primary",
-    primary: "bg-primary-foreground/20 text-primary-foreground",
-    secondary: "bg-secondary-foreground/20 text-secondary-foreground",
-    accent: "bg-accent-foreground/20 text-accent-foreground",
+    primary: "bg-primary/10 text-primary",
+    secondary: "bg-secondary/10 text-secondary",
+    accent: "bg-accent/10 text-accent",
   }
 
   return (
@@ -40,6 +41,11 @@ export function KpiCard({ title, value, icon: Icon, trend, variant = "default" }
               {title}
             </p>
             <p className="text-2xl font-bold">{value.toLocaleString()}</p>
+            {subIndicators && subIndicators.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {subIndicators.map((s) => `${s.label}: ${s.value.toLocaleString()}`).join(" • ")}
+              </p>
+            )}
             {trend && (
               <p className={cn(
                 "text-xs mt-1",

@@ -1,7 +1,6 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -10,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, Plus, Download, Filter } from "lucide-react"
+import { Search } from "lucide-react"
 import { ligues } from "@/lib/data/demo-data"
 
 export function EntentesFilters() {
@@ -52,22 +51,6 @@ export function EntentesFilters() {
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
-
-            <Button variant="outline" size="icon" className="hidden sm:flex">
-              <Filter className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-2 w-full md:w-auto">
-            <Button variant="outline" className="flex-1 md:flex-none gap-2">
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Exporter</span>
-            </Button>
-            <Button className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Nouvelle Entente</span>
-            </Button>
           </div>
         </div>
       </CardContent>

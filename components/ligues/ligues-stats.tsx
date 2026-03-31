@@ -1,11 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { ligues, statsGlobales } from "@/lib/data/demo-data"
-import { Building2, Users, Shield, CheckCircle } from "lucide-react"
+import { Building2, Users, Shield, CheckCircle, XCircle } from "lucide-react"
 
 export function LiguesStats() {
   const liguesActives = ligues.filter((l) => l.statut === "active").length
+  const liguesInactives = ligues.filter((l) => l.statut === "inactive").length
   const totalEntentes = ligues.reduce((sum, l) => sum + l.ententes, 0)
-  const totalClubs = ligues.reduce((sum, l) => sum + l.clubs, 0)
   const totalAthletes = ligues.reduce((sum, l) => sum + l.athletes, 0)
 
   const stats = [
@@ -21,7 +21,14 @@ export function LiguesStats() {
       value: liguesActives,
       icon: CheckCircle,
       color: "text-green-600",
-      bg: "bg-green-100",
+      bg: "bg-green-500/10",
+    },
+    {
+      label: "Ligues Inactives",
+      value: liguesInactives,
+      icon: XCircle,
+      color: "text-red-600",
+      bg: "bg-red-500/10",
     },
     {
       label: "Total Ententes",
@@ -35,14 +42,14 @@ export function LiguesStats() {
       value: totalAthletes,
       icon: Users,
       color: "text-accent-foreground",
-      bg: "bg-accent",
+      bg: "bg-accent/10",
     },
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
       {stats.map((stat) => (
-        <Card key={stat.label}>
+        <Card key={stat.label} className="border-border/50 bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${stat.bg}`}>
@@ -51,6 +58,11 @@ export function LiguesStats() {
               <div>
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
+                {stat.label === "Total Ligues" && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Actives: {liguesActives} • Inactives: {liguesInactives}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>

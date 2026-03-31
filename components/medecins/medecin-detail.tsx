@@ -20,7 +20,7 @@ import {
   Pencil,
   Activity,
 } from "lucide-react"
-import { type Medecin, athletes } from "@/lib/data/demo-data"
+import { type Medecin } from "@/lib/data/demo-data"
 
 interface MedecinDetailProps {
   medecin: Medecin
@@ -28,6 +28,11 @@ interface MedecinDetailProps {
 }
 
 export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
+  const formatMedecinId = (id: string) => {
+    const numeric = id.replace(/\D/g, "")
+    return numeric.padStart(8, "0")
+  }
+
   const getInitials = (nom: string, prenom: string) => {
     return `${prenom.charAt(0)}${nom.charAt(0)}`.toUpperCase()
   }
@@ -75,9 +80,6 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
     return today.getFullYear() - affiliationDate.getFullYear()
   }
 
-  // Simulation des athlètes suivis (athlètes blessés)
-  const athletesSuivis = athletes.filter(a => a.statut === "blesse").slice(0, 3)
-
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -87,8 +89,11 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Profil du Médecin</h1>
-            <p className="text-muted-foreground">Détails et informations complètes</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              Dr. {medecin.prenom} {medecin.nom}
+            </h1>
+            <p className="text-muted-foreground">Fiche médecin</p>
+            <p className="text-xs text-muted-foreground font-mono mt-1">{formatMedecinId(medecin.id)}</p>
           </div>
         </div>
         <Button className="bg-primary hover:bg-primary/90">
@@ -129,10 +134,6 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
                   <MapPin className="h-4 w-4" />
                   <span className="text-sm">{medecin.province}</span>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-sm">{calculateAge(medecin.dateNaissance)} ans</span>
-                </div>
               </div>
             </div>
           </div>
@@ -145,7 +146,7 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
           <CardContent className="p-4 text-center">
             <Users className="h-8 w-8 mx-auto mb-2 text-primary" />
             <p className="text-2xl font-bold text-foreground">{medecin.athletesSuivis}</p>
-            <p className="text-sm text-muted-foreground">Athlètes Suivis</p>
+            <p className="text-sm text-muted-foreground">Clubs suivis</p>
           </CardContent>
         </Card>
         <Card className="border-border">
@@ -173,9 +174,9 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
 
       {/* Tabs */}
       <Tabs defaultValue="informations" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="informations">Informations</TabsTrigger>
-          <TabsTrigger value="athletes">Athlètes</TabsTrigger>
+          <TabsTrigger value="clubs">Clubs</TabsTrigger>
           <TabsTrigger value="activites">Activités</TabsTrigger>
         </TabsList>
 
@@ -248,12 +249,6 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <span className="text-muted-foreground text-sm">Date de naissance</span>
-                    <p className="font-medium text-foreground">
-                      {new Date(medecin.dateNaissance).toLocaleDateString("fr-FR")}
-                    </p>
-                  </div>
-                  <div>
                     <span className="text-muted-foreground text-sm">Genre</span>
                     <p className="font-medium text-foreground">
                       {medecin.genre === "M" ? "Masculin" : "Féminin"}
@@ -263,42 +258,27 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
                     <span className="text-muted-foreground text-sm">Âge</span>
                     <p className="font-medium text-foreground">{calculateAge(medecin.dateNaissance)} ans</p>
                   </div>
+                  <div>
+                    <span className="text-muted-foreground text-sm">Date de naissance</span>
+                    <p className="font-medium text-foreground">
+                      {new Date(medecin.dateNaissance).toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="athletes" className="mt-4">
+        <TabsContent value="clubs" className="mt-4">
           <Card className="border-border">
             <CardHeader>
-              <CardTitle className="text-lg">Athlètes sous suivi médical</CardTitle>
+              <CardTitle className="text-lg">Clubs suivis</CardTitle>
             </CardHeader>
             <CardContent>
-              {athletesSuivis.length > 0 ? (
-                <div className="space-y-4">
-                  {athletesSuivis.map((athlete) => (
-                    <div key={athlete.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-secondary/10 text-secondary">
-                            {athlete.prenom.charAt(0)}{athlete.nom.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-foreground">{athlete.prenom} {athlete.nom}</p>
-                          <p className="text-sm text-muted-foreground">{athlete.club} - {athlete.poste}</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-orange-100 text-orange-800">Blessé</Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-8">
-                  Aucun athlète actuellement sous suivi médical
-                </p>
-              )}
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Coming soon</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -309,24 +289,8 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
               <CardTitle className="text-lg">Historique des activités</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { date: "2024-01-15", action: "Certificat médical délivré", detail: "Patrick Kabongo - Aptitude sportive" },
-                  { date: "2024-01-12", action: "Consultation", detail: "Grace Mutombo - Contrôle de routine" },
-                  { date: "2024-01-10", action: "Suivi blessure", detail: "Blessing Ngoy - Entorse cheville" },
-                  { date: "2024-01-08", action: "Visite médicale équipe", detail: "VC Espoir - 18 athlètes examinés" },
-                  { date: "2024-01-05", action: "Rapport médical", detail: "Rapport mensuel transmis à la FEVOCO" },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-start gap-4 p-3 border-l-2 border-primary/30 pl-4">
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{activity.action}</p>
-                      <p className="text-sm text-muted-foreground">{activity.detail}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(activity.date).toLocaleDateString("fr-FR")}
-                    </span>
-                  </div>
-                ))}
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Coming soon</p>
               </div>
             </CardContent>
           </Card>

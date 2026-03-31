@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Network,
+  UserCog,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -30,6 +31,7 @@ const navigation = [
   { name: "Coachs", href: "/coachs", icon: UserCheck },
   { name: "Arbitres", href: "/arbitres", icon: Flag },
   { name: "Medecins", href: "/medecins", icon: Stethoscope },
+  { name: "Officiels", href: "/officiels", icon: UserCog },
   { name: "Qualite donnees", href: "/qualite", icon: ClipboardCheck },
 ]
 

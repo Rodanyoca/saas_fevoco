@@ -1,39 +1,39 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { arbitres } from "@/lib/data/demo-data"
-import { Flag, Award, Shield, AlertTriangle } from "lucide-react"
+import { officiels } from "@/lib/data/demo-data"
+import { Users, UserCheck, AlertTriangle, Briefcase } from "lucide-react"
 
-export function ArbitresStats() {
-  const totalArbitres = arbitres.length
-  const arbitresActifs = arbitres.filter(a => a.statut === "actif").length
-  const arbitresInternationaux = arbitres.filter(a => a.grade === "International" || a.grade === "National").length
-  const arbitresInactifs = arbitres.filter(a => a.statut === "inactif").length
-  const masculins = arbitres.filter((a) => a.genre === "M").length
-  const feminins = arbitres.filter((a) => a.genre === "F").length
+export function OfficielsStats() {
+  const totalOfficiels = officiels.length
+  const officielsActifs = officiels.filter((o) => o.statut === "actif").length
+  const officielsInactifs = officiels.filter((o) => o.statut === "inactif").length
+  const postesUniques = new Set(officiels.map((o) => o.poste)).size
+  const masculins = officiels.filter((o) => o.genre === "M").length
+  const feminins = officiels.filter((o) => o.genre === "F").length
 
   const stats = [
     {
-      label: "Total Arbitres",
-      value: totalArbitres,
-      icon: Flag,
+      label: "Total Officiels",
+      value: totalOfficiels,
+      icon: Users,
       color: "bg-primary/10 text-primary",
     },
     {
-      label: "Arbitres Actifs",
-      value: arbitresActifs,
-      icon: Shield,
+      label: "Officiels Actifs",
+      value: officielsActifs,
+      icon: UserCheck,
       color: "bg-green-500/10 text-green-600",
     },
     {
-      label: "Grade National+",
-      value: arbitresInternationaux,
-      icon: Award,
+      label: "Postes",
+      value: postesUniques,
+      icon: Briefcase,
       color: "bg-accent/20 text-accent-foreground",
     },
     {
       label: "Inactifs",
-      value: arbitresInactifs,
+      value: officielsInactifs,
       icon: AlertTriangle,
       color: "bg-secondary/10 text-secondary",
     },
@@ -51,7 +51,7 @@ export function ArbitresStats() {
               <div>
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
-                {stat.label === "Total Arbitres" && (
+                {stat.label === "Total Officiels" && (
                   <p className="text-xs text-muted-foreground mt-1">Masculin: {masculins} • Féminin: {feminins}</p>
                 )}
               </div>

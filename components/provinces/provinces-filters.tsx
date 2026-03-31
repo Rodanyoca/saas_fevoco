@@ -1,6 +1,5 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -9,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, Download, Plus } from "lucide-react"
+import { Search } from "lucide-react"
 
 export function ProvincesFilters() {
   return (
@@ -45,17 +44,6 @@ export function ProvincesFilters() {
             <SelectItem value="low">Faible (-50%)</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="flex gap-2">
-        <Button variant="outline" size="sm" className="gap-2">
-          <Download className="h-4 w-4" />
-          Exporter
-        </Button>
-        <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90">
-          <Plus className="h-4 w-4" />
-          Nouvelle Province
-        </Button>
       </div>
     </div>
   )

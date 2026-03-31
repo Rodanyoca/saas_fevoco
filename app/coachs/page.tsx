@@ -21,7 +21,7 @@ export default function CoachsPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
+      <div className="p-6 space-y-6">
         {selectedCoach ? (
           <CoachDetail coach={selectedCoach} onBack={handleBack} />
         ) : (
@@ -32,7 +32,7 @@ export default function CoachsPage() {
                 Gérez les entraîneurs affiliés à la FEVOCO
               </p>
             </div>
-            
+
             <CoachsStats />
             <CoachsFilters />
             <CoachsTable onViewCoach={handleViewCoach} />
