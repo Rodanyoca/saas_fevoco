@@ -9,8 +9,6 @@ export function ArbitresStats() {
   const arbitresActifs = arbitres.filter(a => a.statut === "actif").length
   const arbitresInternationaux = arbitres.filter(a => a.grade === "International" || a.grade === "National").length
   const arbitresInactifs = arbitres.filter(a => a.statut === "inactif").length
-  const masculins = arbitres.filter((a) => a.genre === "M").length
-  const feminins = arbitres.filter((a) => a.genre === "F").length
 
   const stats = [
     {
@@ -51,9 +49,6 @@ export function ArbitresStats() {
               <div>
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
-                {stat.label === "Total Arbitres" && (
-                  <p className="text-xs text-muted-foreground mt-1">Masculin: {masculins} • Féminin: {feminins}</p>
-                )}
               </div>
             </div>
           </CardContent>

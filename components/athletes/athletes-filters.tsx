@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Search } from "lucide-react"
-import { clubs } from "@/lib/data/demo-data"
+import type { Athlete } from "@/lib/types"
 
-export function AthletesFilters() {
+export function AthletesFilters({ athletes }: { athletes: Athlete[] }) {
+  const clubsOptions = Array.from(new Set(athletes.map((a) => a.clubNom).filter(Boolean)))
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -32,9 +34,9 @@ export function AthletesFilters() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les clubs</SelectItem>
-                {clubs.map((club) => (
-                  <SelectItem key={club.id} value={club.id}>
-                    {club.nom}
+                {clubsOptions.map((clubNom) => (
+                  <SelectItem key={clubNom} value={clubNom}>
+                    {clubNom}
                   </SelectItem>
                 ))}
               </SelectContent>

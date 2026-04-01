@@ -1,10 +1,14 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
-import { LiguesTable } from "@/components/ligues/ligues-table"
 import { LiguesStats } from "@/components/ligues/ligues-stats"
-import { LiguesFilters } from "@/components/ligues/ligues-filters"
+import { LiguesClient } from "@/components/ligues/ligues-client"
+import { getLigues } from "@/lib/data"
 
-export default function LiguesPage() {
+export const runtime = "nodejs"
+
+export default async function LiguesPage() {
+  const ligues = await getLigues()
+
   return (
     <DashboardLayout>
       <Header
@@ -14,13 +18,9 @@ export default function LiguesPage() {
 
       <div className="p-6 space-y-6">
         {/* Statistiques des ligues */}
-        <LiguesStats />
+        <LiguesStats ligues={ligues} />
 
-        {/* Filtres et actions */}
-        <LiguesFilters />
-
-        {/* Tableau des ligues */}
-        <LiguesTable />
+        <LiguesClient ligues={ligues} />
       </div>
     </DashboardLayout>
   )

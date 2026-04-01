@@ -3,7 +3,17 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { KpiCard } from "@/components/dashboard/kpi-card"
 import { Progress } from "@/components/ui/progress"
-import { athletes, statsGlobales } from "@/lib/data/demo-data"
+import {
+  arbitres,
+  athletes,
+  clubs,
+  coachs,
+  ententes,
+  ligues,
+  medecins,
+  officiels,
+  statsGlobales,
+} from "@/lib/data/demo-data"
 import {
   MapPin,
   Building2,
@@ -19,8 +29,30 @@ import {
 } from "lucide-react"
 
 export default function DashboardPage() {
+  const liguesActives = ligues.filter((l) => l.statut === "active").length
+  const liguesInactives = ligues.filter((l) => l.statut === "inactive").length
+
+  const ententesActives = ententes.filter((e) => e.statut === "active").length
+  const ententesInactives = ententes.filter((e) => e.statut === "inactive").length
+
+  const clubsMessieurs = clubs.filter((c) => c.genre === "Masculin").length
+  const clubsDames = clubs.filter((c) => c.genre === "Féminin").length
+
   const athletesMasculins = athletes.filter((a) => a.genre === "M").length
   const athletesFeminins = athletes.filter((a) => a.genre === "F").length
+
+  const coachsMasculins = coachs.filter((c) => c.genre === "M").length
+  const coachsFeminins = coachs.filter((c) => c.genre === "F").length
+
+  const arbitresMasculins = arbitres.filter((a) => a.genre === "M").length
+  const arbitresFeminins = arbitres.filter((a) => a.genre === "F").length
+
+  const medecinsMasculins = medecins.filter((m) => m.genre === "M").length
+  const medecinsFeminins = medecins.filter((m) => m.genre === "F").length
+
+  const officielsMasculins = officiels.filter((o) => o.genre === "M").length
+  const officielsFeminins = officiels.filter((o) => o.genre === "F").length
+
   const selectionMasculins = athletes.filter((a) => a.selectionNationale && a.genre === "M").length
   const selectionFeminins = athletes.filter((a) => a.selectionNationale && a.genre === "F").length
 
@@ -43,17 +75,29 @@ export default function DashboardPage() {
             title="Ligues"
             value={statsGlobales.totalLigues}
             icon={Building2}
+            subIndicators={[
+              { label: "Actives", value: liguesActives },
+              { label: "Inactives", value: liguesInactives },
+            ]}
           />
           <KpiCard
             title="Ententes"
             value={statsGlobales.totalEntentes}
             icon={Network}
+            subIndicators={[
+              { label: "Actives", value: ententesActives },
+              { label: "Inactives", value: ententesInactives },
+            ]}
           />
           <KpiCard
             title="Clubs"
             value={statsGlobales.totalClubs}
             icon={Shield}
             variant="primary"
+            subIndicators={[
+              { label: "Messieurs", value: clubsMessieurs },
+              { label: "Dames", value: clubsDames },
+            ]}
           />
         </div>
 
@@ -73,16 +117,28 @@ export default function DashboardPage() {
             title="Coachs"
             value={statsGlobales.totalCoachs}
             icon={UserCheck}
+            subIndicators={[
+              { label: "Masculin", value: coachsMasculins },
+              { label: "Féminin", value: coachsFeminins },
+            ]}
           />
           <KpiCard
             title="Arbitres"
             value={statsGlobales.totalArbitres}
             icon={Flag}
+            subIndicators={[
+              { label: "Masculin", value: arbitresMasculins },
+              { label: "Féminin", value: arbitresFeminins },
+            ]}
           />
           <KpiCard
             title="Medecins"
             value={statsGlobales.totalMedecins}
             icon={Stethoscope}
+            subIndicators={[
+              { label: "Masculin", value: medecinsMasculins },
+              { label: "Féminin", value: medecinsFeminins },
+            ]}
           />
         </div>
 
@@ -91,6 +147,10 @@ export default function DashboardPage() {
             title="Officiels"
             value={statsGlobales.totalOfficiels}
             icon={UserCog}
+            subIndicators={[
+              { label: "Masculin", value: officielsMasculins },
+              { label: "Féminin", value: officielsFeminins },
+            ]}
           />
 
           <KpiCard

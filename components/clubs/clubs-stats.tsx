@@ -1,44 +1,46 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { clubs, statsGlobales } from "@/lib/data/demo-data"
 import { Shield, Users, CheckCircle, XCircle } from "lucide-react"
+import type { Club } from "@/lib/types"
 
-const clubsMessieurs = clubs.filter((c) => c.genre === "Masculin").length
-const clubsDames = clubs.filter((c) => c.genre === "Féminin").length
+export function ClubsStats({ clubs }: { clubs: Club[] }) {
+  const totalClubs = clubs.length
+  const clubsActifs = clubs.filter((c) => c.statut === "actif").length
+  const clubsInactifs = clubs.filter((c) => c.statut === "inactif").length
+  const totalAthletes = clubs.reduce((acc, c) => acc + (c.athletes ?? 0), 0)
 
-const stats = [
-  {
-    title: "Total Clubs",
-    value: statsGlobales.totalClubs,
-    icon: Shield,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    title: "Clubs Actifs",
-    value: statsGlobales.clubsActifs,
-    icon: CheckCircle,
-    color: "text-green-600",
-    bgColor: "bg-green-100",
-  },
-  {
-    title: "Clubs Inactifs",
-    value: statsGlobales.clubsInactifs,
-    icon: XCircle,
-    color: "text-red-600",
-    bgColor: "bg-red-100",
-  },
-  {
-    title: "Total Athlètes",
-    value: statsGlobales.totalAthletes,
-    icon: Users,
-    color: "text-accent-foreground",
-    bgColor: "bg-accent/10",
-  },
-]
+  const stats = [
+    {
+      title: "Total Clubs",
+      value: totalClubs,
+      icon: Shield,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Clubs Actifs",
+      value: clubsActifs,
+      icon: CheckCircle,
+      color: "text-green-600",
+      bgColor: "bg-green-100",
+    },
+    {
+      title: "Clubs Inactifs",
+      value: clubsInactifs,
+      icon: XCircle,
+      color: "text-red-600",
+      bgColor: "bg-red-100",
+    },
+    {
+      title: "Total Athlètes",
+      value: totalAthletes,
+      icon: Users,
+      color: "text-accent-foreground",
+      bgColor: "bg-accent/10",
+    },
+  ]
 
-export function ClubsStats() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat) => (
@@ -51,11 +53,6 @@ export function ClubsStats() {
               <div>
                 <p className="text-sm text-muted-foreground">{stat.title}</p>
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                {stat.title === "Total Clubs" && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Messieurs: {clubsMessieurs} • Dames: {clubsDames}
-                  </p>
-                )}
               </div>
             </div>
           </CardContent>

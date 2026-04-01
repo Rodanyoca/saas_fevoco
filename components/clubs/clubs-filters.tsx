@@ -10,9 +10,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
-import { ligues } from "@/lib/data/demo-data"
+import type { Club } from "@/lib/types"
 
-export function ClubsFilters() {
+export function ClubsFilters({ clubs }: { clubs: Club[] }) {
+  const liguesOptions = Array.from(new Set(clubs.map((c) => c.ligueNom).filter(Boolean)))
+
   return (
     <Card>
       <CardContent className="p-4">
@@ -32,9 +34,9 @@ export function ClubsFilters() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes les ligues</SelectItem>
-                {ligues.map((ligue) => (
-                  <SelectItem key={ligue.id} value={ligue.id}>
-                    {ligue.nom}
+                {liguesOptions.map((ligueNom) => (
+                  <SelectItem key={ligueNom} value={ligueNom}>
+                    {ligueNom}
                   </SelectItem>
                 ))}
               </SelectContent>

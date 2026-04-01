@@ -11,14 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { clubs, type Club } from "@/lib/data/demo-data"
 import { Eye, Shield } from "lucide-react"
+import type { Club } from "@/lib/types"
 
 interface ClubsTableProps {
+  clubs: Club[]
   onViewClub: (club: Club) => void
 }
 
-export function ClubsTable({ onViewClub }: ClubsTableProps) {
+export function ClubsTable({ clubs, onViewClub }: ClubsTableProps) {
   const formatClubId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
     return numeric.padStart(7, "0")
@@ -77,19 +78,22 @@ export function ClubsTable({ onViewClub }: ClubsTableProps) {
                     <div className="flex flex-col gap-1">
                       <span>{club.nom}</span>
                       <span>
-                        <Badge variant="secondary" className={getGenreBadgeColor(club.genre)}>
-                          {club.genre}
+                        <Badge
+                          variant="secondary"
+                          className={getGenreBadgeColor(club.genre ?? "")}
+                        >
+                          {club.genre ?? "—"}
                         </Badge>
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {club.entente}
+                    {club.ententeNom}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {club.ligue}
+                    {club.ligueNom}
                   </TableCell>
-                  <TableCell className="text-center">{club.athletes}</TableCell>
+                  <TableCell className="text-center">{club.athletes ?? "—"}</TableCell>
                   <TableCell className="text-center">
                     <Badge
                       variant={club.statut === "actif" ? "default" : "secondary"}

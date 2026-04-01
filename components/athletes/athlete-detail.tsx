@@ -19,7 +19,7 @@ import {
   FileText,
   Activity,
 } from "lucide-react"
-import type { Athlete } from "@/lib/data/demo-data"
+import type { Athlete } from "@/lib/types"
 
 interface AthleteDetailProps {
   athlete: Athlete
@@ -27,6 +27,13 @@ interface AthleteDetailProps {
 }
 
 export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
+  const getInitials = (nomComplet: string) => {
+    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
+    if (parts.length === 0) return "A"
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+    return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
+  }
+
   const calculateAge = (dateNaissance: string) => {
     const today = new Date()
     const birthDate = new Date(dateNaissance)
@@ -74,9 +81,9 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              {athlete.prenom} {athlete.nom}
+              {athlete.nomComplet}
             </h1>
-            <p className="text-muted-foreground">{athlete.poste} - {athlete.club}</p>
+            <p className="text-muted-foreground">{athlete.poste} - {athlete.clubNom}</p>
           </div>
         </div>
         <Button>
@@ -92,15 +99,15 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
             <div className="flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
                 <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                  {athlete.prenom[0]}{athlete.nom[0]}
+                  {getInitials(athlete.nomComplet)}
                 </AvatarFallback>
               </Avatar>
-              <h2 className="text-xl font-semibold">{athlete.prenom} {athlete.nom}</h2>
+              <h2 className="text-xl font-semibold">{athlete.nomComplet}</h2>
               <p className="text-muted-foreground">{athlete.poste}</p>
               <p className="text-xs text-muted-foreground font-mono mt-1">{formatAthleteId(athlete.id)}</p>
               <div className="flex items-center gap-2 mt-3">
                 {getStatusBadge(athlete.statut)}
-                {athlete.selectionNationale && (
+                {athlete.selectionNationale === true && (
                   <Badge className="bg-accent text-accent-foreground">
                     <Award className="h-3 w-3 mr-1" />
                     Sélection Nationale
@@ -194,38 +201,15 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
                   <CardContent className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Club</span>
-                      <span className="font-medium">{athlete.club}</span>
+                      <span className="font-medium">{athlete.clubNom}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Ligue</span>
-                      <span className="font-medium">{athlete.ligue}</span>
+                      <span className="font-medium">{athlete.ligueNom}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Version</span>
-                      <span className="font-medium">{athlete.version}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Inscription
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Date inscription</span>
-                      <span className="font-medium">{formatDate(athlete.dateInscription)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Statut</span>
-                      {getStatusBadge(athlete.statut)}
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Sélection nationale</span>
-                      <span className="font-medium">{athlete.selectionNationale ? "Oui" : "Non"}</span>
+                      <span className="text-muted-foreground">Entente</span>
+                      <span className="font-medium">{athlete.ententeNom}</span>
                     </div>
                   </CardContent>
                 </Card>

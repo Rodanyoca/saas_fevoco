@@ -10,10 +10,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ligues } from "@/lib/data/demo-data"
 import { Building2 } from "lucide-react"
+import type { Ligue } from "@/lib/types"
 
-export function LiguesTable() {
+export function LiguesTable({
+  ligues,
+  totalCount,
+}: {
+  ligues: Ligue[]
+  totalCount: number
+}) {
   const formatLigueId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
     return numeric.padStart(2, "0")
@@ -28,7 +34,7 @@ export function LiguesTable() {
             Liste des Ligues
           </CardTitle>
           <Badge variant="outline" className="text-xs">
-            {ligues.length} ligues
+            {totalCount} ligues
           </Badge>
         </div>
       </CardHeader>
@@ -54,11 +60,11 @@ export function LiguesTable() {
                   </TableCell>
                   <TableCell className="font-medium">{ligue.nom}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {ligue.province}
+                    {ligue.provinceNom}
                   </TableCell>
-                  <TableCell className="text-center">{ligue.ententes}</TableCell>
-                  <TableCell className="text-center">{ligue.clubs}</TableCell>
-                  <TableCell className="text-center">{ligue.athletes}</TableCell>
+                  <TableCell className="text-center">{ligue.ententes ?? "-"}</TableCell>
+                  <TableCell className="text-center">{ligue.clubs ?? "-"}</TableCell>
+                  <TableCell className="text-center">{ligue.athletes ?? "-"}</TableCell>
                   <TableCell className="text-center">
                     <Badge
                       variant={ligue.statut === "active" ? "default" : "secondary"}

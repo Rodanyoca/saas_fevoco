@@ -9,9 +9,18 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
-import { provinces } from "@/lib/data/demo-data"
 
-export function LiguesFilters() {
+export function LiguesFilters({
+  search,
+  statut,
+  onSearchChange,
+  onStatutChange,
+}: {
+  search: string
+  statut: string
+  onSearchChange: (value: string) => void
+  onStatutChange: (value: string) => void
+}) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -21,33 +30,20 @@ export function LiguesFilters() {
           <Input
             placeholder="Rechercher une ligue..."
             className="pl-9 w-full sm:w-64"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
 
-        {/* Filtre par province */}
-        <Select>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Toutes les provinces" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les provinces</SelectItem>
-            {provinces.map((province) => (
-              <SelectItem key={province.id} value={province.id}>
-                {province.nom}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         {/* Filtre par statut */}
-        <Select>
+        <Select value={statut} onValueChange={onStatutChange}>
           <SelectTrigger className="w-full sm:w-36">
             <SelectValue placeholder="Statut" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="active">Actives</SelectItem>
-            <SelectItem value="inactive">Inactives</SelectItem>
+            <SelectItem value="active">Actif</SelectItem>
+            <SelectItem value="inactive">Inactif</SelectItem>
           </SelectContent>
         </Select>
       </div>

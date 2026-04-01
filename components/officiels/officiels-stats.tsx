@@ -9,8 +9,6 @@ export function OfficielsStats() {
   const officielsActifs = officiels.filter((o) => o.statut === "actif").length
   const officielsInactifs = officiels.filter((o) => o.statut === "inactif").length
   const postesUniques = new Set(officiels.map((o) => o.poste)).size
-  const masculins = officiels.filter((o) => o.genre === "M").length
-  const feminins = officiels.filter((o) => o.genre === "F").length
 
   const stats = [
     {
@@ -51,9 +49,6 @@ export function OfficielsStats() {
               <div>
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
-                {stat.label === "Total Officiels" && (
-                  <p className="text-xs text-muted-foreground mt-1">Masculin: {masculins} • Féminin: {feminins}</p>
-                )}
               </div>
             </div>
           </CardContent>

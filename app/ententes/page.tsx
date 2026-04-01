@@ -1,10 +1,15 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { EntentesStats } from "@/components/ententes/ententes-stats"
-import { EntentesFilters } from "@/components/ententes/ententes-filters"
-import { EntentesTable } from "@/components/ententes/ententes-table"
+import { EntentesClient } from "@/components/ententes/ententes-client"
 
-export default function EntentesPage() {
+import { getEntentes } from "@/lib/data"
+
+export const runtime = "nodejs"
+
+export default async function EntentesPage() {
+  const ententes = await getEntentes()
+
   return (
     <DashboardLayout>
       <Header
@@ -14,13 +19,9 @@ export default function EntentesPage() {
 
       <div className="p-6 space-y-6">
         {/* Statistiques */}
-        <EntentesStats />
+        <EntentesStats ententes={ententes} />
 
-        {/* Filtres */}
-        <EntentesFilters />
-
-        {/* Tableau des ententes */}
-        <EntentesTable />
+        <EntentesClient ententes={ententes} />
       </div>
     </DashboardLayout>
   )

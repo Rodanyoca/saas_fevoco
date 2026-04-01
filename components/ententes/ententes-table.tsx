@@ -10,10 +10,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ententes } from "@/lib/data/demo-data"
 import { Network, Phone, User } from "lucide-react"
+import type { Entente } from "@/lib/types"
 
-export function EntentesTable() {
+export function EntentesTable({
+  ententes,
+  totalCount,
+}: {
+  ententes: Entente[]
+  totalCount: number
+}) {
   const formatEntenteId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
     return numeric.padStart(4, "0")
@@ -28,7 +34,7 @@ export function EntentesTable() {
             Liste des Ententes
           </CardTitle>
           <Badge variant="outline" className="text-xs">
-            {ententes.length} ententes
+            {totalCount} ententes
           </Badge>
         </div>
       </CardHeader>
@@ -52,21 +58,28 @@ export function EntentesTable() {
                   <TableCell className="font-mono text-muted-foreground">
                     {formatEntenteId(entente.id)}
                   </TableCell>
-                  <TableCell className="font-medium">{entente.nom}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {entente.province}
+                  <TableCell>
+                    <div className="flex flex-col gap-1 leading-none">
+                      <span className="font-medium leading-tight">{entente.nom}</span>
+                      <span className="text-xs text-muted-foreground leading-tight">
+                        {entente.pseudo}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell className="text-center">{entente.clubs}</TableCell>
-                  <TableCell className="text-center">{entente.athletes}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {entente.provinceNom}
+                  </TableCell>
+                  <TableCell className="text-center">{entente.clubs ?? "—"}</TableCell>
+                  <TableCell className="text-center">{entente.athletes ?? "—"}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="text-sm flex items-center gap-1">
                         <User className="h-3 w-3 text-muted-foreground" />
-                        {entente.responsable}
+                        {entente.presidentNom}
                       </span>
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Phone className="h-3 w-3" />
-                        {entente.telephone}
+                        {entente.presidentTelephone}
                       </span>
                     </div>
                   </TableCell>

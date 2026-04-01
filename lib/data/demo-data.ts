@@ -73,6 +73,7 @@ export interface Athlete {
 export interface Entente {
   id: string
   nom: string
+  pseudo: string
   ligue: string
   province: string
   clubs: number
@@ -204,11 +205,11 @@ export const ligues: Ligue[] = [
 
 // --- ENTENTES (5 max) ---
 export const ententes: Entente[] = [
-  { id: "e1", nom: "Entente Gombe", ligue: "Ligue de Kinshasa", province: "Kinshasa", clubs: 4, athletes: 52, responsable: "Jean Mukendi", telephone: "+243 812 345 678", statut: "active" },
-  { id: "e2", nom: "Entente Ngaliema", ligue: "Ligue de Kinshasa", province: "Kinshasa", clubs: 3, athletes: 45, responsable: "Marie Kalala", telephone: "+243 823 456 789", statut: "active" },
-  { id: "e3", nom: "Entente Lubumbashi", ligue: "Ligue du Haut-Katanga", province: "Haut-Katanga", clubs: 4, athletes: 48, responsable: "Patrick Ilunga", telephone: "+243 834 567 890", statut: "active" },
-  { id: "e4", nom: "Entente Goma", ligue: "Ligue du Nord-Kivu", province: "Nord-Kivu", clubs: 3, athletes: 38, responsable: "Grace Bahati", telephone: "+243 845 678 901", statut: "active" },
-  { id: "e5", nom: "Entente Matadi", ligue: "Ligue du Kongo Central", province: "Kongo Central", clubs: 2, athletes: 25, responsable: "David Nsimba", telephone: "+243 856 789 012", statut: "inactive" },
+  { id: "e1", nom: "Entente Gombe", pseudo: "GOM", ligue: "Ligue de Kinshasa", province: "Kinshasa", clubs: 4, athletes: 52, responsable: "Jean Mukendi", telephone: "+243 812 345 678", statut: "active" },
+  { id: "e2", nom: "Entente Ngaliema", pseudo: "NGA", ligue: "Ligue de Kinshasa", province: "Kinshasa", clubs: 3, athletes: 45, responsable: "Marie Kalala", telephone: "+243 823 456 789", statut: "active" },
+  { id: "e3", nom: "Entente Lubumbashi", pseudo: "LUB", ligue: "Ligue du Haut-Katanga", province: "Haut-Katanga", clubs: 4, athletes: 48, responsable: "Patrick Ilunga", telephone: "+243 834 567 890", statut: "active" },
+  { id: "e4", nom: "Entente Goma", pseudo: "GOM-K", ligue: "Ligue du Nord-Kivu", province: "Nord-Kivu", clubs: 3, athletes: 38, responsable: "Grace Bahati", telephone: "+243 845 678 901", statut: "active" },
+  { id: "e5", nom: "Entente Matadi", pseudo: "MAT", ligue: "Ligue du Kongo Central", province: "Kongo Central", clubs: 2, athletes: 25, responsable: "David Nsimba", telephone: "+243 856 789 012", statut: "inactive" },
 ]
 
 // --- CLUBS (5 max) ---

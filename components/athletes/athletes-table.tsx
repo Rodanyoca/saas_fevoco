@@ -12,20 +12,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Eye, Award } from "lucide-react"
-import { athletes, clubs, type Athlete } from "@/lib/data/demo-data"
+import type { Athlete } from "@/lib/types"
 
 interface AthletesTableProps {
+  athletes: Athlete[]
   onViewAthlete: (athlete: Athlete) => void
 }
 
-export function AthletesTable({ onViewAthlete }: AthletesTableProps) {
+export function AthletesTable({ athletes, onViewAthlete }: AthletesTableProps) {
   const formatAthleteId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
     return numeric.padStart(10, "0")
-  }
-
-  const getEntenteByClubName = (clubName: string) => {
-    return clubs.find((c) => c.nom === clubName)?.entente
   }
 
   const getStatusBadge = (statut: string) => {
@@ -47,6 +44,15 @@ export function AthletesTable({ onViewAthlete }: AthletesTableProps) {
     ) : (
       <Badge variant="outline" className="border-pink-500 text-pink-500">F</Badge>
     )
+  }
+
+  const getPrenomNom = (nomComplet: string) => {
+    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
+    if (parts.length <= 1) return { prenom: nomComplet.trim(), nom: "" }
+    return {
+      prenom: parts.slice(0, -1).join(" "),
+      nom: parts[parts.length - 1],
+    }
   }
 
   const calculateAge = (dateNaissance: string) => {
@@ -85,10 +91,15 @@ export function AthletesTable({ onViewAthlete }: AthletesTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1">
-                    <span className="font-medium">{athlete.prenom} {athlete.nom}</span>
+                    <span className="font-medium">
+                      {(() => {
+                        const n = getPrenomNom(athlete.nomComplet)
+                        return `${n.prenom}${n.nom ? " " + n.nom : ""}`
+                      })()}
+                    </span>
                     <span className="flex items-center gap-2">
                       {getGenreBadge(athlete.genre)}
-                      {athlete.selectionNationale && <Award className="h-4 w-4 text-accent" />}
+                      {athlete.selectionNationale === true && <Award className="h-4 w-4 text-accent" />}
                     </span>
                   </div>
                 </TableCell>
@@ -100,9 +111,9 @@ export function AthletesTable({ onViewAthlete }: AthletesTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1">
-                    <span>{athlete.club}</span>
+                    <span>{athlete.clubNom}</span>
                     <span className="text-sm text-muted-foreground">
-                      {getEntenteByClubName(athlete.club)}
+                      {athlete.ententeNom}
                     </span>
                   </div>
                 </TableCell>

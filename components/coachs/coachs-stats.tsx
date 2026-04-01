@@ -6,8 +6,6 @@ export function CoachsStats() {
   const totalCoachs = coachs.length
   const coachsActifs = coachs.filter(c => c.statut === "actif").length
   const coachsNational = coachs.filter(c => c.niveauCertification === "National").length
-  const masculins = coachs.filter((c) => c.genre === "M").length
-  const feminins = coachs.filter((c) => c.genre === "F").length
 
   const stats = [
     {
@@ -46,9 +44,6 @@ export function CoachsStats() {
                 <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                 <p className="text-2xl font-bold mt-1">{stat.value}</p>
                 <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
-                {stat.title === "Total Coachs" && (
-                  <p className="text-xs text-muted-foreground mt-1">Masculin: {masculins} • Féminin: {feminins}</p>
-                )}
               </div>
               <div className={`p-2 rounded-lg ${stat.bgColor}`}>
                 <stat.icon className={`h-5 w-5 ${stat.color}`} />

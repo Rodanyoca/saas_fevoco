@@ -3,14 +3,15 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { clubs, type Club } from "@/lib/data/demo-data"
 import { Users, MapPin, Eye, Shield } from "lucide-react"
+import type { Club } from "@/lib/types"
 
 interface ClubsGridProps {
+  clubs: Club[]
   onViewClub: (club: Club) => void
 }
 
-export function ClubsGrid({ onViewClub }: ClubsGridProps) {
+export function ClubsGrid({ clubs, onViewClub }: ClubsGridProps) {
   const getGenreBadgeColor = (genre: string) => {
     switch (genre) {
       case "Masculin":
@@ -58,17 +59,17 @@ export function ClubsGrid({ onViewClub }: ClubsGridProps) {
             <div className="space-y-2 mb-4">
               <div className="flex items-center gap-2 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{club.province}</span>
+                <span className="text-muted-foreground">{club.provinceNom}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{club.athletes} athlètes</span>
+                <span className="text-muted-foreground">{club.athletes ?? "—"} athlètes</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t">
-              <Badge variant="secondary" className={getGenreBadgeColor(club.genre)}>
-                {club.genre}
+              <Badge variant="secondary" className={getGenreBadgeColor(club.genre ?? "")}>
+                {club.genre ?? "—"}
               </Badge>
               <Button variant="ghost" size="sm" onClick={() => onViewClub(club)}>
                 <Eye className="h-4 w-4 mr-1" />

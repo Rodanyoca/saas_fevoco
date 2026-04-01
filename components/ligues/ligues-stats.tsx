@@ -1,41 +1,41 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { ligues, statsGlobales } from "@/lib/data/demo-data"
-import { Building2, Users, Shield, CheckCircle, XCircle } from "lucide-react"
+import { Building2, Users, CheckCircle2, XCircle } from "lucide-react"
+import type { Ligue } from "@/lib/types"
 
-export function LiguesStats() {
-  const liguesActives = ligues.filter((l) => l.statut === "active").length
-  const liguesInactives = ligues.filter((l) => l.statut === "inactive").length
-  const totalEntentes = ligues.reduce((sum, l) => sum + l.ententes, 0)
-  const totalAthletes = ligues.reduce((sum, l) => sum + l.athletes, 0)
+export function LiguesStats({ ligues }: { ligues: Ligue[] }) {
+  const totalAthletes = ligues.reduce((sum, l) => sum + (l.athletes ?? 0), 0)
+
+  const liguesActives = ligues.filter((l) => {
+    const v = String(l.statut ?? "").trim().toLowerCase()
+    return v === "active" || v === "actif"
+  }).length
+
+  const liguesInactives = ligues.filter((l) => {
+    const v = String(l.statut ?? "").trim().toLowerCase()
+    return v === "inactive" || v === "inactif"
+  }).length
 
   const stats = [
     {
       label: "Total Ligues",
-      value: statsGlobales.totalLigues,
+      value: ligues.length,
       icon: Building2,
       color: "text-primary",
       bg: "bg-primary/10",
     },
     {
-      label: "Ligues Actives",
+      label: "Ligues actives",
       value: liguesActives,
-      icon: CheckCircle,
-      color: "text-green-600",
-      bg: "bg-green-500/10",
-    },
-    {
-      label: "Ligues Inactives",
-      value: liguesInactives,
-      icon: XCircle,
-      color: "text-red-600",
-      bg: "bg-red-500/10",
-    },
-    {
-      label: "Total Ententes",
-      value: totalEntentes,
-      icon: Shield,
+      icon: CheckCircle2,
       color: "text-secondary",
       bg: "bg-secondary/10",
+    },
+    {
+      label: "Ligues inactives",
+      value: liguesInactives,
+      icon: XCircle,
+      color: "text-destructive",
+      bg: "bg-destructive/10",
     },
     {
       label: "Total Athlètes",
@@ -47,7 +47,7 @@ export function LiguesStats() {
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {stats.map((stat) => (
         <Card key={stat.label} className="border-border/50 bg-card">
           <CardContent className="p-4">
@@ -58,11 +58,6 @@ export function LiguesStats() {
               <div>
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
-                {stat.label === "Total Ligues" && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Actives: {liguesActives} • Inactives: {liguesInactives}
-                  </p>
-                )}
               </div>
             </div>
           </CardContent>

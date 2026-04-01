@@ -10,9 +10,24 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
-import { ligues } from "@/lib/data/demo-data"
 
-export function EntentesFilters() {
+export function EntentesFilters({
+  search,
+  ligue,
+  statut,
+  ligues,
+  onSearchChange,
+  onLigueChange,
+  onStatutChange,
+}: {
+  search: string
+  ligue: string
+  statut: string
+  ligues: string[]
+  onSearchChange: (value: string) => void
+  onLigueChange: (value: string) => void
+  onStatutChange: (value: string) => void
+}) {
   return (
     <Card className="border-border">
       <CardContent className="p-4">
@@ -24,31 +39,33 @@ export function EntentesFilters() {
               <Input
                 placeholder="Rechercher une entente..."
                 className="pl-9 bg-background border-input"
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
               />
             </div>
 
-            <Select>
+            <Select value={ligue} onValueChange={onLigueChange}>
               <SelectTrigger className="w-full sm:w-[180px] bg-background border-input">
                 <SelectValue placeholder="Ligue" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes les ligues</SelectItem>
-                {ligues.map((ligue) => (
-                  <SelectItem key={ligue.id} value={ligue.id}>
-                    {ligue.nom}
+                {ligues.map((ligueNom) => (
+                  <SelectItem key={ligueNom} value={ligueNom}>
+                    {ligueNom}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <Select>
+            <Select value={statut} onValueChange={onStatutChange}>
               <SelectTrigger className="w-full sm:w-[140px] bg-background border-input">
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="active">Actif</SelectItem>
+                <SelectItem value="inactive">Inactif</SelectItem>
               </SelectContent>
             </Select>
           </div>

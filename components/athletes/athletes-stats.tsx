@@ -2,16 +2,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, UserCheck, UserX, Award } from "lucide-react"
-import { athletes, statsGlobales } from "@/lib/data/demo-data"
+import type { Athlete } from "@/lib/types"
 
-export function AthletesStats() {
-  const totalAthletes = statsGlobales.totalAthletes
-  const actifs = athletes.filter(a => a.statut === "actif").length
-  const inactifs = athletes.filter(a => a.statut === "inactif").length
-  const masculins = athletes.filter((a) => a.genre === "M").length
-  const feminins = athletes.filter((a) => a.genre === "F").length
-  const selectionMasculins = athletes.filter((a) => a.selectionNationale && a.genre === "M").length
-  const selectionFeminins = athletes.filter((a) => a.selectionNationale && a.genre === "F").length
+export function AthletesStats({ athletes }: { athletes: Athlete[] }) {
+  const totalAthletes = athletes.length
+  const actifs = athletes.filter((a) => a.statut === "actif").length
+  const inactifs = athletes.filter((a) => a.statut === "inactif").length
+  const selectionNationale = athletes.filter((a) => a.selectionNationale === true).length
 
   const stats = [
     {
@@ -32,7 +29,7 @@ export function AthletesStats() {
     },
     {
       title: "Sélection Nationale",
-      value: statsGlobales.selectionNationale.toString(),
+      value: selectionNationale.toString(),
       icon: Award,
       description: "Membres de l'équipe nationale",
       color: "text-accent",
@@ -63,12 +60,6 @@ export function AthletesStats() {
           <CardContent>
             <div className="text-2xl font-bold">{stat.value}</div>
             <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
-            {stat.title === "Total Athlètes" && (
-              <p className="text-xs text-muted-foreground mt-1">Masculin: {masculins} • Féminin: {feminins}</p>
-            )}
-            {stat.title === "Sélection Nationale" && (
-              <p className="text-xs text-muted-foreground mt-1">Masculin: {selectionMasculins} • Féminin: {selectionFeminins}</p>
-            )}
           </CardContent>
         </Card>
       ))}

@@ -9,8 +9,6 @@ export function MedecinsStats() {
   const medecinsActifs = medecins.filter(m => m.statut === "actif").length
   const medecinsInactifs = medecins.filter(m => m.statut === "inactif").length
   const totalClubsSuivis = medecins.reduce((acc, m) => acc + m.athletesSuivis, 0)
-  const masculins = medecins.filter((m) => m.genre === "M").length
-  const feminins = medecins.filter((m) => m.genre === "F").length
 
   const stats = [
     {
@@ -55,9 +53,6 @@ export function MedecinsStats() {
               <div>
                 <p className="text-sm text-muted-foreground">{stat.title}</p>
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                {stat.title === "Total Médecins" && (
-                  <p className="text-xs text-muted-foreground mt-1">Masculin: {masculins} • Féminin: {feminins}</p>
-                )}
               </div>
             </div>
           </CardContent>
