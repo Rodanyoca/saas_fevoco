@@ -2,11 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
-import { repartitionGenre } from "@/lib/data/demo-data"
 
 const COLORS = ["var(--chart-1)", "var(--chart-2)"]
 
-export function GenreChart() {
+export function GenreChart({ data }: { data: Array<{ genre: string; count: number }> }) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -17,7 +16,7 @@ export function GenreChart() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={repartitionGenre}
+                data={data}
                 cx="50%"
                 cy="50%"
                 innerRadius={50}
@@ -26,7 +25,7 @@ export function GenreChart() {
                 dataKey="count"
                 nameKey="genre"
               >
-                {repartitionGenre.map((_, index) => (
+                {data.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

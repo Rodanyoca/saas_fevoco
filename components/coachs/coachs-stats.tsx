@@ -1,11 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Users, UserCheck, Award } from "lucide-react"
-import { coachs } from "@/lib/data/demo-data"
+import type { Coach } from "@/lib/types"
 
-export function CoachsStats() {
+export function CoachsStats({ coachs }: { coachs: Coach[] }) {
   const totalCoachs = coachs.length
-  const coachsActifs = coachs.filter(c => c.statut === "actif").length
-  const coachsNational = coachs.filter(c => c.niveauCertification === "National").length
+  const coachsActifs = coachs.filter((c) => c.statut === "actif").length
+  const coachsNational = coachs.filter((c) => c.niveau === "National").length
 
   const stats = [
     {

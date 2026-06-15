@@ -13,10 +13,9 @@ import {
   Building2,
   Briefcase,
   Calendar,
-  Flag,
   Pencil,
 } from "lucide-react"
-import { type Officiel } from "@/lib/data/demo-data"
+import type { Officiel } from "@/lib/types"
 
 interface OfficielDetailProps {
   officiel: Officiel
@@ -58,7 +57,7 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              {officiel.prenom} {officiel.nom}
+              {officiel.nomComplet}
             </h1>
             <p className="text-muted-foreground">Fiche officiel</p>
             <p className="text-xs text-muted-foreground font-mono mt-1">{formatOfficielId(officiel.id)}</p>
@@ -77,7 +76,7 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
             <div className="flex flex-col items-start gap-2">
               <div className="flex items-center gap-2">
                 {getStatutBadge(officiel.statut)}
-                <Badge variant="outline">{officiel.poste}</Badge>
+                <Badge variant="outline">{officiel.fonction}</Badge>
               </div>
             </div>
 
@@ -110,7 +109,7 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Province</p>
-                  <p className="text-sm font-medium">{officiel.province}</p>
+                  <p className="text-sm font-medium">{officiel.provinceNom}</p>
                 </div>
               </div>
 
@@ -119,8 +118,8 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                   <Building2 className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Entité</p>
-                  <p className="text-sm font-medium">{officiel.entite}</p>
+                  <p className="text-xs text-muted-foreground">Club</p>
+                  <p className="text-sm font-medium">{officiel.clubNom}</p>
                 </div>
               </div>
 
@@ -130,7 +129,7 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Poste</p>
-                  <p className="text-sm font-medium">{officiel.poste}</p>
+                  <p className="text-sm font-medium">{officiel.fonction}</p>
                 </div>
               </div>
 
@@ -141,16 +140,6 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                 <div>
                   <p className="text-xs text-muted-foreground">Date de naissance</p>
                   <p className="text-sm font-medium">{officiel.dateNaissance} ({calculateAge(officiel.dateNaissance)} ans)</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Flag className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Nationalité</p>
-                  <p className="text-sm font-medium">{officiel.nationalite}</p>
                 </div>
               </div>
             </div>
@@ -174,19 +163,19 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-muted-foreground">Province</p>
-                  <p className="font-medium">{officiel.province}</p>
+                  <p className="font-medium">{officiel.provinceNom}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Entité</p>
-                  <p className="font-medium">{officiel.entite}</p>
+                  <p className="text-sm text-muted-foreground">Fonction</p>
+                  <p className="font-medium">{officiel.fonction}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Statut</p>
                   <p className="font-medium">{officiel.statut === "actif" ? "Actif" : "Inactif"}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Poste</p>
-                  <p className="font-medium">{officiel.poste}</p>
+                  <p className="text-sm text-muted-foreground">Niveau</p>
+                  <p className="font-medium">{officiel.niveau}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Date de naissance</p>
@@ -197,12 +186,12 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                   <p className="font-medium">{calculateAge(officiel.dateNaissance)} ans</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Nationalité</p>
-                  <p className="font-medium">{officiel.nationalite}</p>
+                  <p className="text-sm text-muted-foreground">Date de nomination</p>
+                  <p className="font-medium">{officiel.dateNomination || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Identifiant</p>
-                  <p className="font-medium font-mono">{formatOfficielId(officiel.id)}</p>
+                  <p className="text-sm text-muted-foreground">Date de fin de mandat</p>
+                  <p className="font-medium">{officiel.dateFinMandat || "—"}</p>
                 </div>
               </div>
             </CardContent>

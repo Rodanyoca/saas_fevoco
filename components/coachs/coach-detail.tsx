@@ -18,7 +18,7 @@ import {
   Clock,
   Users,
 } from "lucide-react"
-import { type Coach, clubs, athletes } from "@/lib/data/demo-data"
+import type { Coach } from "@/lib/types"
 
 interface CoachDetailProps {
   coach: Coach
@@ -31,8 +31,11 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
     return numeric.padStart(9, "0")
   }
 
-  const getInitials = (nom: string, prenom: string) => {
-    return `${prenom.charAt(0)}${nom.charAt(0)}`
+  const getInitials = (nomComplet: string) => {
+    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
+    const first = parts[0]?.charAt(0) ?? ""
+    const second = parts[1]?.charAt(0) ?? parts[0]?.charAt(1) ?? ""
+    return `${first}${second}`.toUpperCase()
   }
 
   const getAge = (dateNaissance: string) => {
@@ -78,10 +81,6 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
     }
   }
 
-  // Trouver les athlètes du club du coach
-  const clubAthletes = athletes.filter(a => a.club === coach.club)
-  const clubInfo = clubs.find(c => c.nom === coach.club)
-
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -109,18 +108,18 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
             <div className="flex flex-col items-center md:items-start gap-4">
               <Avatar className="h-24 w-24">
                 <AvatarFallback className={`text-2xl ${coach.genre === "F" ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"}`}>
-                  {getInitials(coach.nom, coach.prenom)}
+                  {getInitials(coach.nomComplet)}
                 </AvatarFallback>
               </Avatar>
               <div className="text-center md:text-left">
-                <h2 className="text-xl font-bold">{coach.prenom} {coach.nom}</h2>
-                <p className="text-muted-foreground">{coach.specialite}</p>
+                <h2 className="text-xl font-bold">{coach.nomComplet}</h2>
+                <p className="text-muted-foreground">{coach.specialisation}</p>
                 <div className="mt-1 space-y-1">
                   <p className="text-xs text-muted-foreground font-mono">{formatCoachId(coach.id)}</p>
                 </div>
                 <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
                   {getStatutBadge(coach.statut)}
-                  {getCertificationBadge(coach.niveauCertification)}
+                  {getCertificationBadge(coach.niveau)}
                 </div>
               </div>
             </div>
@@ -150,8 +149,8 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Adresse</p>
-                  <p className="font-medium">{coach.adresse}</p>
+                  <p className="text-sm text-muted-foreground">Province</p>
+                  <p className="font-medium">{coach.provinceNom}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -199,23 +198,23 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <Briefcase className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Spécialité:</span>
-                      <span className="font-medium">{coach.specialite}</span>
+                      <span className="text-sm text-muted-foreground">Spécialisation:</span>
+                      <span className="font-medium">{coach.specialisation}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Award className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Certification:</span>
-                      <span className="font-medium">{coach.niveauCertification}</span>
+                      <span className="text-sm text-muted-foreground">Niveau:</span>
+                      <span className="font-medium">{coach.niveau}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Expérience:</span>
-                      <span className="font-medium">{coach.experience} ans</span>
+                      <span className="text-sm text-muted-foreground">Diplôme:</span>
+                      <span className="font-medium">{coach.diplome}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Date embauche:</span>
-                      <span className="font-medium">{formatDate(coach.dateEmbauche)}</span>
+                      <span className="text-sm text-muted-foreground">Date affiliation:</span>
+                      <span className="font-medium">{formatDate(coach.dateAffiliation)}</span>
                     </div>
                   </div>
                 </div>
@@ -228,17 +227,17 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
                     <div className="flex items-center gap-3">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">Club:</span>
-                      <span className="font-medium">{coach.club}</span>
+                      <span className="font-medium">{coach.clubNom}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">Ligue:</span>
-                      <span className="font-medium">{coach.ligue}</span>
+                      <span className="font-medium">{coach.ligueNom}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Athlètes encadrés:</span>
-                      <span className="font-medium">{clubAthletes.length}</span>
+                      <span className="text-sm text-muted-foreground">Équipe:</span>
+                      <span className="font-medium">{coach.equipeNom}</span>
                     </div>
                   </div>
                 </div>
@@ -250,33 +249,29 @@ export function CoachDetail({ coach, onBack }: CoachDetailProps) {
         <TabsContent value="club" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Club - {coach.club}</CardTitle>
+              <CardTitle>Club - {coach.clubNom}</CardTitle>
             </CardHeader>
             <CardContent>
-              {clubInfo ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-4 rounded-lg bg-muted">
-                      <p className="text-sm text-muted-foreground">Genre</p>
-                      <p className="text-xl font-bold">{clubInfo.genre}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted">
-                      <p className="text-sm text-muted-foreground">Athlètes</p>
-                      <p className="text-xl font-bold">{clubInfo.athletes}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted">
-                      <p className="text-sm text-muted-foreground">Province</p>
-                      <p className="text-xl font-bold">{clubInfo.province}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted">
-                      <p className="text-sm text-muted-foreground">Statut</p>
-                      <p className="text-xl font-bold capitalize">{clubInfo.statut}</p>
-                    </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Entente</p>
+                    <p className="text-xl font-bold">{coach.ententeNom}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Ligue</p>
+                    <p className="text-xl font-bold">{coach.ligueNom}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Province</p>
+                    <p className="text-xl font-bold">{coach.provinceNom}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Statut</p>
+                    <p className="text-xl font-bold capitalize">{coach.statut}</p>
                   </div>
                 </div>
-              ) : (
-                <p className="text-muted-foreground">Information du club non disponible</p>
-              )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

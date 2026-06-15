@@ -27,17 +27,20 @@ import {
   TrendingUp,
   Shield,
 } from "lucide-react"
-import { type Province, ligues, ententes, clubs } from "@/lib/data/demo-data"
+import type { Club, Entente, Ligue, Province } from "@/lib/types"
 
 interface ProvinceDetailProps {
   province: Province
+  ligues: Ligue[]
+  ententes: Entente[]
+  clubs: Club[]
   onBack: () => void
 }
 
-export function ProvinceDetail({ province, onBack }: ProvinceDetailProps) {
-  const provinceLigues = ligues.filter(l => l.province === province.nom)
-  const provinceEntentes = ententes.filter(e => e.province === province.nom)
-  const provinceClubs = clubs.filter(c => c.province === province.nom)
+export function ProvinceDetail({ province, ligues, ententes, clubs, onBack }: ProvinceDetailProps) {
+  const provinceLigues = ligues.filter((l) => l.provinceId === province.id || l.provinceNom === province.nom)
+  const provinceEntentes = ententes.filter((e) => e.provinceId === province.id || e.provinceNom === province.nom)
+  const provinceClubs = clubs.filter((c) => c.provinceId === province.id || c.provinceNom === province.nom)
 
   return (
     <div className="flex flex-col gap-6">
@@ -245,10 +248,10 @@ export function ProvinceDetail({ province, onBack }: ProvinceDetailProps) {
                     provinceEntentes.map((entente) => (
                       <TableRow key={entente.id}>
                         <TableCell className="font-medium">{entente.nom}</TableCell>
-                        <TableCell className="text-muted-foreground">{entente.ligue}</TableCell>
-                        <TableCell className="text-center">{entente.clubs}</TableCell>
-                        <TableCell className="text-center">{entente.athletes}</TableCell>
-                        <TableCell className="text-muted-foreground">{entente.responsable}</TableCell>
+                        <TableCell className="text-muted-foreground">{entente.ligueNom}</TableCell>
+                        <TableCell className="text-center">{entente.clubs ?? 0}</TableCell>
+                        <TableCell className="text-center">{entente.athletes ?? 0}</TableCell>
+                        <TableCell className="text-muted-foreground">{entente.presidentNom}</TableCell>
                         <TableCell>
                           <Badge
                             className={
@@ -297,10 +300,10 @@ export function ProvinceDetail({ province, onBack }: ProvinceDetailProps) {
                       <TableRow key={club.id}>
                         <TableCell className="font-medium">{club.nom}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">{club.genre}</Badge>
+                          <Badge variant="outline">{club.genre ?? "—"}</Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{club.entente}</TableCell>
-                        <TableCell className="text-center">{club.athletes}</TableCell>
+                        <TableCell className="text-muted-foreground">{club.ententeNom}</TableCell>
+                        <TableCell className="text-center">{club.athletes ?? 0}</TableCell>
                         <TableCell>
                           <Badge
                             className={

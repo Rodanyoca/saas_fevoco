@@ -20,7 +20,7 @@ import {
   Pencil,
   Activity,
 } from "lucide-react"
-import { type Medecin } from "@/lib/data/demo-data"
+import type { Medecin } from "@/lib/types"
 
 interface MedecinDetailProps {
   medecin: Medecin
@@ -33,8 +33,11 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
     return numeric.padStart(8, "0")
   }
 
-  const getInitials = (nom: string, prenom: string) => {
-    return `${prenom.charAt(0)}${nom.charAt(0)}`.toUpperCase()
+  const getInitials = (nomComplet: string) => {
+    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
+    const first = parts[0]?.charAt(0) ?? ""
+    const second = parts[1]?.charAt(0) ?? parts[0]?.charAt(1) ?? ""
+    return `${first}${second}`.toUpperCase()
   }
 
   const getStatutBadge = (statut: Medecin["statut"]) => {
@@ -48,19 +51,8 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
     }
   }
 
-  const getSpecialiteBadge = (specialite: Medecin["specialite"]) => {
-    switch (specialite) {
-      case "Médecine du sport":
-        return <Badge className="bg-primary/10 text-primary hover:bg-primary/10">Médecine du Sport</Badge>
-      case "Traumatologie":
-        return <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/10">Traumatologie</Badge>
-      case "Kinésithérapie":
-        return <Badge className="bg-accent/20 text-accent-foreground hover:bg-accent/20">Kinésithérapie</Badge>
-      case "Médecine générale":
-        return <Badge className="bg-muted text-muted-foreground hover:bg-muted">Médecine Générale</Badge>
-      default:
-        return <Badge variant="outline">{specialite}</Badge>
-    }
+  const getSpecialiteBadge = (specialite: string) => {
+    return <Badge variant="outline">{specialite}</Badge>
   }
 
   const calculateAge = (dateNaissance: string) => {
@@ -75,6 +67,7 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
   }
 
   const calculateYearsAffiliated = (dateAffiliation: string) => {
+    if (!dateAffiliation) return 0
     const today = new Date()
     const affiliationDate = new Date(dateAffiliation)
     return today.getFullYear() - affiliationDate.getFullYear()
@@ -90,7 +83,7 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              Dr. {medecin.prenom} {medecin.nom}
+              Dr. {medecin.nomComplet}
             </h1>
             <p className="text-muted-foreground">Fiche médecin</p>
             <p className="text-xs text-muted-foreground font-mono mt-1">{formatMedecinId(medecin.id)}</p>
@@ -108,14 +101,14 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <Avatar className="h-24 w-24 bg-primary/10">
               <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
-                {getInitials(medecin.nom, medecin.prenom)}
+                {getInitials(medecin.nomComplet)}
               </AvatarFallback>
             </Avatar>
             
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-2">
                 <h2 className="text-2xl font-bold text-foreground">
-                  Dr. {medecin.prenom} {medecin.nom}
+                  Dr. {medecin.nomComplet}
                 </h2>
                 {getStatutBadge(medecin.statut)}
                 {getSpecialiteBadge(medecin.specialite)}
@@ -132,7 +125,7 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
-                  <span className="text-sm">{medecin.province}</span>
+                  <span className="text-sm">{medecin.provinceNom}</span>
                 </div>
               </div>
             </div>
@@ -145,8 +138,8 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
         <Card className="border-border">
           <CardContent className="p-4 text-center">
             <Users className="h-8 w-8 mx-auto mb-2 text-primary" />
-            <p className="text-2xl font-bold text-foreground">{medecin.athletesSuivis}</p>
-            <p className="text-sm text-muted-foreground">Clubs suivis</p>
+            <p className="text-2xl font-bold text-foreground">{medecin.clubNom ? 1 : 0}</p>
+            <p className="text-sm text-muted-foreground">Clubs</p>
           </CardContent>
         </Card>
         <Card className="border-border">
@@ -159,15 +152,15 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
         <Card className="border-border">
           <CardContent className="p-4 text-center">
             <Activity className="h-8 w-8 mx-auto mb-2 text-green-600" />
-            <p className="text-2xl font-bold text-foreground">48</p>
-            <p className="text-sm text-muted-foreground">Consultations/Mois</p>
+            <p className="text-2xl font-bold text-foreground">{medecin.niveau || "—"}</p>
+            <p className="text-sm text-muted-foreground">Niveau</p>
           </CardContent>
         </Card>
         <Card className="border-border">
           <CardContent className="p-4 text-center">
             <Award className="h-8 w-8 mx-auto mb-2 text-secondary" />
-            <p className="text-2xl font-bold text-foreground">12</p>
-            <p className="text-sm text-muted-foreground">Certificats Délivrés</p>
+            <p className="text-2xl font-bold text-foreground">{medecin.numeroOrdre || "—"}</p>
+            <p className="text-sm text-muted-foreground">N° ordre</p>
           </CardContent>
         </Card>
       </div>
@@ -203,13 +196,13 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Date d&apos;affiliation</span>
                   <span className="font-medium text-foreground">
-                    {new Date(medecin.dateAffiliation).toLocaleDateString("fr-FR")}
+                    {medecin.dateAffiliation ? new Date(medecin.dateAffiliation).toLocaleDateString("fr-FR") : "—"}
                   </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Ligue assignée</span>
-                  <span className="font-medium text-foreground">{medecin.ligue}</span>
+                  <span className="font-medium text-foreground">{medecin.ligueNom}</span>
                 </div>
               </CardContent>
             </Card>
@@ -218,23 +211,23 @@ export function MedecinDetail({ medecin, onBack }: MedecinDetailProps) {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-primary" />
-                  Établissement de Santé
+                  Affiliation
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Hôpital/Clinique</span>
-                  <span className="font-medium text-foreground">{medecin.hopital}</span>
+                  <span className="text-muted-foreground">Entente</span>
+                  <span className="font-medium text-foreground">{medecin.ententeNom}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Province</span>
-                  <span className="font-medium text-foreground">{medecin.province}</span>
+                  <span className="text-muted-foreground">Club</span>
+                  <span className="font-medium text-foreground">{medecin.clubNom}</span>
                 </div>
                 <Separator />
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">Adresse complète</span>
-                  <span className="font-medium text-foreground text-sm">{medecin.adresse}</span>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Équipe</span>
+                  <span className="font-medium text-foreground">{medecin.equipeNom}</span>
                 </div>
               </CardContent>
             </Card>

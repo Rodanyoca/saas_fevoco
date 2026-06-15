@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { provinces } from "@/lib/data/demo-data"
+import type { Province } from "@/lib/types"
 
-export function StatsTable() {
+export function StatsTable({ provinces }: { provinces: Province[] }) {
   return (
     <Card>
       <CardHeader className="pb-3">

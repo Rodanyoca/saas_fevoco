@@ -9,9 +9,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
-import { ligues } from "@/lib/data/demo-data"
+import type { Arbitre } from "@/lib/types"
 
-export function ArbitresFilters() {
+export function ArbitresFilters({ arbitres }: { arbitres: Arbitre[] }) {
+  const ligueOptions = Array.from(
+    new Set(arbitres.map((a) => a.ligueNom).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b))
+
+  const gradeOptions = Array.from(
+    new Set(arbitres.map((a) => a.grade).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b))
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full sm:w-auto">
@@ -29,9 +37,9 @@ export function ArbitresFilters() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toutes les ligues</SelectItem>
-            {ligues.map((ligue) => (
-              <SelectItem key={ligue.id} value={ligue.id}>
-                {ligue.nom}
+            {ligueOptions.map((ligueNom) => (
+              <SelectItem key={ligueNom} value={ligueNom}>
+                {ligueNom}
               </SelectItem>
             ))}
           </SelectContent>
@@ -43,10 +51,11 @@ export function ArbitresFilters() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les grades</SelectItem>
-            <SelectItem value="international">International</SelectItem>
-            <SelectItem value="national">National</SelectItem>
-            <SelectItem value="provincial">Provincial</SelectItem>
-            <SelectItem value="local">Local</SelectItem>
+            {gradeOptions.map((grade) => (
+              <SelectItem key={grade} value={grade}>
+                {grade}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

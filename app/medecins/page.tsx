@@ -1,43 +1,18 @@
-"use client"
-
-import { useState } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { MedecinsStats } from "@/components/medecins/medecins-stats"
-import { MedecinsFilters } from "@/components/medecins/medecins-filters"
-import { MedecinsTable } from "@/components/medecins/medecins-table"
-import { MedecinDetail } from "@/components/medecins/medecin-detail"
-import { type Medecin } from "@/lib/data/demo-data"
+import { Header } from "@/components/dashboard/header"
+import { MedecinsClient } from "@/components/medecins/medecins-client"
+import { getMedecins } from "@/lib/data"
 
-export default function MedecinsPage() {
-  const [selectedMedecin, setSelectedMedecin] = useState<Medecin | null>(null)
+export const runtime = "nodejs"
 
-  const handleViewMedecin = (medecin: Medecin) => {
-    setSelectedMedecin(medecin)
-  }
-
-  const handleBack = () => {
-    setSelectedMedecin(null)
-  }
+export default async function MedecinsPage() {
+  const medecins = await getMedecins()
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6 p-6">
-        {selectedMedecin ? (
-          <MedecinDetail medecin={selectedMedecin} onBack={handleBack} />
-        ) : (
-          <>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Gestion des Médecins</h1>
-              <p className="text-muted-foreground mt-1">
-                Gérez les médecins affiliés à la FEVOCO
-              </p>
-            </div>
-            
-            <MedecinsStats />
-            <MedecinsFilters />
-            <MedecinsTable onViewMedecin={handleViewMedecin} />
-          </>
-        )}
+      <Header title="Médecins" subtitle="Gérez les médecins affiliés à la FEVOCO" />
+      <div className="p-6">
+        <MedecinsClient medecins={medecins} />
       </div>
     </DashboardLayout>
   )

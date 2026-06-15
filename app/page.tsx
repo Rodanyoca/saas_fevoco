@@ -3,17 +3,19 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { KpiCard } from "@/components/dashboard/kpi-card"
 import { Progress } from "@/components/ui/progress"
+import { DashboardClient } from "@/components/dashboard/dashboard-client"
+import { ProvinceChart } from "@/components/dashboard/province-chart"
 import {
-  arbitres,
-  athletes,
-  clubs,
-  coachs,
-  ententes,
-  ligues,
-  medecins,
-  officiels,
-  statsGlobales,
-} from "@/lib/data/demo-data"
+  getArbitres,
+  getAthletes,
+  getClubs,
+  getCoachs,
+  getEntentes,
+  getLigues,
+  getMedecins,
+  getOfficiels,
+  getProvinces,
+} from "@/lib/data"
 import {
   MapPin,
   Building2,
@@ -28,7 +30,38 @@ import {
   UserCog,
 } from "lucide-react"
 
-export default function DashboardPage() {
+export const runtime = "nodejs"
+
+export default async function DashboardPage() {
+  const [provinces, ligues, ententes, clubs, athletes, coachs, arbitres, medecins, officiels] =
+    await Promise.all([
+      getProvinces(),
+      getLigues(),
+      getEntentes(),
+      getClubs(),
+      getAthletes(),
+      getCoachs(),
+      getArbitres(),
+      getMedecins(),
+      getOfficiels(),
+    ])
+
+  const statsGlobales = {
+    totalProvinces: provinces.length,
+    totalLigues: ligues.length,
+    totalEntentes: ententes.length,
+    totalClubs: clubs.length,
+    totalAthletes: athletes.length,
+    totalCoachs: coachs.length,
+    totalArbitres: arbitres.length,
+    totalMedecins: medecins.length,
+    totalOfficiels: officiels.length,
+    selectionNationale: athletes.filter((a) => a.selectionNationale).length,
+    tauxCompletude: provinces.length
+      ? Math.round(provinces.reduce((acc, p) => acc + (p.completude ?? 0), 0) / provinces.length)
+      : 0,
+  }
+
   const liguesActives = ligues.filter((l) => l.statut === "active").length
   const liguesInactives = ligues.filter((l) => l.statut === "inactive").length
 
@@ -55,6 +88,42 @@ export default function DashboardPage() {
 
   const selectionMasculins = athletes.filter((a) => a.selectionNationale && a.genre === "M").length
   const selectionFeminins = athletes.filter((a) => a.selectionNationale && a.genre === "F").length
+
+  const genreData = [
+    { genre: "Masculin", count: athletesMasculins + coachsMasculins + arbitresMasculins + medecinsMasculins + officielsMasculins },
+    { genre: "Féminin", count: athletesFeminins + coachsFeminins + arbitresFeminins + medecinsFeminins + officielsFeminins },
+  ]
+
+  const activities = [
+    {
+      id: "a-clubs",
+      type: "club" as const,
+      action: "Mise à jour des clubs",
+      date: new Date().toISOString(),
+      description: `${clubs.length} clubs chargés depuis Google Sheets`,
+    },
+    {
+      id: "a-athletes",
+      type: "athlete" as const,
+      action: "Mise à jour des athlètes",
+      date: new Date().toISOString(),
+      description: `${athletes.length} athlètes chargés depuis Google Sheets`,
+    },
+    {
+      id: "a-ligues",
+      type: "ligue" as const,
+      action: "Mise à jour des ligues",
+      date: new Date().toISOString(),
+      description: `${ligues.length} ligues chargées depuis Google Sheets`,
+    },
+    {
+      id: "a-ententes",
+      type: "entente" as const,
+      action: "Mise à jour des ententes",
+      date: new Date().toISOString(),
+      description: `${ententes.length} ententes chargées depuis Google Sheets`,
+    },
+  ]
 
   return (
     <DashboardLayout>
@@ -184,6 +253,15 @@ export default function DashboardPage() {
                 <Progress value={statsGlobales.tauxCompletude} className="h-2" />
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-6">
+            <DashboardClient provinces={provinces} activities={activities} genreData={genreData} />
+          </div>
+          <div className="lg:col-span-2 space-y-6">
+            <ProvinceChart provinces={provinces} />
           </div>
         </div>
       </div>

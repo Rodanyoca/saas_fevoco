@@ -81,7 +81,7 @@ export function ClubDetail({ club, onBack }: ClubDetailProps) {
                 <div className="flex items-start gap-3">
                   <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Date d'affiliation</p>
+                    <p className="text-sm text-muted-foreground">Date d&apos;affiliation</p>
                     <p className="font-medium">
                       {club.dateAffiliation ? new Date(club.dateAffiliation).toLocaleDateString("fr-FR") : "—"}
                     </p>

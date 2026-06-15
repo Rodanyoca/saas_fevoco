@@ -12,13 +12,14 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Eye } from "lucide-react"
-import { coachs, type Coach } from "@/lib/data/demo-data"
+import type { Coach } from "@/lib/types"
 
 interface CoachsTableProps {
+  coachs: Coach[]
   onViewCoach: (coach: Coach) => void
 }
 
-export function CoachsTable({ onViewCoach }: CoachsTableProps) {
+export function CoachsTable({ coachs, onViewCoach }: CoachsTableProps) {
   const formatCoachId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
     return numeric.padStart(9, "0")
@@ -73,7 +74,7 @@ export function CoachsTable({ onViewCoach }: CoachsTableProps) {
               <TableHead>Profil</TableHead>
               <TableHead>Club</TableHead>
               <TableHead>Certification</TableHead>
-              <TableHead>Expérience</TableHead>
+              <TableHead>Spécialisation</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="w-[70px]">Actions</TableHead>
             </TableRow>
@@ -84,7 +85,7 @@ export function CoachsTable({ onViewCoach }: CoachsTableProps) {
                 <TableCell className="font-mono text-muted-foreground">{formatCoachId(coach.id)}</TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <p className="font-medium">{coach.prenom} {coach.nom}</p>
+                    <p className="font-medium">{coach.nomComplet}</p>
                     <p className="text-sm text-muted-foreground">{coach.email}</p>
                   </div>
                 </TableCell>
@@ -96,9 +97,9 @@ export function CoachsTable({ onViewCoach }: CoachsTableProps) {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell>{coach.club}</TableCell>
-                <TableCell>{getCertificationBadge(coach.niveauCertification)}</TableCell>
-                <TableCell>{coach.experience} ans</TableCell>
+                <TableCell>{coach.clubNom}</TableCell>
+                <TableCell>{getCertificationBadge(coach.niveau)}</TableCell>
+                <TableCell>{coach.specialisation}</TableCell>
                 <TableCell>{getStatutBadge(coach.statut)}</TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" onClick={() => onViewCoach(coach)}>

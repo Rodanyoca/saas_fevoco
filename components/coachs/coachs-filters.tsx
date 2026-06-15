@@ -10,9 +10,13 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Search } from "lucide-react"
-import { clubs } from "@/lib/data/demo-data"
+import type { Coach } from "@/lib/types"
 
-export function CoachsFilters() {
+export function CoachsFilters({ coachs }: { coachs: Coach[] }) {
+  const clubOptions = Array.from(
+    new Set(coachs.map((c) => c.clubNom).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b))
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -32,9 +36,9 @@ export function CoachsFilters() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les clubs</SelectItem>
-                {clubs.map((club) => (
-                  <SelectItem key={club.id} value={club.id}>
-                    {club.nom}
+                {clubOptions.map((clubNom) => (
+                  <SelectItem key={clubNom} value={clubNom}>
+                    {clubNom}
                   </SelectItem>
                 ))}
               </SelectContent>

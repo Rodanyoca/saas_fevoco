@@ -12,13 +12,14 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye } from "lucide-react"
-import { officiels, type Officiel } from "@/lib/data/demo-data"
+import type { Officiel } from "@/lib/types"
 
 interface OfficielsTableProps {
+  officiels: Officiel[]
   onViewOfficiel: (officiel: Officiel) => void
 }
 
-export function OfficielsTable({ onViewOfficiel }: OfficielsTableProps) {
+export function OfficielsTable({ officiels, onViewOfficiel }: OfficielsTableProps) {
   const formatOfficielId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
     return numeric.padStart(8, "0")
@@ -57,13 +58,13 @@ export function OfficielsTable({ onViewOfficiel }: OfficielsTableProps) {
                 <TableCell>
                   <div>
                     <p className="font-medium text-foreground">
-                      {officiel.prenom} {officiel.nom}
+                      {officiel.nomComplet}
                     </p>
                     <p className="text-xs text-muted-foreground">{officiel.email}</p>
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">{officiel.poste}</TableCell>
-                <TableCell className="text-muted-foreground">{officiel.province}</TableCell>
+                <TableCell className="text-muted-foreground">{officiel.fonction}</TableCell>
+                <TableCell className="text-muted-foreground">{officiel.provinceNom}</TableCell>
                 <TableCell>{getStatutBadge(officiel.statut)}</TableCell>
                 <TableCell>
                   <Button

@@ -9,9 +9,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
-import { clubs, ligues } from "@/lib/data/demo-data"
+import type { Medecin } from "@/lib/types"
 
-export function MedecinsFilters() {
+export function MedecinsFilters({ medecins }: { medecins: Medecin[] }) {
+  const ligueOptions = Array.from(
+    new Set(medecins.map((m) => m.ligueNom).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b))
+
+  const clubOptions = Array.from(
+    new Set(medecins.map((m) => m.clubNom).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b))
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
       <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full lg:w-auto">
@@ -29,9 +37,9 @@ export function MedecinsFilters() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toutes les ligues</SelectItem>
-            {ligues.map((ligue) => (
-              <SelectItem key={ligue.id} value={ligue.id}>
-                {ligue.nom}
+            {ligueOptions.map((ligueNom) => (
+              <SelectItem key={ligueNom} value={ligueNom}>
+                {ligueNom}
               </SelectItem>
             ))}
           </SelectContent>
@@ -43,9 +51,9 @@ export function MedecinsFilters() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les clubs</SelectItem>
-            {clubs.map((club) => (
-              <SelectItem key={club.id} value={club.id}>
-                {club.nom}
+            {clubOptions.map((clubNom) => (
+              <SelectItem key={clubNom} value={clubNom}>
+                {clubNom}
               </SelectItem>
             ))}
           </SelectContent>

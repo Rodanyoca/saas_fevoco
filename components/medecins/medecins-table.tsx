@@ -12,13 +12,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Eye, Phone } from "lucide-react"
-import { medecins, type Medecin } from "@/lib/data/demo-data"
+import type { Medecin } from "@/lib/types"
 
 interface MedecinsTableProps {
+  medecins: Medecin[]
   onViewMedecin: (medecin: Medecin) => void
 }
 
-export function MedecinsTable({ onViewMedecin }: MedecinsTableProps) {
+export function MedecinsTable({ medecins, onViewMedecin }: MedecinsTableProps) {
   const formatMedecinId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
     return numeric.padStart(8, "0")
@@ -61,7 +62,7 @@ export function MedecinsTable({ onViewMedecin }: MedecinsTableProps) {
               <TableHead className="text-muted-foreground">Médecin</TableHead>
               <TableHead className="text-muted-foreground">Profil</TableHead>
               <TableHead className="text-muted-foreground">Ligue</TableHead>
-              <TableHead className="text-muted-foreground text-center">Clubs suivis</TableHead>
+              <TableHead className="text-muted-foreground">Club</TableHead>
               <TableHead className="text-muted-foreground">Statut</TableHead>
               <TableHead className="text-muted-foreground w-[60px]"></TableHead>
             </TableRow>
@@ -78,7 +79,7 @@ export function MedecinsTable({ onViewMedecin }: MedecinsTableProps) {
                 <TableCell>
                   <div>
                     <p className="font-medium text-foreground">
-                      Dr. {medecin.prenom} {medecin.nom}
+                      Dr. {medecin.nomComplet}
                     </p>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Phone className="h-3 w-3" />
@@ -94,10 +95,8 @@ export function MedecinsTable({ onViewMedecin }: MedecinsTableProps) {
                     <p className="text-xs text-muted-foreground">{calculateAge(medecin.dateNaissance)} ans</p>
                   </div>
                 </TableCell>
-                <TableCell className="text-foreground">{medecin.ligue}</TableCell>
-                <TableCell className="text-center">
-                  <span className="font-semibold text-foreground">{medecin.athletesSuivis}</span>
-                </TableCell>
+                <TableCell className="text-foreground">{medecin.ligueNom}</TableCell>
+                <TableCell className="text-foreground">{medecin.clubNom}</TableCell>
                 <TableCell>{getStatutBadge(medecin.statut)}</TableCell>
                 <TableCell>
                   <Button

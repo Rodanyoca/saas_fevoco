@@ -1,43 +1,18 @@
-"use client"
-
-import { useState } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { CoachsStats } from "@/components/coachs/coachs-stats"
-import { CoachsFilters } from "@/components/coachs/coachs-filters"
-import { CoachsTable } from "@/components/coachs/coachs-table"
-import { CoachDetail } from "@/components/coachs/coach-detail"
-import { type Coach } from "@/lib/data/demo-data"
+import { Header } from "@/components/dashboard/header"
+import { CoachsClient } from "@/components/coachs/coachs-client"
+import { getCoachs } from "@/lib/data"
 
-export default function CoachsPage() {
-  const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null)
+export const runtime = "nodejs"
 
-  const handleViewCoach = (coach: Coach) => {
-    setSelectedCoach(coach)
-  }
-
-  const handleBack = () => {
-    setSelectedCoach(null)
-  }
+export default async function CoachsPage() {
+  const coachs = await getCoachs()
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        {selectedCoach ? (
-          <CoachDetail coach={selectedCoach} onBack={handleBack} />
-        ) : (
-          <>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Gestion des Coachs</h1>
-              <p className="text-muted-foreground mt-1">
-                Gérez les entraîneurs affiliés à la FEVOCO
-              </p>
-            </div>
-
-            <CoachsStats />
-            <CoachsFilters />
-            <CoachsTable onViewCoach={handleViewCoach} />
-          </>
-        )}
+      <Header title="Coachs" subtitle="Gérez les entraîneurs affiliés à la FEVOCO" />
+      <div className="p-6">
+        <CoachsClient coachs={coachs} />
       </div>
     </DashboardLayout>
   )

@@ -13,13 +13,14 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, MapPin } from "lucide-react"
-import { provinces, type Province } from "@/lib/data/demo-data"
+import type { Province } from "@/lib/types"
 
 interface ProvincesTableProps {
+  provinces: Province[]
   onViewProvince: (province: Province) => void
 }
 
-export function ProvincesTable({ onViewProvince }: ProvincesTableProps) {
+export function ProvincesTable({ provinces, onViewProvince }: ProvincesTableProps) {
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-3">

@@ -11,7 +11,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Calendar,
   Award,
   User,
   Ruler,
@@ -176,16 +175,18 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
                   <CardContent className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Taille</span>
-                      <span className="font-medium">{athlete.taille} cm</span>
+                      <span className="font-medium">{athlete.taille !== null ? `${athlete.taille} cm` : "—"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Poids</span>
-                      <span className="font-medium">{athlete.poids} kg</span>
+                      <span className="font-medium">{athlete.poids !== null ? `${athlete.poids} kg` : "—"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">IMC</span>
                       <span className="font-medium">
-                        {(athlete.poids / Math.pow(athlete.taille / 100, 2)).toFixed(1)}
+                        {athlete.taille !== null && athlete.taille > 0 && athlete.poids !== null
+                          ? (athlete.poids / Math.pow(athlete.taille / 100, 2)).toFixed(1)
+                          : "—"}
                       </span>
                     </div>
                   </CardContent>

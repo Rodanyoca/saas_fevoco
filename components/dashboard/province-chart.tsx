@@ -2,9 +2,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts"
-import { topProvinces } from "@/lib/data/demo-data"
+import type { Province } from "@/lib/types"
 
-export function ProvinceChart() {
+export function ProvinceChart({ provinces }: { provinces: Province[] }) {
+  const topProvinces = [...provinces]
+    .sort((a, b) => (b.athletes ?? 0) - (a.athletes ?? 0))
+    .slice(0, 5)
+
   return (
     <Card>
       <CardHeader className="pb-3">

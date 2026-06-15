@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { recentActivities } from "@/lib/data/demo-data"
 import { Users, Shield, Building2, Network } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { DashboardActivity } from "@/components/dashboard/dashboard-client"
 
 const iconMap = {
   athlete: Users,
@@ -17,14 +17,14 @@ const colorMap = {
   entente: "bg-muted text-muted-foreground",
 }
 
-export function RecentActivity() {
+export function RecentActivity({ activities }: { activities: DashboardActivity[] }) {
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">Activité Récente</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {recentActivities.map((activity) => {
+        {activities.map((activity) => {
           const Icon = iconMap[activity.type]
           return (
             <div key={activity.id} className="flex items-start gap-3">

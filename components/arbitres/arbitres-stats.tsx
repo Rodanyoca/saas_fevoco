@@ -1,14 +1,16 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { arbitres } from "@/lib/data/demo-data"
 import { Flag, Award, Shield, AlertTriangle } from "lucide-react"
+import type { Arbitre } from "@/lib/types"
 
-export function ArbitresStats() {
+export function ArbitresStats({ arbitres }: { arbitres: Arbitre[] }) {
   const totalArbitres = arbitres.length
-  const arbitresActifs = arbitres.filter(a => a.statut === "actif").length
-  const arbitresInternationaux = arbitres.filter(a => a.grade === "International" || a.grade === "National").length
-  const arbitresInactifs = arbitres.filter(a => a.statut === "inactif").length
+  const arbitresActifs = arbitres.filter((a) => a.statut === "actif").length
+  const arbitresInternationaux = arbitres.filter(
+    (a) => a.grade.toLowerCase() === "international" || a.grade.toLowerCase() === "national"
+  ).length
+  const arbitresInactifs = arbitres.filter((a) => a.statut === "inactif").length
 
   const stats = [
     {

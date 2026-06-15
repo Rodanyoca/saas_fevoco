@@ -2,13 +2,15 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { MapPin, Building2, Users, TrendingUp } from "lucide-react"
-import { provinces } from "@/lib/data/demo-data"
+import type { Province } from "@/lib/types"
 
-export function ProvincesStats() {
+export function ProvincesStats({ provinces }: { provinces: Province[] }) {
   const totalProvinces = provinces.length
   const provincesActives = provinces.filter(p => p.statut === "active").length
   const totalAthletes = provinces.reduce((acc, p) => acc + p.athletes, 0)
-  const moyenneCompletude = Math.round(provinces.reduce((acc, p) => acc + p.completude, 0) / provinces.length)
+  const moyenneCompletude = provinces.length
+    ? Math.round(provinces.reduce((acc, p) => acc + p.completude, 0) / provinces.length)
+    : 0
 
   const stats = [
     {

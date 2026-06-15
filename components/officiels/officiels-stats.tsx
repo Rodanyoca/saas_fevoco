@@ -1,14 +1,14 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { officiels } from "@/lib/data/demo-data"
 import { Users, UserCheck, AlertTriangle, Briefcase } from "lucide-react"
+import type { Officiel } from "@/lib/types"
 
-export function OfficielsStats() {
+export function OfficielsStats({ officiels }: { officiels: Officiel[] }) {
   const totalOfficiels = officiels.length
   const officielsActifs = officiels.filter((o) => o.statut === "actif").length
   const officielsInactifs = officiels.filter((o) => o.statut === "inactif").length
-  const postesUniques = new Set(officiels.map((o) => o.poste)).size
+  const fonctionsUniques = new Set(officiels.map((o) => o.fonction)).size
 
   const stats = [
     {
@@ -25,7 +25,7 @@ export function OfficielsStats() {
     },
     {
       label: "Postes",
-      value: postesUniques,
+      value: fonctionsUniques,
       icon: Briefcase,
       color: "bg-accent/20 text-accent-foreground",
     },

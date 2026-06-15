@@ -9,8 +9,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
+import type { Province } from "@/lib/types"
 
-export function ProvincesFilters() {
+export function ProvincesFilters({ provinces }: { provinces: Province[] }) {
+  void provinces
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border/50 bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-center">

@@ -18,7 +18,7 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react"
-import { type Arbitre } from "@/lib/data/demo-data"
+import type { Arbitre } from "@/lib/types"
 
 interface ArbitreDetailProps {
   arbitre: Arbitre
@@ -43,6 +43,7 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
   }
 
   const formatDate = (date: string) => {
+    if (!date) return "—"
     return new Date(date).toLocaleDateString("fr-FR", {
       day: "numeric",
       month: "long",
@@ -56,28 +57,27 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
         return <Badge className="bg-green-500/10 text-green-600">Actif</Badge>
       case "inactif":
         return <Badge variant="secondary">Inactif</Badge>
-      case "suspendu":
-        return <Badge className="bg-secondary/10 text-secondary">Suspendu</Badge>
+      default:
+        return <Badge variant="outline">{statut}</Badge>
     }
   }
 
   const getGradeBadge = (grade: Arbitre["grade"]) => {
-    switch (grade) {
-      case "International":
-        return <Badge className="bg-accent/20 text-accent-foreground">{grade}</Badge>
-      case "National":
-        return <Badge className="bg-primary/10 text-primary">{grade}</Badge>
-      case "Provincial":
-        return <Badge variant="outline">{grade}</Badge>
-      case "Local":
-        return <Badge variant="secondary">{grade}</Badge>
-    }
+    return <Badge variant="outline">{grade}</Badge>
   }
 
   const yearsOfExperience = () => {
-    const gradeDate = new Date(arbitre.dateObtentionGrade)
+    if (!arbitre.dateHomologation) return 0
+    const gradeDate = new Date(arbitre.dateHomologation)
     const today = new Date()
     return today.getFullYear() - gradeDate.getFullYear()
+  }
+
+  const getInitials = (nomComplet: string) => {
+    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
+    const first = parts[0]?.charAt(0) ?? ""
+    const second = parts[1]?.charAt(0) ?? parts[0]?.charAt(1) ?? ""
+    return `${first}${second}`.toUpperCase()
   }
 
   return (
@@ -90,7 +90,7 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              {arbitre.prenom} {arbitre.nom}
+              {arbitre.nomComplet}
             </h1>
             <p className="text-muted-foreground">Fiche arbitre</p>
             <p className="text-xs text-muted-foreground font-mono mt-1">{formatArbitreId(arbitre.id)}</p>
@@ -109,7 +109,7 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
             <div className="flex flex-col items-center gap-4">
               <Avatar className="h-28 w-28">
                 <AvatarFallback className="bg-primary/10 text-primary text-3xl">
-                  {arbitre.prenom[0]}{arbitre.nom[0]}
+                  {getInitials(arbitre.nomComplet)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-center gap-2">
@@ -146,8 +146,8 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Adresse</p>
-                  <p className="text-sm font-medium">{arbitre.adresse}</p>
+                  <p className="text-xs text-muted-foreground">Province</p>
+                  <p className="text-sm font-medium">{arbitre.provinceNom}</p>
                 </div>
               </div>
               
@@ -176,8 +176,8 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
                 <Target className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{arbitre.matchsArbitres}</p>
-                <p className="text-xs text-muted-foreground">Matchs arbitres</p>
+                <p className="text-2xl font-bold">{arbitre.ligueNom || "—"}</p>
+                <p className="text-xs text-muted-foreground">Ligue</p>
               </div>
             </div>
           </CardContent>
@@ -204,8 +204,8 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
                 <TrendingUp className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{yearsOfExperience()} ans</p>
-                <p className="text-xs text-muted-foreground">Experience au grade</p>
+                <p className="text-2xl font-bold">{arbitre.experience || `${yearsOfExperience()} ans`}</p>
+                <p className="text-xs text-muted-foreground">Expérience</p>
               </div>
             </div>
           </CardContent>
@@ -218,8 +218,8 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
                 <Flag className="h-5 w-5 text-secondary" />
               </div>
               <div>
-                <p className="text-2xl font-bold truncate text-sm">{arbitre.specialite}</p>
-                <p className="text-xs text-muted-foreground">Specialite</p>
+                <p className="text-2xl font-bold truncate text-sm">{formatDate(arbitre.dateHomologation)}</p>
+                <p className="text-xs text-muted-foreground">Homologation</p>
               </div>
             </div>
           </CardContent>
@@ -243,19 +243,19 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-muted-foreground">Ligue</p>
-                  <p className="font-medium">{arbitre.ligue}</p>
+                  <p className="font-medium">{arbitre.ligueNom}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Province</p>
-                  <p className="font-medium">{arbitre.province}</p>
+                  <p className="font-medium">{arbitre.provinceNom}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Specialite</p>
-                  <p className="font-medium">{arbitre.specialite}</p>
+                  <p className="text-sm text-muted-foreground">Entente</p>
+                  <p className="font-medium">{arbitre.ententeNom}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Date obtention du grade</p>
-                  <p className="font-medium">{formatDate(arbitre.dateObtentionGrade)}</p>
+                  <p className="text-sm text-muted-foreground">Date homologation</p>
+                  <p className="font-medium">{formatDate(arbitre.dateHomologation)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Genre</p>

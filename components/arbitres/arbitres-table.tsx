@@ -12,13 +12,14 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye } from "lucide-react"
-import { arbitres, type Arbitre } from "@/lib/data/demo-data"
+import type { Arbitre } from "@/lib/types"
 
 interface ArbitresTableProps {
+  arbitres: Arbitre[]
   onViewArbitre: (arbitre: Arbitre) => void
 }
 
-export function ArbitresTable({ onViewArbitre }: ArbitresTableProps) {
+export function ArbitresTable({ arbitres, onViewArbitre }: ArbitresTableProps) {
   const formatArbitreId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
     return numeric.padStart(9, "0")
@@ -30,26 +31,18 @@ export function ArbitresTable({ onViewArbitre }: ArbitresTableProps) {
         return <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">Actif</Badge>
       case "inactif":
         return <Badge variant="secondary">Inactif</Badge>
-      case "suspendu":
-        return <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20">Suspendu</Badge>
+      default:
+        return <Badge variant="outline">{statut}</Badge>
     }
   }
 
   const getGradeBadge = (grade: Arbitre["grade"]) => {
-    switch (grade) {
-      case "International":
-        return <Badge className="bg-accent/20 text-accent-foreground">International</Badge>
-      case "National":
-        return <Badge className="bg-primary/10 text-primary">National</Badge>
-      case "Provincial":
-        return <Badge variant="outline">Provincial</Badge>
-      case "Local":
-        return <Badge variant="secondary">Local</Badge>
-    }
+    return <Badge variant="outline">{grade}</Badge>
   }
 
-  const yearsOfExperience = (dateObtentionGrade: string) => {
-    const gradeDate = new Date(dateObtentionGrade)
+  const yearsOfExperience = (dateHomologation: string) => {
+    if (!dateHomologation) return 0
+    const gradeDate = new Date(dateHomologation)
     const today = new Date()
     return today.getFullYear() - gradeDate.getFullYear()
   }
@@ -78,7 +71,7 @@ export function ArbitresTable({ onViewArbitre }: ArbitresTableProps) {
               <TableHead>Arbitre</TableHead>
               <TableHead>Grade</TableHead>
               <TableHead>Ligue</TableHead>
-              <TableHead className="text-center">Experience</TableHead>
+              <TableHead className="text-center">Exp.</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="w-[60px]"></TableHead>
             </TableRow>
@@ -90,7 +83,7 @@ export function ArbitresTable({ onViewArbitre }: ArbitresTableProps) {
                 <TableCell>
                   <div>
                     <p className="font-medium text-foreground">
-                      {arbitre.prenom} {arbitre.nom}
+                      {arbitre.nomComplet}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {calculateAge(arbitre.dateNaissance)} ans - {arbitre.genre === "M" ? "Homme" : "Femme"}
@@ -98,8 +91,8 @@ export function ArbitresTable({ onViewArbitre }: ArbitresTableProps) {
                   </div>
                 </TableCell>
                 <TableCell>{getGradeBadge(arbitre.grade)}</TableCell>
-                <TableCell className="text-muted-foreground">{arbitre.ligue}</TableCell>
-                <TableCell className="text-center font-medium">{yearsOfExperience(arbitre.dateObtentionGrade)}</TableCell>
+                <TableCell className="text-muted-foreground">{arbitre.ligueNom}</TableCell>
+                <TableCell className="text-center font-medium">{arbitre.experience || yearsOfExperience(arbitre.dateHomologation)}</TableCell>
                 <TableCell>{getStatutBadge(arbitre.statut)}</TableCell>
                 <TableCell>
                   <Button

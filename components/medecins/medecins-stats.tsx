@@ -1,14 +1,14 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { medecins } from "@/lib/data/demo-data"
 import { Stethoscope, UserCheck, Activity, Users } from "lucide-react"
+import type { Medecin } from "@/lib/types"
 
-export function MedecinsStats() {
+export function MedecinsStats({ medecins }: { medecins: Medecin[] }) {
   const totalMedecins = medecins.length
-  const medecinsActifs = medecins.filter(m => m.statut === "actif").length
-  const medecinsInactifs = medecins.filter(m => m.statut === "inactif").length
-  const totalClubsSuivis = medecins.reduce((acc, m) => acc + m.athletesSuivis, 0)
+  const medecinsActifs = medecins.filter((m) => m.statut === "actif").length
+  const medecinsInactifs = medecins.filter((m) => m.statut === "inactif").length
+  const specialitesUniques = new Set(medecins.map((m) => m.specialite).filter(Boolean)).size
 
   const stats = [
     {
@@ -34,7 +34,7 @@ export function MedecinsStats() {
     },
     {
       title: "Clubs suivis",
-      value: totalClubsSuivis,
+      value: specialitesUniques,
       icon: Users,
       color: "text-secondary",
       bgColor: "bg-secondary/10",

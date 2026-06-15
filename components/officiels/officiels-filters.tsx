@@ -9,9 +9,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
-import { provinces } from "@/lib/data/demo-data"
+import type { Officiel } from "@/lib/types"
 
-export function OfficielsFilters() {
+export function OfficielsFilters({ officiels }: { officiels: Officiel[] }) {
+  const provinceOptions = Array.from(
+    new Set(officiels.map((o) => o.provinceNom).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b))
+
+  const fonctionOptions = Array.from(
+    new Set(officiels.map((o) => o.fonction).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b))
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full sm:w-auto">
@@ -26,9 +34,9 @@ export function OfficielsFilters() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toutes les provinces</SelectItem>
-            {provinces.map((province) => (
-              <SelectItem key={province.id} value={province.id}>
-                {province.nom}
+            {provinceOptions.map((provinceNom) => (
+              <SelectItem key={provinceNom} value={provinceNom}>
+                {provinceNom}
               </SelectItem>
             ))}
           </SelectContent>
@@ -40,10 +48,11 @@ export function OfficielsFilters() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les postes</SelectItem>
-            <SelectItem value="secretaire">Secrétaire</SelectItem>
-            <SelectItem value="tresorier">Trésorier</SelectItem>
-            <SelectItem value="competitions">Chargé des compétitions</SelectItem>
-            <SelectItem value="administratif">Responsable administratif</SelectItem>
+            {fonctionOptions.map((fonction) => (
+              <SelectItem key={fonction} value={fonction}>
+                {fonction}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
