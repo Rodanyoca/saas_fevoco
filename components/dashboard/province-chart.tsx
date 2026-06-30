@@ -1,8 +1,8 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts"
 import type { Province } from "@/lib/types"
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 export function ProvinceChart({ provinces }: { provinces: Province[] }) {
   const topProvinces = [...provinces]
@@ -12,7 +12,7 @@ export function ProvinceChart({ provinces }: { provinces: Province[] }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">Top Provinces - Athlètes</CardTitle>
+        <CardTitle className="text-base font-semibold">Top provinces - Athletes</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[200px]">
@@ -36,12 +36,7 @@ export function ProvinceChart({ provinces }: { provinces: Province[] }) {
                 labelStyle={{ color: "var(--foreground)" }}
                 cursor={{ fill: "var(--muted)", opacity: 0.3 }}
               />
-              <Bar
-                dataKey="athletes"
-                fill="var(--chart-1)"
-                radius={[0, 4, 4, 0]}
-                barSize={20}
-              />
+              <Bar dataKey="athletes" fill="var(--chart-1)" radius={[0, 4, 4, 0]} barSize={20} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -6,31 +6,31 @@ export function StatsTable({ provinces }: { provinces: Province[] }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">Répartition par Province</CardTitle>
+        <CardTitle className="text-base font-semibold">Repartition par province</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Province</th>
-                <th className="text-center py-3 px-4 font-medium text-muted-foreground">Ligues</th>
-                <th className="text-center py-3 px-4 font-medium text-muted-foreground">Clubs</th>
-                <th className="text-center py-3 px-4 font-medium text-muted-foreground">Athlètes</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Complétude</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Province</th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">Ligues</th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">Clubs</th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">Athletes</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Completude</th>
               </tr>
             </thead>
             <tbody>
               {provinces.map((province) => (
-                <tr key={province.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                  <td className="py-3 px-4 font-medium text-foreground">{province.nom}</td>
-                  <td className="py-3 px-4 text-center text-muted-foreground">{province.ligues}</td>
-                  <td className="py-3 px-4 text-center text-muted-foreground">{province.clubs}</td>
-                  <td className="py-3 px-4 text-center text-muted-foreground">{province.athletes}</td>
-                  <td className="py-3 px-4">
+                <tr key={province.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/30">
+                  <td className="px-4 py-3 font-medium text-foreground">{province.nom}</td>
+                  <td className="px-4 py-3 text-center text-muted-foreground">{province.ligues}</td>
+                  <td className="px-4 py-3 text-center text-muted-foreground">{province.clubs}</td>
+                  <td className="px-4 py-3 text-center text-muted-foreground">{province.athletes}</td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Progress value={province.completude} className="h-2 flex-1" />
-                      <span className="text-xs text-muted-foreground w-10">{province.completude}%</span>
+                      <span className="w-10 text-xs text-muted-foreground">{province.completude}%</span>
                     </div>
                   </td>
                 </tr>

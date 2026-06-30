@@ -1,24 +1,24 @@
 "use client"
 
+import type { ComponentType } from "react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
 import {
   ArrowLeft,
-  Pencil,
+  Award,
+  Building2,
+  Edit,
   Mail,
   Phone,
-  MapPin,
-  Calendar,
-  Award,
-  Flag,
-  Target,
-  TrendingUp,
+  Shield,
+  Trophy,
+  User,
 } from "lucide-react"
 import type { Arbitre } from "@/lib/types"
+import { calculateAgeFromSheetDate, formatSheetDate, parseSheetDate } from "@/lib/date-utils"
 
 interface ArbitreDetailProps {
   arbitre: Arbitre
@@ -26,52 +26,9 @@ interface ArbitreDetailProps {
 }
 
 export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
-  const formatArbitreId = (id: string) => {
-    const numeric = id.replace(/\D/g, "")
-    return numeric.padStart(9, "0")
-  }
-
-  const calculateAge = (dateNaissance: string) => {
-    const today = new Date()
-    const birthDate = new Date(dateNaissance)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const monthDiff = today.getMonth() - birthDate.getMonth()
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    return age
-  }
-
-  const formatDate = (date: string) => {
-    if (!date) return "—"
-    return new Date(date).toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
-  }
-
-  const getStatutBadge = (statut: Arbitre["statut"]) => {
-    switch (statut) {
-      case "actif":
-        return <Badge className="bg-green-500/10 text-green-600">Actif</Badge>
-      case "inactif":
-        return <Badge variant="secondary">Inactif</Badge>
-      default:
-        return <Badge variant="outline">{statut}</Badge>
-    }
-  }
-
-  const getGradeBadge = (grade: Arbitre["grade"]) => {
-    return <Badge variant="outline">{grade}</Badge>
-  }
-
-  const yearsOfExperience = () => {
-    if (!arbitre.dateHomologation) return 0
-    const gradeDate = new Date(arbitre.dateHomologation)
-    const today = new Date()
-    return today.getFullYear() - gradeDate.getFullYear()
-  }
+  const age = calculateAgeFromSheetDate(arbitre.dateNaissance)
+  const experience = calculateExperience(arbitre.dateHomologation)
+  const isEquipeNationale = isNationalTeam(arbitre.equipeNational)
 
   const getInitials = (nomComplet: string) => {
     const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
@@ -80,222 +37,210 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
     return `${first}${second}`.toUpperCase()
   }
 
+  const getStatutBadge = (statut: Arbitre["statut"]) => {
+    switch (statut) {
+      case "actif":
+        return <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/20">Actif</Badge>
+      case "inactif":
+        return <Badge variant="secondary">Inactif</Badge>
+      case "suspendu":
+        return <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">Suspendu</Badge>
+      default:
+        return <Badge variant="outline">{statut || "Non défini"}</Badge>
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {arbitre.nomComplet}
-            </h1>
-            <p className="text-muted-foreground">Fiche arbitre</p>
-            <p className="text-xs text-muted-foreground font-mono mt-1">{formatArbitreId(arbitre.id)}</p>
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold text-foreground">{arbitre.nomComplet}</h1>
+            <p className="text-sm text-muted-foreground">Fiche arbitre</p>
           </div>
         </div>
-        <Button className="bg-primary hover:bg-primary/90">
-          <Pencil className="h-4 w-4 mr-2" />
+
+        <Button className="shrink-0">
+          <Edit className="mr-2 h-4 w-4" />
           Modifier
         </Button>
       </div>
 
-      {/* Profile Card */}
-      <Card className="border-border/50">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-28 w-28">
-                <AvatarFallback className="bg-primary/10 text-primary text-3xl">
+      <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
+        <Card className="h-fit">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center">
+              <Avatar className="h-24 w-24">
+                <AvatarFallback className="bg-primary/10 text-2xl font-semibold text-primary">
                   {getInitials(arbitre.nomComplet)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col items-center gap-2">
+
+              <div className="mt-4 min-w-0">
+                <h2 className="text-xl font-semibold text-foreground">{arbitre.nomComplet}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{arbitre.grade || "Grade non défini"}</p>
+              </div>
+
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
                 {getStatutBadge(arbitre.statut)}
-                {getGradeBadge(arbitre.grade)}
+                {arbitre.grade ? <Badge variant="outline">{arbitre.grade}</Badge> : null}
               </div>
             </div>
-            
-            <Separator orientation="vertical" className="hidden md:block h-auto" />
-            
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Email</p>
-                  <p className="text-sm font-medium">{arbitre.email}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Telephone</p>
-                  <p className="text-sm font-medium">{arbitre.telephone}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Province</p>
-                  <p className="text-sm font-medium">{arbitre.provinceNom}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Date de naissance</p>
-                  <p className="text-sm font-medium">
-                    {formatDate(arbitre.dateNaissance)} ({calculateAge(arbitre.dateNaissance)} ans)
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Target className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{arbitre.ligueNom || "—"}</p>
-                <p className="text-xs text-muted-foreground">Ligue</p>
-              </div>
+            <div className="mt-6 grid grid-cols-3 gap-2 text-center">
+              <MiniStat label="Âge" value={age !== null ? age : "-"} />
+              <MiniStat label="Exp." value={experience} />
+              <MiniStat label="EN" value={isEquipeNationale ? "Oui" : "Non"} />
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <ContactLine icon={Phone} value={arbitre.telephone || "-"} />
+              <ContactLine icon={Mail} value={arbitre.email || "-"} />
+              <ContactLine icon={Award} value={arbitre.grade || "-"} />
+              <ContactLine icon={Building2} value={arbitre.ligueNom || "-"} />
             </div>
           </CardContent>
         </Card>
-        
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/20">
-                <Award className="h-5 w-5 text-accent-foreground" />
+
+        <div className="min-w-0">
+          <Tabs defaultValue="infos" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="infos">Informations</TabsTrigger>
+              <TabsTrigger value="profil">Profil arbitral</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="infos" className="mt-4">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <User className="h-4 w-4" />
+                      Identité
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {infoRow("ID arbitre", arbitre.id)}
+                    {infoRow("Nom complet", arbitre.nomComplet)}
+                    {infoRow("Date de naissance", formatSheetDate(arbitre.dateNaissance))}
+                    {infoRow("Âge", age !== null ? `${age} ans` : "-")}
+                    {infoRow("Genre", formatGender(arbitre.genre))}
+                    {infoRow("Statut", arbitre.statut)}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Phone className="h-4 w-4" />
+                      Contact
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {infoRow("Téléphone", arbitre.telephone)}
+                    {infoRow("Email", arbitre.email)}
+                  </CardContent>
+                </Card>
               </div>
-              <div>
-                <p className="text-2xl font-bold">{arbitre.grade}</p>
-                <p className="text-xs text-muted-foreground">Grade actuel</p>
+            </TabsContent>
+
+            <TabsContent value="profil" className="mt-4">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Shield className="h-4 w-4" />
+                      Homologation
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {infoRow("Grade", arbitre.grade)}
+                    {infoRow("Ligue", arbitre.ligueNom)}
+                    {infoRow("Date homologation", formatSheetDate(arbitre.dateHomologation))}
+                    {infoRow("Expérience", experience)}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Trophy className="h-4 w-4" />
+                      Sélection
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {infoRow("Équipe nationale", arbitre.equipeNational || "-")}
+                    {infoRow("Statut", isEquipeNationale ? "Oui" : "Non")}
+                    {infoRow("Statut arbitre", arbitre.statut)}
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{arbitre.experience || `${yearsOfExperience()} ans`}</p>
-                <p className="text-xs text-muted-foreground">Expérience</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-secondary/10">
-                <Flag className="h-5 w-5 text-secondary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold truncate text-sm">{formatDate(arbitre.dateHomologation)}</p>
-                <p className="text-xs text-muted-foreground">Homologation</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
+    </div>
+  )
+}
 
-      {/* Tabs */}
-      <Tabs defaultValue="informations" className="w-full">
-        <TabsList className="w-full justify-start bg-muted/50">
-          <TabsTrigger value="informations">Informations</TabsTrigger>
-          <TabsTrigger value="statistiques">Statistiques</TabsTrigger>
-          <TabsTrigger value="historique">Historique</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="informations" className="mt-4">
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="text-lg">Informations professionnelles</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-muted-foreground">Ligue</p>
-                  <p className="font-medium">{arbitre.ligueNom}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Province</p>
-                  <p className="font-medium">{arbitre.provinceNom}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Entente</p>
-                  <p className="font-medium">{arbitre.ententeNom}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Date homologation</p>
-                  <p className="font-medium">{formatDate(arbitre.dateHomologation)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Genre</p>
-                  <p className="font-medium">{arbitre.genre === "M" ? "Masculin" : "Feminin"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Identifiant</p>
-                  <p className="font-medium font-mono">{arbitre.id.toUpperCase()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="statistiques" className="mt-4">
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="text-lg">Statistiques de carriere</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Coming soon</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="historique" className="mt-4">
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="text-lg">Historique des activites</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Coming soon</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+function calculateExperience(dateHomologation: string) {
+  const start = parseSheetDate(dateHomologation)
+  if (!start) return "-"
+
+  const today = new Date()
+  let years = today.getFullYear() - start.getFullYear()
+  const monthDelta = today.getMonth() - start.getMonth()
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < start.getDate())) {
+    years--
+  }
+
+  if (years <= 0) return "Moins d'un an"
+  return `${years} an${years > 1 ? "s" : ""}`
+}
+
+function formatGender(genre: string) {
+  if (genre === "M") return "Masculin"
+  if (genre === "F") return "Féminin"
+  return genre || "-"
+}
+
+function isNationalTeam(value: string) {
+  return ["oui", "yes", "true", "1", "x"].includes(value.trim().toLowerCase())
+}
+
+function MiniStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-md border bg-muted/20 px-2 py-3">
+      <p className="text-lg font-semibold text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
+  )
+}
+
+function ContactLine({
+  icon: Icon,
+  value,
+}: {
+  icon: ComponentType<{ className?: string }>
+  value: string
+}) {
+  return (
+    <div className="flex min-w-0 items-start gap-3 text-sm">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 whitespace-normal break-words text-left [overflow-wrap:anywhere]">{value}</span>
+    </div>
+  )
+}
+
+function infoRow(label: string, value: string) {
+  return (
+    <div className="grid min-w-0 gap-1 text-sm sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="min-w-0 whitespace-normal break-words font-medium text-foreground [overflow-wrap:anywhere] sm:text-right">
+        {value || "-"}
+      </span>
     </div>
   )
 }

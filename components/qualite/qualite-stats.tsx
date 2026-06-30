@@ -2,34 +2,62 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import {
-  TrendingUp,
-} from "lucide-react"
-import { dataQualityStats } from "@/lib/data/demo-data"
+import { getGlobalQualityRate, type QualityStat } from "@/lib/quality"
+import { AlertTriangle, CheckCircle, Database, TrendingUp } from "lucide-react"
 
-export function QualiteStats() {
-  const totalCompletude = Math.round(
-    dataQualityStats.reduce((acc, s) => acc + s.tauxCompletude, 0) / dataQualityStats.length
-  )
+export function QualiteStats({ stats }: { stats: QualityStat[] }) {
+  const totalCompletude = getGlobalQualityRate(stats)
+  const total = stats.reduce((acc, stat) => acc + stat.total, 0)
+  const complets = stats.reduce((acc, stat) => acc + stat.complets, 0)
+  const incomplets = stats.reduce((acc, stat) => acc + stat.incomplets, 0)
+
+  const cards = [
+    {
+      label: "Completude globale",
+      value: `${totalCompletude}%`,
+      icon: TrendingUp,
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      label: "Lignes analysees",
+      value: total,
+      icon: Database,
+      color: "bg-blue-500/10 text-blue-700",
+    },
+    {
+      label: "Completes",
+      value: complets,
+      icon: CheckCircle,
+      color: "bg-green-500/10 text-green-700",
+    },
+    {
+      label: "Incompletes",
+      value: incomplets,
+      icon: AlertTriangle,
+      color: "bg-amber-500/10 text-amber-700",
+    },
+  ]
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full bg-primary/10">
-                <TrendingUp className="h-5 w-5 text-primary" />
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {cards.map((card) => (
+        <Card key={card.label} className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className={`rounded-lg p-3 ${card.color}`}>
+                <card.icon className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Taux de Complétude Global</p>
-                <p className="text-2xl font-bold text-foreground">{totalCompletude}%</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted-foreground">{card.label}</p>
+                <p className="text-2xl font-bold text-foreground">{card.value.toLocaleString()}</p>
               </div>
             </div>
-          </div>
-          <Progress value={totalCompletude} className="h-2" />
-        </div>
-      </CardContent>
-    </Card>
+            {card.label === "Completude globale" ? (
+              <Progress value={totalCompletude} className="mt-4 h-2" />
+            ) : null}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   )
 }

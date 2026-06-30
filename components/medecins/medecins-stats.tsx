@@ -1,53 +1,57 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Stethoscope, UserCheck, Activity, Users } from "lucide-react"
+import { Activity, Building2, Stethoscope, Users } from "lucide-react"
 import type { Medecin } from "@/lib/types"
 
 export function MedecinsStats({ medecins }: { medecins: Medecin[] }) {
   const totalMedecins = medecins.length
-  const medecinsActifs = medecins.filter((m) => m.statut === "actif").length
-  const medecinsInactifs = medecins.filter((m) => m.statut === "inactif").length
-  const specialitesUniques = new Set(medecins.map((m) => m.specialite).filter(Boolean)).size
+  const affiliationsActives = medecins.reduce(
+    (total, medecin) =>
+      total + medecin.affiliations.filter((affiliation) => affiliation.statut === "actif").length,
+    0
+  )
+  const liguesCouvertes = new Set(medecins.map((medecin) => medecin.ligueNom).filter(Boolean)).size
+  const clubsSuivis = new Set(medecins.map((medecin) => medecin.clubNom).filter(Boolean)).size
 
   const stats = [
     {
-      title: "Total Médecins",
+      title: "Médecins",
       value: totalMedecins,
       icon: Stethoscope,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
-      title: "Médecins Actifs",
-      value: medecinsActifs,
-      icon: UserCheck,
-      color: "text-green-600",
+      title: "Affiliations actives",
+      value: affiliationsActives,
+      icon: Activity,
+      color: "text-green-700",
       bgColor: "bg-green-500/10",
     },
     {
-      title: "Médecins inactifs",
-      value: medecinsInactifs,
-      icon: Activity,
-      color: "text-accent",
-      bgColor: "bg-accent/20",
+      title: "Ligues couvertes",
+      value: liguesCouvertes,
+      icon: Building2,
+      color: "text-blue-700",
+      bgColor: "bg-blue-500/10",
     },
     {
       title: "Clubs suivis",
-      value: specialitesUniques,
+      value: clubsSuivis,
       icon: Users,
-      color: "text-secondary",
-      bgColor: "bg-secondary/10",
+      color: "text-amber-700",
+      bgColor: "bg-amber-500/10",
     },
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => (
         <Card key={stat.title} className="border-border/50 bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+              <div className={`rounded-lg p-3 ${stat.bgColor}`}>
                 <stat.icon className={`h-5 w-5 ${stat.color}`} />
               </div>
               <div>

@@ -1,294 +1,290 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import type { ComponentType } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { calculateAgeFromSheetDate, formatSheetDate, parseSheetDate } from "@/lib/date-utils"
+import type { Coach, CoachAffiliation } from "@/lib/types"
 import {
+  Activity,
   ArrowLeft,
-  Phone,
+  Award,
+  Briefcase,
+  Edit,
+  GraduationCap,
   Mail,
   MapPin,
-  Calendar,
-  Building2,
-  Award,
-  Pencil,
-  Briefcase,
-  Clock,
-  Users,
+  Phone,
+  User,
 } from "lucide-react"
-import type { Coach } from "@/lib/types"
 
 interface CoachDetailProps {
   coach: Coach
+  affiliations: CoachAffiliation[]
   onBack: () => void
 }
 
-export function CoachDetail({ coach, onBack }: CoachDetailProps) {
-  const formatCoachId = (id: string) => {
-    const numeric = id.replace(/\D/g, "")
-    return numeric.padStart(9, "0")
-  }
+export function CoachDetail({ coach, affiliations, onBack }: CoachDetailProps) {
+  const age = calculateAgeFromSheetDate(coach.dateNaissance)
+  const activeAffiliations = affiliations.filter((affiliation) => affiliation.statut === "actif")
+  const teamsCount = new Set(
+    affiliations.map((affiliation) => affiliation.equipeId || affiliation.equipeNom).filter(Boolean)
+  ).size
 
   const getInitials = (nomComplet: string) => {
     const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
-    const first = parts[0]?.charAt(0) ?? ""
-    const second = parts[1]?.charAt(0) ?? parts[0]?.charAt(1) ?? ""
-    return `${first}${second}`.toUpperCase()
+    if (parts.length === 0) return "C"
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+    return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
   }
 
-  const getAge = (dateNaissance: string) => {
-    const today = new Date()
-    const birthDate = new Date(dateNaissance)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const m = today.getMonth() - birthDate.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    return age
-  }
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
+  const formatGender = (genre: string) => {
+    if (genre === "M") return "Masculin"
+    if (genre === "F") return "Féminin"
+    return genre || "-"
   }
 
   const getStatutBadge = (statut: string) => {
     switch (statut) {
       case "actif":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Actif</Badge>
+        return <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/20">Actif</Badge>
       case "inactif":
         return <Badge variant="secondary">Inactif</Badge>
       default:
-        return <Badge variant="outline">{statut}</Badge>
-    }
-  }
-
-  const getCertificationBadge = (niveau: string) => {
-    switch (niveau) {
-      case "National":
-        return <Badge className="bg-primary/10 text-primary hover:bg-primary/10">National</Badge>
-      case "Provincial":
-        return <Badge className="bg-accent/10 text-accent-foreground hover:bg-accent/10">Provincial</Badge>
-      case "Local":
-        return <Badge variant="outline">Local</Badge>
-      default:
-        return <Badge variant="outline">{niveau}</Badge>
+        return <Badge variant="outline">{statut || "Non défini"}</Badge>
     }
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Profil du Coach</h1>
-            <p className="text-muted-foreground">Détails et informations</p>
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold text-foreground">{coach.nomComplet}</h1>
+            <p className="text-sm text-muted-foreground">Fiche coach</p>
           </div>
         </div>
-        <Button>
-          <Pencil className="h-4 w-4 mr-2" />
+
+        <Button className="shrink-0">
+          <Edit className="mr-2 h-4 w-4" />
           Modifier
         </Button>
       </div>
 
-      {/* Profil Card */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Avatar et infos principales */}
-            <div className="flex flex-col items-center md:items-start gap-4">
+      <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
+        <Card className="h-fit">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center">
               <Avatar className="h-24 w-24">
-                <AvatarFallback className={`text-2xl ${coach.genre === "F" ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"}`}>
+                <AvatarFallback className="bg-primary/10 text-2xl font-semibold text-primary">
                   {getInitials(coach.nomComplet)}
                 </AvatarFallback>
               </Avatar>
-              <div className="text-center md:text-left">
-                <h2 className="text-xl font-bold">{coach.nomComplet}</h2>
-                <p className="text-muted-foreground">{coach.specialisation}</p>
-                <div className="mt-1 space-y-1">
-                  <p className="text-xs text-muted-foreground font-mono">{formatCoachId(coach.id)}</p>
-                </div>
-                <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
-                  {getStatutBadge(coach.statut)}
-                  {getCertificationBadge(coach.niveau)}
-                </div>
+
+              <div className="mt-4 min-w-0">
+                <h2 className="text-xl font-semibold text-foreground">{coach.nomComplet}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{coach.specialisation || "Spécialisation non définie"}</p>
+              </div>
+
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                {getStatutBadge(coach.statut)}
+                {coach.niveau ? <Badge variant="outline">{coach.niveau}</Badge> : null}
               </div>
             </div>
 
-            {/* Infos de contact */}
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Téléphone</p>
-                  <p className="font-medium">{coach.telephone}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{coach.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Province</p>
-                  <p className="font-medium">{coach.provinceNom}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Âge</p>
-                  <p className="font-medium">{getAge(coach.dateNaissance)} ans</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Date de naissance</p>
-                  <p className="font-medium">{formatDate(coach.dateNaissance)}</p>
-                </div>
-              </div>
+            <div className="mt-6 grid grid-cols-3 gap-2 text-center">
+              <MiniStat label="Âge" value={age !== null ? age : "-"} />
+              <MiniStat label="Équipes" value={teamsCount} />
+              <MiniStat label="Actives" value={activeAffiliations.length} />
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Tabs */}
-      <Tabs defaultValue="informations" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="informations">Informations</TabsTrigger>
-          <TabsTrigger value="club">Club</TabsTrigger>
-          <TabsTrigger value="historique">Historique</TabsTrigger>
-        </TabsList>
+            <div className="mt-6 space-y-4">
+              <ContactLine icon={Phone} value={coach.telephone || "-"} />
+              <ContactLine icon={Mail} value={coach.email || "-"} />
+              <ContactLine icon={Award} value={coach.niveau || "-"} />
+              <ContactLine icon={MapPin} value={coach.nationalite || "-"} />
+            </div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="informations" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations professionnelles</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                    Carrière
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Briefcase className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Spécialisation:</span>
-                      <span className="font-medium">{coach.specialisation}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Award className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Niveau:</span>
-                      <span className="font-medium">{coach.niveau}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Diplôme:</span>
-                      <span className="font-medium">{coach.diplome}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Date affiliation:</span>
-                      <span className="font-medium">{formatDate(coach.dateAffiliation)}</span>
-                    </div>
-                  </div>
-                </div>
+        <div className="min-w-0">
+          <Tabs defaultValue="infos" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="infos">Informations</TabsTrigger>
+              <TabsTrigger value="profil">Profil</TabsTrigger>
+              <TabsTrigger value="parcours">Parcours</TabsTrigger>
+            </TabsList>
 
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                    Affiliation
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Club:</span>
-                      <span className="font-medium">{coach.clubNom}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Ligue:</span>
-                      <span className="font-medium">{coach.ligueNom}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Équipe:</span>
-                      <span className="font-medium">{coach.equipeNom}</span>
-                    </div>
-                  </div>
-                </div>
+            <TabsContent value="infos" className="mt-4">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <User className="h-4 w-4" />
+                      Identité
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {infoRow("ID coach", coach.id)}
+                    {infoRow("Nom complet", coach.nomComplet)}
+                    {infoRow("Genre", formatGender(coach.genre))}
+                    {infoRow("Nationalité", coach.nationalite)}
+                    {infoRow("Date de naissance", formatSheetDate(coach.dateNaissance))}
+                    {infoRow("Lieu de naissance", coach.lieuNaissance)}
+                    {infoRow("Âge", age !== null ? `${age} ans` : "-")}
+                    {infoRow("Statut", coach.statut)}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Phone className="h-4 w-4" />
+                      Contact
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {infoRow("Téléphone", coach.telephone)}
+                    {infoRow("Email", coach.email)}
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </TabsContent>
 
-        <TabsContent value="club" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Club - {coach.clubNom}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 rounded-lg bg-muted">
-                    <p className="text-sm text-muted-foreground">Entente</p>
-                    <p className="text-xl font-bold">{coach.ententeNom}</p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-muted">
-                    <p className="text-sm text-muted-foreground">Ligue</p>
-                    <p className="text-xl font-bold">{coach.ligueNom}</p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-muted">
-                    <p className="text-sm text-muted-foreground">Province</p>
-                    <p className="text-xl font-bold">{coach.provinceNom}</p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-muted">
-                    <p className="text-sm text-muted-foreground">Statut</p>
-                    <p className="text-xl font-bold capitalize">{coach.statut}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <TabsContent value="profil" className="mt-4">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <GraduationCap className="h-4 w-4" />
+                      Profil professionnel
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {infoRow("Niveau", coach.niveau)}
+                    {infoRow("Spécialisation", coach.specialisation)}
+                    {infoRow("Date affiliation", formatSheetDate(coach.dateAffiliation))}
+                  </CardContent>
+                </Card>
 
-        <TabsContent value="historique" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Historique</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center text-muted-foreground text-sm py-10">
-                Coming soon
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Activity className="h-4 w-4" />
+                      Couverture
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {infoRow("Affiliations actives", String(activeAffiliations.length))}
+                    {infoRow("Équipes suivies", String(teamsCount))}
+                    {infoRow("Total parcours", String(affiliations.length))}
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </TabsContent>
+
+            <TabsContent value="parcours" className="mt-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Briefcase className="h-4 w-4" />
+                    Parcours
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {affiliations.length > 0 ? (
+                    affiliations.map((affiliation) => (
+                      <div key={affiliation.id} className="rounded-md border p-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-foreground">
+                              {affiliation.equipeNom || affiliation.equipeId || "Équipe non définie"}
+                            </p>
+                            <p className="truncate text-sm text-muted-foreground">{affiliation.role || "Rôle non défini"}</p>
+                          </div>
+                          {getStatutBadge(affiliation.statut)}
+                        </div>
+                        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                          {infoRow("Début", formatSheetDate(affiliation.dateDebut))}
+                          {infoRow("Fin", affiliation.dateFin ? formatSheetDate(affiliation.dateFin) : "En cours")}
+                          {infoRow("Durée", formatDuration(affiliation.dateDebut, affiliation.dateFin))}
+                          {infoRow("Rôle", affiliation.role)}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-10 text-center text-sm text-muted-foreground">
+                      Aucun parcours enregistré pour ce coach.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function formatDuration(dateDebut: string, dateFin: string) {
+  const start = parseSheetDate(dateDebut)
+  if (!start) return "-"
+
+  const end = parseSheetDate(dateFin) ?? new Date()
+  const months =
+    (end.getFullYear() - start.getFullYear()) * 12 +
+    (end.getMonth() - start.getMonth()) -
+    (end.getDate() < start.getDate() ? 1 : 0)
+
+  if (months < 0) return "-"
+  if (months < 1) return "Moins d'un mois"
+
+  const years = Math.floor(months / 12)
+  const remainingMonths = months % 12
+  return [
+    years > 0 ? `${years} an${years > 1 ? "s" : ""}` : "",
+    remainingMonths > 0 ? `${remainingMonths} mois` : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+}
+
+function MiniStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-md border bg-muted/20 px-2 py-3">
+      <p className="text-lg font-semibold text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
+  )
+}
+
+function ContactLine({
+  icon: Icon,
+  value,
+}: {
+  icon: ComponentType<{ className?: string }>
+  value: string
+}) {
+  return (
+    <div className="flex min-w-0 items-start gap-3 text-sm">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 break-words text-left">{value}</span>
+    </div>
+  )
+}
+
+function infoRow(label: string, value: string) {
+  return (
+    <div className="flex min-w-0 items-start justify-between gap-4 text-sm">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-words text-right font-medium text-foreground">{value || "-"}</span>
     </div>
   )
 }

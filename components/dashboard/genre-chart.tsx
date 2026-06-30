@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 
 const COLORS = ["var(--chart-1)", "var(--chart-2)"]
 
@@ -9,7 +9,7 @@ export function GenreChart({ data }: { data: Array<{ genre: string; count: numbe
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">Répartition par Genre</CardTitle>
+        <CardTitle className="text-base font-semibold">Repartition par genre</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[200px]">

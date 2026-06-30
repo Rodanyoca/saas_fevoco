@@ -33,11 +33,13 @@ export function mapMedecinRow(row: SheetRow): Medecin {
     ligueNom: str(row, "nom_ligue"),
     ententeId: str(row, "id_entente"),
     ententeNom: str(row, "nom_entente"),
+    pseudoEntente: str(row, "pseudo_entente"),
     clubId: str(row, "id_club"),
     clubNom: str(row, "nom_club"),
     equipeId: str(row, "id_equipe"),
     equipeNom: str(row, "nom_equipe"),
     dateAffiliation: str(row, "date_affiliation"),
     statut: normalizeStatut(statutRaw),
+    affiliations: [],
   }
 }

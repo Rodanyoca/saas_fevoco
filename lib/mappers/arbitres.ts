@@ -32,6 +32,7 @@ export function mapArbitreRow(row: SheetRow): Arbitre {
     telephone: str(row, "telephone"),
     email: str(row, "email"),
     dateHomologation: str(row, "date_homologation"),
+    equipeNational: str(row, "equipe_national"),
     experience: str(row, "experience"),
     statut: normalizeStatut(statutRaw),
   }

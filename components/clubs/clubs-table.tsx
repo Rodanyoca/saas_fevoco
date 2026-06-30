@@ -1,8 +1,8 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -11,8 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Eye, Shield } from "lucide-react"
 import type { Club } from "@/lib/types"
+import { Eye, Phone, Shield, User } from "lucide-react"
 
 interface ClubsTableProps {
   clubs: Club[]
@@ -25,24 +25,11 @@ export function ClubsTable({ clubs, onViewClub }: ClubsTableProps) {
     return numeric.padStart(7, "0")
   }
 
-  const getGenreBadgeColor = (genre: string) => {
-    switch (genre) {
-      case "Masculin":
-        return "bg-blue-100 text-blue-800 hover:bg-blue-100"
-      case "Féminin":
-        return "bg-pink-100 text-pink-800 hover:bg-pink-100"
-      case "Mixte":
-        return "bg-purple-100 text-purple-800 hover:bg-purple-100"
-      default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-100"
-    }
-  }
-
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
             <Shield className="h-5 w-5 text-primary" />
             Liste des Clubs
           </CardTitle>
@@ -57,43 +44,42 @@ export function ClubsTable({ clubs, onViewClub }: ClubsTableProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[110px]">ID</TableHead>
-                <TableHead>Nom du Club</TableHead>
-                <TableHead>Entente</TableHead>
-                <TableHead>Ligue</TableHead>
+                <TableHead>Club</TableHead>
+                <TableHead>Ligue / Entente</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Version</TableHead>
                 <TableHead className="text-center">Athlètes</TableHead>
                 <TableHead className="text-center">Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {clubs.map((club) => (
-                <TableRow key={club.id} className="cursor-pointer hover:bg-muted/50">
+                <TableRow key={club.id} className="hover:bg-muted/50">
                   <TableCell className="font-mono text-muted-foreground">
                     {formatClubId(club.id)}
                   </TableCell>
-                  <TableCell 
-                    className="font-medium"
-                    onClick={() => onViewClub(club)}
-                  >
-                    <div className="flex flex-col gap-1">
-                      <span>{club.nom}</span>
-                      <span>
-                        <Badge
-                          variant="secondary"
-                          className={getGenreBadgeColor(club.genre ?? "")}
-                        >
-                          {club.genre ?? "—"}
-                        </Badge>
+                  <TableCell className="font-medium">{club.nom}</TableCell>
+                  <TableCell>
+                    <div className="flex min-w-[180px] flex-col gap-1 leading-tight">
+                      <span className="font-medium">{club.ligueNom || "-"}</span>
+                      <span className="text-sm text-muted-foreground">{club.pseudoEntente || "-"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="flex items-center gap-1 text-sm">
+                        <User className="h-3 w-3 text-muted-foreground" />
+                        {club.personneContactNom || "-"}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        {club.personneContactTelephone || "-"}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {club.ententeNom}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {club.ligueNom}
-                  </TableCell>
-                  <TableCell className="text-center">{club.athletes ?? "—"}</TableCell>
+                  <TableCell>{club.version || "-"}</TableCell>
+                  <TableCell className="text-center">{club.athletes ?? 0}</TableCell>
                   <TableCell className="text-center">
                     <Badge
                       variant={club.statut === "actif" ? "default" : "secondary"}

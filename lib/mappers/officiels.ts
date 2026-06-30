@@ -36,6 +36,7 @@ export function mapOfficielRow(row: SheetRow): Officiel {
     email: str(row, "email"),
     dateNomination: str(row, "date_de_nomination"),
     dateFinMandat: str(row, "date_de_fin_de_mandat"),
+    equipeFederal: str(row, "equipe_federal"),
     statut: normalizeStatut(statutRaw),
   }
 }

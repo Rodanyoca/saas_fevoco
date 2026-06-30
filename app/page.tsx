@@ -1,269 +1,320 @@
-// FEVOCO Dashboard - Systeme de Gestion
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { GenreChart } from "@/components/dashboard/genre-chart"
 import { Header } from "@/components/dashboard/header"
 import { KpiCard } from "@/components/dashboard/kpi-card"
-import { Progress } from "@/components/ui/progress"
-import { DashboardClient } from "@/components/dashboard/dashboard-client"
 import { ProvinceChart } from "@/components/dashboard/province-chart"
+import { StatsTable } from "@/components/dashboard/stats-table"
+import { Progress } from "@/components/ui/progress"
 import {
   getArbitres,
   getAthletes,
   getClubs,
   getCoachs,
+  getCompetitionResults,
+  getCompetitions,
+  getCompetitionUnites,
   getEntentes,
   getLigues,
   getMedecins,
   getOfficiels,
   getProvinces,
+  getTransferts,
 } from "@/lib/data"
+import { createQualityStats } from "@/lib/quality"
 import {
-  MapPin,
+  ArrowRightLeft,
   Building2,
-  Shield,
-  Users,
-  UserCheck,
-  Flag,
-  Target,
+  CalendarCheck,
   CheckCircle,
-  Stethoscope,
+  Flag,
+  MapPin,
   Network,
+  Shield,
+  Stethoscope,
+  Target,
+  Trophy,
+  UserCheck,
   UserCog,
+  Users,
 } from "lucide-react"
 
 export const runtime = "nodejs"
 
+function normalizeValue(value: string | null | undefined): string {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+}
+
+function isActive(value: string | null | undefined): boolean {
+  const normalized = normalizeValue(value)
+  return normalized === "actif" || normalized === "active" || normalized === "en cours"
+}
+
+function isInactive(value: string | null | undefined): boolean {
+  const normalized = normalizeValue(value)
+  return normalized === "inactif" || normalized === "inactive" || normalized === "annule"
+}
+
+function isValidated(value: string | null | undefined): boolean {
+  const normalized = normalizeValue(value)
+  return normalized === "valide" || normalized === "validee" || normalized === "approuve" || normalized === "approuvee"
+}
+
+function isBeach(value: string | null | undefined): boolean {
+  return normalizeValue(value).includes("beach")
+}
+
+function isIndoor(value: string | null | undefined): boolean {
+  return normalizeValue(value).includes("indoor")
+}
+
 export default async function DashboardPage() {
-  const [provinces, ligues, ententes, clubs, athletes, coachs, arbitres, medecins, officiels] =
-    await Promise.all([
-      getProvinces(),
-      getLigues(),
-      getEntentes(),
-      getClubs(),
-      getAthletes(),
-      getCoachs(),
-      getArbitres(),
-      getMedecins(),
-      getOfficiels(),
-    ])
+  const [
+    provinces,
+    ligues,
+    ententes,
+    clubs,
+    athletes,
+    coachs,
+    arbitres,
+    medecins,
+    officiels,
+    competitions,
+    competitionUnites,
+    competitionResults,
+    transferts,
+  ] = await Promise.all([
+    getProvinces(),
+    getLigues(),
+    getEntentes(),
+    getClubs(),
+    getAthletes(),
+    getCoachs(),
+    getArbitres(),
+    getMedecins(),
+    getOfficiels(),
+    getCompetitions(),
+    getCompetitionUnites(),
+    getCompetitionResults(),
+    getTransferts(),
+  ])
 
-  const statsGlobales = {
-    totalProvinces: provinces.length,
-    totalLigues: ligues.length,
-    totalEntentes: ententes.length,
-    totalClubs: clubs.length,
-    totalAthletes: athletes.length,
-    totalCoachs: coachs.length,
-    totalArbitres: arbitres.length,
-    totalMedecins: medecins.length,
-    totalOfficiels: officiels.length,
-    selectionNationale: athletes.filter((a) => a.selectionNationale).length,
-    tauxCompletude: provinces.length
-      ? Math.round(provinces.reduce((acc, p) => acc + (p.completude ?? 0), 0) / provinces.length)
-      : 0,
-  }
+  const qualityStats = createQualityStats({
+    provinces,
+    ligues,
+    ententes,
+    clubs,
+    athletes,
+    coachs,
+    arbitres,
+    medecins,
+    officiels,
+    competitions,
+    competitionUnites,
+    competitionResults,
+    transferts,
+  })
+  const totalRecords = qualityStats.reduce((acc, stat) => acc + stat.total, 0)
+  const totalCompleteRecords = qualityStats.reduce((acc, stat) => acc + stat.complets, 0)
+  const tauxCompletude = totalRecords ? Math.round((totalCompleteRecords / totalRecords) * 100) : 0
 
-  const liguesActives = ligues.filter((l) => l.statut === "active").length
-  const liguesInactives = ligues.filter((l) => l.statut === "inactive").length
+  const liguesActives = ligues.filter((ligue) => isActive(ligue.statut)).length
+  const liguesInactives = ligues.filter((ligue) => isInactive(ligue.statut)).length
+  const ententesActives = ententes.filter((entente) => isActive(entente.statut)).length
+  const ententesInactives = ententes.filter((entente) => isInactive(entente.statut)).length
+  const clubsActifs = clubs.filter((club) => isActive(club.statut)).length
+  const clubsInactifs = clubs.filter((club) => isInactive(club.statut)).length
 
-  const ententesActives = ententes.filter((e) => e.statut === "active").length
-  const ententesInactives = ententes.filter((e) => e.statut === "inactive").length
+  const athletesMasculins = athletes.filter((athlete) => athlete.genre === "M").length
+  const athletesFeminins = athletes.filter((athlete) => athlete.genre === "F").length
+  const coachsMasculins = coachs.filter((coach) => coach.genre === "M").length
+  const coachsFeminins = coachs.filter((coach) => coach.genre === "F").length
+  const arbitresMasculins = arbitres.filter((arbitre) => arbitre.genre === "M").length
+  const arbitresFeminins = arbitres.filter((arbitre) => arbitre.genre === "F").length
+  const medecinsMasculins = medecins.filter((medecin) => medecin.genre === "M").length
+  const medecinsFeminins = medecins.filter((medecin) => medecin.genre === "F").length
+  const officielsMasculins = officiels.filter((officiel) => officiel.genre === "M").length
+  const officielsFeminins = officiels.filter((officiel) => officiel.genre === "F").length
+  const selectionMasculins = athletes.filter((athlete) => athlete.selectionNationale && athlete.genre === "M").length
+  const selectionFeminins = athletes.filter((athlete) => athlete.selectionNationale && athlete.genre === "F").length
 
-  const clubsMessieurs = clubs.filter((c) => c.genre === "Masculin").length
-  const clubsDames = clubs.filter((c) => c.genre === "Féminin").length
-
-  const athletesMasculins = athletes.filter((a) => a.genre === "M").length
-  const athletesFeminins = athletes.filter((a) => a.genre === "F").length
-
-  const coachsMasculins = coachs.filter((c) => c.genre === "M").length
-  const coachsFeminins = coachs.filter((c) => c.genre === "F").length
-
-  const arbitresMasculins = arbitres.filter((a) => a.genre === "M").length
-  const arbitresFeminins = arbitres.filter((a) => a.genre === "F").length
-
-  const medecinsMasculins = medecins.filter((m) => m.genre === "M").length
-  const medecinsFeminins = medecins.filter((m) => m.genre === "F").length
-
-  const officielsMasculins = officiels.filter((o) => o.genre === "M").length
-  const officielsFeminins = officiels.filter((o) => o.genre === "F").length
-
-  const selectionMasculins = athletes.filter((a) => a.selectionNationale && a.genre === "M").length
-  const selectionFeminins = athletes.filter((a) => a.selectionNationale && a.genre === "F").length
+  const competitionsIndoor = competitions.filter((competition) => isIndoor(competition.discipline)).length
+  const competitionsBeach = competitions.filter((competition) => isBeach(competition.discipline)).length
+  const competitionsActives = competitions.filter((competition) => isActive(competition.statut)).length
+  const matchsJoues = competitionResults.filter((result) => result.scoreGlobal || isValidated(result.statutMatch)).length
+  const transfertsValides = transferts.filter((transfert) => isValidated(transfert.statut)).length
+  const transfertsEnCours = transferts.filter((transfert) => isActive(transfert.statut) && !isValidated(transfert.statut)).length
 
   const genreData = [
-    { genre: "Masculin", count: athletesMasculins + coachsMasculins + arbitresMasculins + medecinsMasculins + officielsMasculins },
-    { genre: "Féminin", count: athletesFeminins + coachsFeminins + arbitresFeminins + medecinsFeminins + officielsFeminins },
-  ]
-
-  const activities = [
     {
-      id: "a-clubs",
-      type: "club" as const,
-      action: "Mise à jour des clubs",
-      date: new Date().toISOString(),
-      description: `${clubs.length} clubs chargés depuis Google Sheets`,
+      genre: "Masculin",
+      count: athletesMasculins + coachsMasculins + arbitresMasculins + medecinsMasculins + officielsMasculins,
     },
     {
-      id: "a-athletes",
-      type: "athlete" as const,
-      action: "Mise à jour des athlètes",
-      date: new Date().toISOString(),
-      description: `${athletes.length} athlètes chargés depuis Google Sheets`,
-    },
-    {
-      id: "a-ligues",
-      type: "ligue" as const,
-      action: "Mise à jour des ligues",
-      date: new Date().toISOString(),
-      description: `${ligues.length} ligues chargées depuis Google Sheets`,
-    },
-    {
-      id: "a-ententes",
-      type: "entente" as const,
-      action: "Mise à jour des ententes",
-      date: new Date().toISOString(),
-      description: `${ententes.length} ententes chargées depuis Google Sheets`,
+      genre: "Feminin",
+      count: athletesFeminins + coachsFeminins + arbitresFeminins + medecinsFeminins + officielsFeminins,
     },
   ]
 
   return (
     <DashboardLayout>
-      <Header
-        title="Tableau de Bord"
-        subtitle="Vue globale du systeme national de volleyball"
-      />
+      <Header title="Tableau de bord" subtitle="Vue globale du systeme national de volleyball" />
 
-      <div className="p-6 space-y-6">
-        {/* KPI Cards - Structure organisationnelle */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-          <KpiCard
-            title="Provinces"
-            value={statsGlobales.totalProvinces}
-            icon={MapPin}
-          />
-          <KpiCard
-            title="Ligues"
-            value={statsGlobales.totalLigues}
-            icon={Building2}
-            subIndicators={[
-              { label: "Actives", value: liguesActives },
-              { label: "Inactives", value: liguesInactives },
-            ]}
-          />
-          <KpiCard
-            title="Ententes"
-            value={statsGlobales.totalEntentes}
-            icon={Network}
-            subIndicators={[
-              { label: "Actives", value: ententesActives },
-              { label: "Inactives", value: ententesInactives },
-            ]}
-          />
-          <KpiCard
-            title="Clubs"
-            value={statsGlobales.totalClubs}
-            icon={Shield}
-            variant="primary"
-            subIndicators={[
-              { label: "Messieurs", value: clubsMessieurs },
-              { label: "Dames", value: clubsDames },
-            ]}
-          />
-        </div>
+      <div className="space-y-6 p-6">
+        <section className="grid grid-cols-1 gap-4 2xl:grid-cols-12">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:col-span-8">
+            <KpiCard title="Provinces" value={provinces.length} icon={MapPin} />
+            <KpiCard
+              title="Ligues"
+              value={ligues.length}
+              icon={Building2}
+              subIndicators={[
+                { label: "Actives", value: liguesActives },
+                { label: "Inactives", value: liguesInactives },
+              ]}
+            />
+            <KpiCard
+              title="Ententes"
+              value={ententes.length}
+              icon={Network}
+              subIndicators={[
+                { label: "Actives", value: ententesActives },
+                { label: "Inactives", value: ententesInactives },
+              ]}
+            />
+            <KpiCard
+              title="Clubs"
+              value={clubs.length}
+              icon={Shield}
+              variant="primary"
+              subIndicators={[
+                { label: "Actifs", value: clubsActifs },
+                { label: "Inactifs", value: clubsInactifs },
+              ]}
+            />
+            <KpiCard
+              title="Athletes"
+              value={athletes.length}
+              icon={Users}
+              variant="secondary"
+              subIndicators={[
+                { label: "Masculin", value: athletesMasculins },
+                { label: "Feminin", value: athletesFeminins },
+              ]}
+            />
+            <KpiCard
+              title="Coachs"
+              value={coachs.length}
+              icon={UserCheck}
+              subIndicators={[
+                { label: "Masculin", value: coachsMasculins },
+                { label: "Feminin", value: coachsFeminins },
+              ]}
+            />
+            <KpiCard
+              title="Arbitres"
+              value={arbitres.length}
+              icon={Flag}
+              subIndicators={[
+                { label: "Masculin", value: arbitresMasculins },
+                { label: "Feminin", value: arbitresFeminins },
+              ]}
+            />
+            <KpiCard
+              title="Medecins"
+              value={medecins.length}
+              icon={Stethoscope}
+              subIndicators={[
+                { label: "Masculin", value: medecinsMasculins },
+                { label: "Feminin", value: medecinsFeminins },
+              ]}
+            />
+          </div>
 
-        {/* KPI Cards - Personnel technique */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KpiCard
-            title="Athletes"
-            value={statsGlobales.totalAthletes}
-            icon={Users}
-            variant="secondary"
-            subIndicators={[
-              { label: "Masculin", value: athletesMasculins },
-              { label: "Féminin", value: athletesFeminins },
-            ]}
-          />
-          <KpiCard
-            title="Coachs"
-            value={statsGlobales.totalCoachs}
-            icon={UserCheck}
-            subIndicators={[
-              { label: "Masculin", value: coachsMasculins },
-              { label: "Féminin", value: coachsFeminins },
-            ]}
-          />
-          <KpiCard
-            title="Arbitres"
-            value={statsGlobales.totalArbitres}
-            icon={Flag}
-            subIndicators={[
-              { label: "Masculin", value: arbitresMasculins },
-              { label: "Féminin", value: arbitresFeminins },
-            ]}
-          />
-          <KpiCard
-            title="Medecins"
-            value={statsGlobales.totalMedecins}
-            icon={Stethoscope}
-            subIndicators={[
-              { label: "Masculin", value: medecinsMasculins },
-              { label: "Féminin", value: medecinsFeminins },
-            ]}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <KpiCard
-            title="Officiels"
-            value={statsGlobales.totalOfficiels}
-            icon={UserCog}
-            subIndicators={[
-              { label: "Masculin", value: officielsMasculins },
-              { label: "Féminin", value: officielsFeminins },
-            ]}
-          />
-
-          <KpiCard
-            title="Selection Nationale"
-            value={statsGlobales.selectionNationale}
-            icon={Target}
-            variant="accent"
-            subIndicators={[
-              { label: "Masculin", value: selectionMasculins },
-              { label: "Féminin", value: selectionFeminins },
-            ]}
-          />
-
-          <div className="md:col-span-2">
-            <div className="rounded-xl border border-border/50 bg-card shadow-sm p-5 h-full">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:col-span-4 2xl:grid-cols-1">
+            <KpiCard
+              title="Officiels"
+              value={officiels.length}
+              icon={UserCog}
+              subIndicators={[
+                { label: "Masculin", value: officielsMasculins },
+                { label: "Feminin", value: officielsFeminins },
+              ]}
+            />
+            <KpiCard
+              title="Competitions"
+              value={competitions.length}
+              icon={Trophy}
+              variant="accent"
+              subIndicators={[
+                { label: "Actives", value: competitionsActives },
+                { label: "Indoor", value: competitionsIndoor },
+                { label: "Beach", value: competitionsBeach },
+              ]}
+            />
+            <KpiCard
+              title="Matchs"
+              value={competitionResults.length}
+              icon={CalendarCheck}
+              subIndicators={[
+                { label: "Joues", value: matchsJoues },
+                { label: "Unites", value: competitionUnites.length },
+              ]}
+            />
+            <KpiCard
+              title="Transferts"
+              value={transferts.length}
+              icon={ArrowRightLeft}
+              subIndicators={[
+                { label: "Valides", value: transfertsValides },
+                { label: "En cours", value: transfertsEnCours },
+              ]}
+            />
+            <KpiCard
+              title="Selection nationale"
+              value={selectionMasculins + selectionFeminins}
+              icon={Target}
+              variant="accent"
+              subIndicators={[
+                { label: "Masculin", value: selectionMasculins },
+                { label: "Feminin", value: selectionFeminins },
+              ]}
+            />
+            <div className="h-full rounded-xl border border-border/50 bg-card p-5 shadow-sm">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-medium uppercase tracking-wider mb-1 text-muted-foreground">
-                    Taux Completude
+                  <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Taux completude
                   </p>
                   <div className="flex items-baseline gap-2">
-                    <p className="text-2xl font-bold">{statsGlobales.tauxCompletude}%</p>
+                    <p className="text-2xl font-bold">{tauxCompletude}%</p>
                     <p className="text-xs text-muted-foreground">dossiers complets</p>
                   </div>
                 </div>
-                <div className="p-2.5 rounded-lg bg-accent/10 text-accent">
+                <div className="rounded-lg bg-accent/10 p-2.5 text-accent">
                   <CheckCircle className="h-5 w-5" />
                 </div>
               </div>
               <div className="mt-4">
-                <Progress value={statsGlobales.tauxCompletude} className="h-2" />
+                <Progress value={tauxCompletude} className="h-2" />
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
-            <DashboardClient provinces={provinces} activities={activities} genreData={genreData} />
+        <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-4">
+            <GenreChart data={genreData} />
           </div>
-          <div className="lg:col-span-2 space-y-6">
+          <div className="xl:col-span-8">
             <ProvinceChart provinces={provinces} />
           </div>
-        </div>
+          <div className="xl:col-span-12">
+            <StatsTable provinces={provinces} />
+          </div>
+        </section>
       </div>
     </DashboardLayout>
   )

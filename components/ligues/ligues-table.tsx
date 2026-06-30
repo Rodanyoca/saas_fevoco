@@ -1,7 +1,8 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -10,15 +11,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Building2 } from "lucide-react"
 import type { Ligue } from "@/lib/types"
+import { Building2, Eye } from "lucide-react"
 
 export function LiguesTable({
   ligues,
   totalCount,
+  onViewLigue,
 }: {
   ligues: Ligue[]
   totalCount: number
+  onViewLigue: (ligue: Ligue) => void
 }) {
   const formatLigueId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
@@ -29,7 +32,7 @@ export function LiguesTable({
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
             <Building2 className="h-5 w-5 text-primary" />
             Liste des Ligues
           </CardTitle>
@@ -50,6 +53,7 @@ export function LiguesTable({
                 <TableHead className="text-center">Clubs</TableHead>
                 <TableHead className="text-center">Athlètes</TableHead>
                 <TableHead className="text-center">Statut</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -76,6 +80,16 @@ export function LiguesTable({
                     >
                       {ligue.statut === "active" ? "Active" : "Inactive"}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onViewLigue(ligue)}
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span className="sr-only">Voir les détails</span>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

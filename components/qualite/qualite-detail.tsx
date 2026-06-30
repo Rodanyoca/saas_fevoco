@@ -16,7 +16,19 @@ import {
   FileText,
   History,
 } from "lucide-react"
-import { type DataQualityIssue } from "@/lib/data/demo-data"
+
+interface DataQualityIssue {
+  id: string
+  entite: "athlete" | "club" | "coach" | "arbitre" | "medecin"
+  entiteId: string
+  entiteNom: string
+  champManquant: string
+  province: string
+  ligue: string
+  dateDetection: string
+  priorite: "haute" | "moyenne" | "basse"
+  statut: "non_resolu" | "en_cours" | "resolu"
+}
 
 interface QualiteDetailProps {
   issue: DataQualityIssue

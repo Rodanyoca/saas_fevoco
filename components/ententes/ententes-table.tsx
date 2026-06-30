@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -10,8 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Network, Phone, User } from "lucide-react"
 import type { Entente } from "@/lib/types"
+import { Network, Phone, User } from "lucide-react"
 
 export function EntentesTable({
   ententes,
@@ -29,7 +29,7 @@ export function EntentesTable({
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
             <Network className="h-5 w-5 text-primary" />
             Liste des Ententes
           </CardTitle>
@@ -44,11 +44,11 @@ export function EntentesTable({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[90px]">ID</TableHead>
-                <TableHead>Nom de l&apos;Entente</TableHead>
-                <TableHead>Province</TableHead>
+                <TableHead>Entente</TableHead>
+                <TableHead>Ligue</TableHead>
+                <TableHead>Personne contact</TableHead>
                 <TableHead className="text-center">Clubs</TableHead>
                 <TableHead className="text-center">Athlètes</TableHead>
-                <TableHead>Responsable</TableHead>
                 <TableHead className="text-center">Statut</TableHead>
               </TableRow>
             </TableHeader>
@@ -61,28 +61,28 @@ export function EntentesTable({
                   <TableCell>
                     <div className="flex flex-col gap-1 leading-none">
                       <span className="font-medium leading-tight">{entente.nom}</span>
-                      <span className="text-xs text-muted-foreground leading-tight">
-                        {entente.pseudo}
+                      <span className="text-xs leading-tight text-muted-foreground">
+                        {entente.pseudo || "-"}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {entente.provinceNom}
+                    {entente.ligueNom || "-"}
                   </TableCell>
-                  <TableCell className="text-center">{entente.clubs ?? "—"}</TableCell>
-                  <TableCell className="text-center">{entente.athletes ?? "—"}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="text-sm flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-sm">
                         <User className="h-3 w-3 text-muted-foreground" />
-                        {entente.presidentNom}
+                        {entente.personneContactNom || "-"}
                       </span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Phone className="h-3 w-3" />
-                        {entente.presidentTelephone}
+                        {entente.personneContactTelephone || "-"}
                       </span>
                     </div>
                   </TableCell>
+                  <TableCell className="text-center">{entente.clubs ?? 0}</TableCell>
+                  <TableCell className="text-center">{entente.athletes ?? 0}</TableCell>
                   <TableCell className="text-center">
                     <Badge
                       variant={entente.statut === "active" ? "default" : "secondary"}

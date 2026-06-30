@@ -1,12 +1,25 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { ClubsClient } from "@/components/clubs/clubs-client"
-import { getClubs } from "@/lib/data"
+import { getAthletes, getClubs } from "@/lib/data"
+import type { Athlete, Club } from "@/lib/types"
 
 export const runtime = "nodejs"
 
+function belongsToClub(athlete: Pick<Athlete, "clubId" | "clubNom">, club: Club) {
+  return Boolean(
+    (athlete.clubId && athlete.clubId === club.id) ||
+      (athlete.clubNom && athlete.clubNom === club.nom),
+  )
+}
+
 export default async function ClubsPage() {
-  const clubs = await getClubs()
+  const [clubs, athletes] = await Promise.all([getClubs(), getAthletes()])
+
+  const clubsWithCounts = clubs.map((club) => ({
+    ...club,
+    athletes: athletes.filter((athlete) => belongsToClub(athlete, club)).length,
+  }))
 
   return (
     <DashboardLayout>
@@ -16,7 +29,7 @@ export default async function ClubsPage() {
           subtitle="Gérez les clubs affiliés à la FEVOCO"
         />
 
-        <ClubsClient clubs={clubs} />
+        <ClubsClient clubs={clubsWithCounts} athletes={athletes} />
       </div>
     </DashboardLayout>
   )

@@ -29,6 +29,7 @@ export function mapLigueRow(row: SheetRow): Ligue {
     nom: str(row, "nom_ligue"),
     provinceId: str(row, "id_province"),
     provinceNom: str(row, "nom_province"),
+    emailLigue: str(row, "email_ligue"),
     presidentId: str(row, "id_president_ligue"),
     presidentNom: str(row, "nom_president_ligue"),
     presidentTelephone: str(row, "telephone_president_ligue"),

@@ -3,12 +3,30 @@ import { Header } from "@/components/dashboard/header"
 import { EntentesStats } from "@/components/ententes/ententes-stats"
 import { EntentesClient } from "@/components/ententes/ententes-client"
 
-import { getEntentes } from "@/lib/data"
+import { getAthletes, getClubs, getEntentes } from "@/lib/data"
+import type { Athlete, Club, Entente } from "@/lib/types"
 
 export const runtime = "nodejs"
 
+function belongsToEntente(item: Pick<Club | Athlete, "ententeId" | "ententeNom">, entente: Entente) {
+  return Boolean(
+    (item.ententeId && item.ententeId === entente.id) ||
+      (item.ententeNom && item.ententeNom === entente.nom),
+  )
+}
+
 export default async function EntentesPage() {
-  const ententes = await getEntentes()
+  const [ententes, clubs, athletes] = await Promise.all([
+    getEntentes(),
+    getClubs(),
+    getAthletes(),
+  ])
+
+  const ententesWithCounts = ententes.map((entente) => ({
+    ...entente,
+    clubs: clubs.filter((club) => belongsToEntente(club, entente)).length,
+    athletes: athletes.filter((athlete) => belongsToEntente(athlete, entente)).length,
+  }))
 
   return (
     <DashboardLayout>
@@ -19,9 +37,9 @@ export default async function EntentesPage() {
 
       <div className="p-6 space-y-6">
         {/* Statistiques */}
-        <EntentesStats ententes={ententes} />
+        <EntentesStats ententes={ententesWithCounts} />
 
-        <EntentesClient ententes={ententes} />
+        <EntentesClient ententes={ententesWithCounts} />
       </div>
     </DashboardLayout>
   )
