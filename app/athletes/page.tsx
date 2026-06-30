@@ -1,12 +1,12 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { AthletesClient } from "@/components/athletes/athletes-client"
-import { getAthletes } from "@/lib/data"
+import { getAthletes, getTransferts } from "@/lib/data"
 
 export const runtime = "nodejs"
 
 export default async function AthletesPage() {
-  const athletes = await getAthletes()
+  const [athletes, transferts] = await Promise.all([getAthletes(), getTransferts()])
 
   return (
     <DashboardLayout>
@@ -16,7 +16,7 @@ export default async function AthletesPage() {
           subtitle="Gérez les athlètes inscrits à la FEVOCO"
         />
 
-        <AthletesClient athletes={athletes} />
+        <AthletesClient athletes={athletes} transferts={transferts} />
       </div>
     </DashboardLayout>
   )

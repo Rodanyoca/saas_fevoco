@@ -24,6 +24,7 @@ export interface Ligue {
   nom: string
   provinceId: string
   provinceNom: string
+  emailLigue: string
   presidentId: string
   presidentNom: string
   presidentTelephone: string
@@ -48,6 +49,9 @@ export interface Entente {
   ligueNom: string
   provinceId: string
   provinceNom: string
+  personneContactId: string
+  personneContactNom: string
+  personneContactTelephone: string
   presidentId: string
   presidentNom: string
   presidentTelephone: string
@@ -75,6 +79,8 @@ export interface Club {
   pseudoEntente: string
   version: string
   dateAffiliation: string
+  personneContactNom: string
+  personneContactTelephone: string
   presidentId: string
   presidentNom: string
   presidentTelephone: string
@@ -82,9 +88,8 @@ export interface Club {
   adresse: string
   statut: Statut
 
-  // Optional computed/legacy fields (not present in the CLUBS sheet today)
+  // Optional computed fields
   athletes?: number
-  genre?: string
 }
 
 export interface Athlete {
@@ -103,13 +108,14 @@ export interface Athlete {
   ententeNom: string
   clubId: string
   clubNom: string
-  poste: string
+  disciplineActive: string
+  posteIndoor: string
+  posteBeach: string
   numero: string
   taille: number | null
   poids: number | null
   telephone: string
   email: string
-  estCapitaine: boolean | null
   selectionNationale: boolean | null
   statut: Statut
 }
@@ -123,20 +129,20 @@ export interface Coach {
   nationalite: string
   telephone: string
   email: string
-  provinceId: string
-  provinceNom: string
-  ligueId: string
-  ligueNom: string
-  ententeId: string
-  ententeNom: string
-  clubId: string
-  clubNom: string
-  equipeId: string
-  equipeNom: string
   niveau: string
   specialisation: string
-  diplome: string
   dateAffiliation: string
+  statut: Statut
+}
+
+export interface CoachAffiliation {
+  id: string
+  coachId: string
+  role: string
+  equipeId: string
+  equipeNom: string
+  dateDebut: string
+  dateFin: string
   statut: Statut
 }
 
@@ -159,6 +165,7 @@ export interface Officiel {
   email: string
   dateNomination: string
   dateFinMandat: string
+  equipeFederal: string
   statut: Statut
 }
 
@@ -178,11 +185,28 @@ export interface Medecin {
   ligueNom: string
   ententeId: string
   ententeNom: string
+  pseudoEntente: string
   clubId: string
   clubNom: string
   equipeId: string
   equipeNom: string
   dateAffiliation: string
+  statut: Statut
+  affiliations: MedecinAffiliation[]
+}
+
+export interface MedecinAffiliation {
+  medecinId: string
+  medecinNom: string
+  ligueId: string
+  ligueNom: string
+  ententeId: string
+  ententeNom: string
+  pseudoEntente: string
+  clubId: string
+  clubNom: string
+  dateDebut: string
+  dateFin: string
   statut: Statut
 }
 
@@ -201,6 +225,97 @@ export interface Arbitre {
   telephone: string
   email: string
   dateHomologation: string
+  equipeNational: string
   experience: string
   statut: Statut
+}
+
+export type CompetitionDiscipline = "INDOOR" | "BEACH" | string
+
+export interface Competition {
+  id: string
+  nomCompetition: string
+  dateDebut: string
+  dateFin: string
+  discipline: CompetitionDiscipline
+  lieu: string
+  niveau: string
+  statut: Statut
+  suiviCno: string
+}
+
+export interface CompetitionParticipant {
+  idParticipation: string
+  idCompetition: string
+  nomCompetition: string
+  discipline: CompetitionDiscipline
+  typeParticipant: string
+  idClub: string
+  nomClub: string
+  poule: string
+  idAthlete: string
+  nomAthlete: string
+  statutParticipation: string
+  exportCoc: string
+}
+
+export interface CompetitionUnite {
+  idUnite: string
+  nomUnite: string
+  idCompetition: string
+  nomCompetition: string
+  discipline: CompetitionDiscipline
+  typeUnite: string
+  poule: string
+  idClub: string
+  nomClub: string
+  idAthleteA: string
+  nomAthleteA: string
+  idAthleteB: string
+  nomAthleteB: string
+}
+
+export interface CompetitionResult {
+  idResultat: string
+  idCompetition: string
+  nomCompetition: string
+  discipline: CompetitionDiscipline
+  dateMatch: string
+  phase: string
+  poule: string
+  idUniteA: string
+  nomUniteA: string
+  idUniteB: string
+  nomUniteB: string
+  scoreGlobal: string
+  set1A: number | null
+  set1B: number | null
+  set2A: number | null
+  set2B: number | null
+  set3A: number | null
+  set3B: number | null
+  set4A: number | null
+  set4B: number | null
+  set5A: number | null
+  set5B: number | null
+  totalPointA: number | null
+  totalPointB: number | null
+  idUniteVainqueur: string
+  statutMatch: string
+}
+
+export interface Transfert {
+  id: string
+  athleteId: string
+  athleteNom: string
+  clubOrigineId: string
+  clubOrigineNom: string
+  clubBeneficiaireId: string
+  clubBeneficiaireNom: string
+  typeTransfert: string
+  duree: string
+  statut: Statut
+  dateValidation: string
+  dateDebut: string
+  dateFin: string
 }

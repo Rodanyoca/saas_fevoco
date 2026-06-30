@@ -1,0 +1,32 @@
+import type { SheetRow } from "@/lib/google-sheets"
+import type { CompetitionUnite } from "@/lib/types"
+
+function str(row: SheetRow, key: string): string {
+  const v = row[key]
+  return v === null || v === undefined ? "" : String(v).trim()
+}
+
+function normalizeDiscipline(raw: string): string {
+  const v = raw.trim().toUpperCase()
+  if (v === "INDOOR") return "INDOOR"
+  if (v === "BEACH") return "BEACH"
+  return raw.trim()
+}
+
+export function mapCompetitionUniteRow(row: SheetRow): CompetitionUnite {
+  return {
+    idUnite: str(row, "id_unite"),
+    nomUnite: str(row, "nom_unite"),
+    idCompetition: str(row, "id_competition"),
+    nomCompetition: str(row, "nom_competition"),
+    discipline: normalizeDiscipline(str(row, "discipline")),
+    typeUnite: str(row, "type_unite"),
+    poule: str(row, "poule"),
+    idClub: str(row, "id_club"),
+    nomClub: str(row, "nom_club"),
+    idAthleteA: str(row, "id_athlete_a"),
+    nomAthleteA: str(row, "nom_athlete_a"),
+    idAthleteB: str(row, "id_athlete_b"),
+    nomAthleteB: str(row, "nom_athlete_b"),
+  }
+}

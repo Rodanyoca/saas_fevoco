@@ -1,0 +1,80 @@
+"use client"
+
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import type { Transfert } from "@/lib/types"
+import { Search } from "lucide-react"
+
+export function TransfertsFilters({
+  transferts,
+  search,
+  statut,
+  type,
+  onSearchChange,
+  onStatutChange,
+  onTypeChange,
+}: {
+  transferts: Transfert[]
+  search: string
+  statut: string
+  type: string
+  onSearchChange: (value: string) => void
+  onStatutChange: (value: string) => void
+  onTypeChange: (value: string) => void
+}) {
+  const statuts = Array.from(new Set(transferts.map((transfert) => transfert.statut).filter(Boolean))).sort()
+  const types = Array.from(new Set(transferts.map((transfert) => transfert.typeTransfert).filter(Boolean))).sort()
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex flex-col gap-3 lg:flex-row">
+          <div className="relative min-w-[220px] flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un transfert..."
+              className="pl-9"
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
+            />
+          </div>
+
+          <Select value={type} onValueChange={onTypeChange}>
+            <SelectTrigger className="w-full lg:w-[190px]">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les types</SelectItem>
+              {types.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {value}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={statut} onValueChange={onStatutChange}>
+            <SelectTrigger className="w-full lg:w-[190px]">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              {statuts.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {value}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

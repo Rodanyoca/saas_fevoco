@@ -3,10 +3,10 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
+import type { ElementType } from "react"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
-  MapPin,
   Building2,
   Users,
   UserCheck,
@@ -14,35 +14,83 @@ import {
   Shield,
   Stethoscope,
   ClipboardCheck,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Network,
+  Trophy,
   UserCog,
+  ArrowRightLeft,
 } from "lucide-react"
 import { useState } from "react"
 
-const navigation = [
+const mainNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Provinces", href: "/provinces", icon: MapPin },
-  { name: "Ligues", href: "/ligues", icon: Building2 },
-  { name: "Ententes", href: "/ententes", icon: Network },
-  { name: "Clubs", href: "/clubs", icon: Shield },
-  { name: "Athletes", href: "/athletes", icon: Users },
-  { name: "Coachs", href: "/coachs", icon: UserCheck },
-  { name: "Arbitres", href: "/arbitres", icon: Flag },
-  { name: "Medecins", href: "/medecins", icon: Stethoscope },
-  { name: "Officiels", href: "/officiels", icon: UserCog },
+]
+
+const groupedNavigation = [
+  {
+    name: "Structure territoriale",
+    icon: Building2,
+    items: [
+      { name: "Ligues", href: "/ligues", icon: Building2 },
+      { name: "Ententes", href: "/ententes", icon: Network },
+      { name: "Clubs", href: "/clubs", icon: Shield },
+    ],
+  },
+  {
+    name: "Acteurs",
+    icon: Users,
+    items: [
+      { name: "Athletes", href: "/athletes", icon: Users },
+      { name: "Coachs", href: "/coachs", icon: UserCheck },
+      { name: "Medecins", href: "/medecins", icon: Stethoscope },
+      { name: "Arbitres", href: "/arbitres", icon: Flag },
+      { name: "Officiels", href: "/officiels", icon: UserCog },
+    ],
+  },
+]
+
+const secondaryNavigation = [
+  { name: "Competitions", href: "/competitions", icon: Trophy },
+  { name: "Transferts", href: "/transferts", icon: ArrowRightLeft },
   { name: "Qualite donnees", href: "/qualite", icon: ClipboardCheck },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    "Structure territoriale": true,
+    Acteurs: true,
+  })
+
+  const renderLink = (item: { name: string; href: string; icon: ElementType }, nested = false) => {
+    const isActive = pathname === item.href
+
+    return (
+      <Link
+        key={item.name}
+        href={item.href}
+        className={cn(
+          "flex items-center gap-3 rounded-md text-sm font-medium transition-colors",
+          nested && !collapsed ? "px-3 py-2 pl-9" : "px-3 py-2.5",
+          isActive
+            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        )}
+        title={collapsed ? item.name : undefined}
+      >
+        <item.icon className="h-5 w-5 flex-shrink-0" />
+        {!collapsed && <span>{item.name}</span>}
+      </Link>
+    )
+  }
 
   return (
     <aside
       className={cn(
-        "flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300",
+        "flex h-screen flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -67,25 +115,65 @@ export function Sidebar() {
 
       {/* Navigation principale */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href
+        {mainNavigation.map((item) => renderLink(item))}
+
+        {groupedNavigation.map((group) => {
+          const isGroupActive = group.items.some((item) => pathname === item.href)
+          const isOpen = openGroups[group.name] || isGroupActive
+
+          if (collapsed) {
+            return (
+              <div key={group.name} className="space-y-1">
+                {group.items.map((item) => renderLink(item))}
+              </div>
+            )
+          }
+
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            <div key={group.name} className="space-y-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!collapsed) {
+                    setOpenGroups((current) => ({
+                      ...current,
+                      [group.name]: !current[group.name],
+                    }))
+                  }
+                }}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                  isGroupActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+                title={collapsed ? group.name : undefined}
+                aria-expanded={isOpen}
+              >
+                <group.icon className="h-5 w-5 flex-shrink-0" />
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 text-left">{group.name}</span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 flex-shrink-0 transition-transform",
+                        isOpen ? "rotate-180" : "rotate-0"
+                      )}
+                    />
+                  </>
+                )}
+              </button>
+
+              {!collapsed && isOpen && (
+                <div className="space-y-1">
+                  {group.items.map((item) => renderLink(item, true))}
+                </div>
               )}
-              title={collapsed ? item.name : undefined}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>{item.name}</span>}
-            </Link>
+            </div>
           )
         })}
+
+        {secondaryNavigation.map((item) => renderLink(item))}
       </nav>
 
       {/* Footer - Signature DS Concept */}

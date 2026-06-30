@@ -6,6 +6,14 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
   ArrowLeft,
   Edit,
   Mail,
@@ -18,14 +26,19 @@ import {
   FileText,
   Activity,
 } from "lucide-react"
-import type { Athlete } from "@/lib/types"
+import type { Athlete, Transfert } from "@/lib/types"
+import { calculateAgeFromSheetDate, formatSheetDate } from "@/lib/date-utils"
 
 interface AthleteDetailProps {
   athlete: Athlete
+  transferts: Transfert[]
   onBack: () => void
 }
 
-export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
+export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProps) {
+  const age = calculateAgeFromSheetDate(athlete.dateNaissance)
+  const athleteTransferts = transferts.filter((transfert) => transfert.athleteId === athlete.id)
+
   const getInitials = (nomComplet: string) => {
     const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
     if (parts.length === 0) return "A"
@@ -33,185 +46,185 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
     return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
   }
 
-  const calculateAge = (dateNaissance: string) => {
-    const today = new Date()
-    const birthDate = new Date(dateNaissance)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const m = today.getMonth() - birthDate.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    return age
-  }
-
   const formatAthleteId = (id: string) => {
     const numeric = id.replace(/\D/g, "")
-    return numeric.padStart(10, "0")
+    return numeric ? numeric.padStart(10, "0") : id || "-"
   }
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
+  const formatGender = (genre: string) => {
+    if (genre === "M") return "Masculin"
+    if (genre === "F") return "Féminin"
+    return genre || "-"
   }
+
+  const formatBoolean = (value: boolean | null) => {
+    if (value === true) return "Oui"
+    if (value === false) return "Non"
+    return "-"
+  }
+
+  const formatNumber = (value: number | null, suffix: string) => (
+    value !== null ? `${value} ${suffix}` : "-"
+  )
+
+  const infoRow = (label: string, value: string | number | null | undefined) => (
+    <div className="grid gap-1 text-sm md:grid-cols-[10.5rem_minmax(0,1fr)] md:items-start">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-words font-medium text-foreground md:text-right">
+        {value !== null && value !== undefined && value !== "" ? value : "-"}
+      </span>
+    </div>
+  )
 
   const getStatusBadge = (statut: string) => {
     switch (statut) {
       case "actif":
+      case "active":
         return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Actif</Badge>
       case "inactif":
+      case "inactive":
         return <Badge variant="secondary">Inactif</Badge>
       case "blesse":
+      case "blessé":
         return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">Blessé</Badge>
       default:
-        return <Badge variant="outline">{statut}</Badge>
+        return <Badge variant="outline">{statut || "-"}</Badge>
     }
   }
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold text-foreground">
               {athlete.nomComplet}
             </h1>
-            <p className="text-muted-foreground">{athlete.poste} - {athlete.clubNom}</p>
+            <p className="truncate text-muted-foreground">{athlete.disciplineActive || "-"} - {athlete.clubNom || "-"}</p>
           </div>
         </div>
-        <Button>
-          <Edit className="h-4 w-4 mr-2" />
+        <Button className="self-start sm:self-auto">
+          <Edit className="mr-2 h-4 w-4" />
           Modifier
         </Button>
       </div>
 
-      {/* Profile Card */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
+      <div className="grid gap-6 xl:grid-cols-[19rem_minmax(0,1fr)]">
+        <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center">
-              <Avatar className="h-24 w-24 mb-4">
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+            <div className="flex min-w-0 flex-col items-center text-center">
+              <Avatar className="mb-4 h-24 w-24">
+                <AvatarFallback className="bg-primary/10 text-2xl text-primary">
                   {getInitials(athlete.nomComplet)}
                 </AvatarFallback>
               </Avatar>
-              <h2 className="text-xl font-semibold">{athlete.nomComplet}</h2>
-              <p className="text-muted-foreground">{athlete.poste}</p>
-              <p className="text-xs text-muted-foreground font-mono mt-1">{formatAthleteId(athlete.id)}</p>
-              <div className="flex items-center gap-2 mt-3">
+              <h2 className="w-full break-words text-xl font-semibold">{athlete.nomComplet}</h2>
+              <p className="text-muted-foreground">{athlete.disciplineActive || "-"}</p>
+              <p className="mt-1 font-mono text-xs text-muted-foreground">{formatAthleteId(athlete.id)}</p>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 {getStatusBadge(athlete.statut)}
                 {athlete.selectionNationale === true && (
                   <Badge className="bg-accent text-accent-foreground">
-                    <Award className="h-3 w-3 mr-1" />
-                    Sélection Nationale
+                    <Award className="mr-1 h-3 w-3" />
+                    Sélection nationale
                   </Badge>
                 )}
               </div>
-              
-              <div className="w-full mt-6 space-y-3">
-                <div className="flex items-center gap-3 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{athlete.email}</span>
+
+              <div className="mt-6 w-full space-y-3">
+                <div className="flex min-w-0 items-start gap-3 text-sm">
+                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 break-words text-left">{athlete.email || "-"}</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{athlete.telephone}</span>
+                <div className="flex min-w-0 items-start gap-3 text-sm">
+                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 break-words text-left">{athlete.telephone || "-"}</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>{athlete.adresse}</span>
+                <div className="flex min-w-0 items-start gap-3 text-sm">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 break-words text-left">{athlete.adresse || "-"}</span>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="lg:col-span-2">
+        <div className="min-w-0">
           <Tabs defaultValue="infos" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="infos">Informations</TabsTrigger>
               <TabsTrigger value="stats">Statistiques</TabsTrigger>
               <TabsTrigger value="historique">Historique</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="infos" className="mt-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
                       <User className="h-4 w-4" />
-                      Informations Personnelles
+                      Identité
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Genre</span>
-                      <span className="font-medium">{athlete.genre === "M" ? "Masculin" : "Féminin"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Date de naissance</span>
-                      <span className="font-medium">{formatDate(athlete.dateNaissance)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Age</span>
-                      <span className="font-medium">{calculateAge(athlete.dateNaissance)} ans</span>
-                    </div>
+                    {infoRow("ID athlète", athlete.id)}
+                    {infoRow("Nom complet", athlete.nomComplet)}
+                    {infoRow("Date de naissance", formatSheetDate(athlete.dateNaissance))}
+                    {infoRow("Lieu de naissance", athlete.lieuNaissance)}
+                    {infoRow("Âge", age !== null ? `${age} ans` : "-")}
+                    {infoRow("Genre", formatGender(athlete.genre))}
+                    {infoRow("Nationalité", athlete.nationalite)}
+                    {infoRow("Statut", athlete.statut)}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Ruler className="h-4 w-4" />
-                      Caractéristiques Physiques
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <MapPin className="h-4 w-4" />
+                      Contact et adresse
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Taille</span>
-                      <span className="font-medium">{athlete.taille !== null ? `${athlete.taille} cm` : "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Poids</span>
-                      <span className="font-medium">{athlete.poids !== null ? `${athlete.poids} kg` : "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">IMC</span>
-                      <span className="font-medium">
-                        {athlete.taille !== null && athlete.taille > 0 && athlete.poids !== null
-                          ? (athlete.poids / Math.pow(athlete.taille / 100, 2)).toFixed(1)
-                          : "—"}
-                      </span>
-                    </div>
+                    {infoRow("Téléphone", athlete.telephone)}
+                    {infoRow("Email", athlete.email)}
+                    {infoRow("Adresse", athlete.adresse)}
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="lg:col-span-2">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
                       <Building2 className="h-4 w-4" />
                       Affiliation
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Club</span>
-                      <span className="font-medium">{athlete.clubNom}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Ligue</span>
-                      <span className="font-medium">{athlete.ligueNom}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Entente</span>
-                      <span className="font-medium">{athlete.ententeNom}</span>
-                    </div>
+                    {infoRow("Province", athlete.provinceNom)}
+                    {infoRow("Ligue", athlete.ligueNom)}
+                    {infoRow("Entente", athlete.ententeNom)}
+                    {infoRow("Club", athlete.clubNom)}
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-2">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Ruler className="h-4 w-4" />
+                      Profil sportif
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-3 lg:grid-cols-2">
+                    {infoRow("Discipline active", athlete.disciplineActive)}
+                    {infoRow("Poste indoor", athlete.posteIndoor)}
+                    {infoRow("Poste beach", athlete.posteBeach)}
+                    {infoRow("Numéro", athlete.numero)}
+                    {infoRow("Taille", formatNumber(athlete.taille, "cm"))}
+                    {infoRow("Poids", formatNumber(athlete.poids, "kg"))}
+                    {infoRow("Sélection nationale", formatBoolean(athlete.selectionNationale))}
                   </CardContent>
                 </Card>
               </div>
@@ -220,14 +233,14 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
             <TabsContent value="stats" className="mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <Activity className="h-4 w-4" />
-                    Statistiques de Performance
+                    Statistiques de performance
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center text-muted-foreground text-sm py-10">
-                    Coming soon
+                  <div className="py-10 text-center text-sm text-muted-foreground">
+                    Statistiques bientot disponibles.
                   </div>
                 </CardContent>
               </Card>
@@ -236,14 +249,45 @@ export function AthleteDetail({ athlete, onBack }: AthleteDetailProps) {
             <TabsContent value="historique" className="mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <FileText className="h-4 w-4" />
-                    Historique des Activités
+                    Historique des activités
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center text-muted-foreground text-sm py-10">
-                    Coming soon
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Periode</TableHead>
+                          <TableHead>Club beneficiaire</TableHead>
+                          <TableHead>ID club beneficiaire</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {athleteTransferts.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="h-24 text-center text-sm text-muted-foreground">
+                              Aucun transfert disponible.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          athleteTransferts.map((transfert) => (
+                            <TableRow key={transfert.id}>
+                              <TableCell className="whitespace-nowrap text-muted-foreground">
+                                {formatSheetDate(transfert.dateDebut)} - {formatSheetDate(transfert.dateFin)}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {transfert.clubBeneficiaireNom || "-"}
+                              </TableCell>
+                              <TableCell className="font-mono text-muted-foreground">
+                                {transfert.clubBeneficiaireId || "-"}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
                 </CardContent>
               </Card>
