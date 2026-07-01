@@ -15,11 +15,11 @@ import type { Officiel } from "@/lib/types"
 interface OfficielsFiltersProps {
   officiels: Officiel[]
   search: string
-  province: string
+  entite: string
   fonction: string
   statut: string
   onSearchChange: (value: string) => void
-  onProvinceChange: (value: string) => void
+  onEntiteChange: (value: string) => void
   onFonctionChange: (value: string) => void
   onStatutChange: (value: string) => void
 }
@@ -27,16 +27,16 @@ interface OfficielsFiltersProps {
 export function OfficielsFilters({
   officiels,
   search,
-  province,
+  entite,
   fonction,
   statut,
   onSearchChange,
-  onProvinceChange,
+  onEntiteChange,
   onFonctionChange,
   onStatutChange,
 }: OfficielsFiltersProps) {
-  const provinceOptions = Array.from(
-    new Set(officiels.map((officiel) => officiel.provinceNom).filter(Boolean))
+  const entiteOptions = Array.from(
+    new Set(officiels.map((officiel) => officiel.entite).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b))
 
   const fonctionOptions = Array.from(
@@ -57,15 +57,15 @@ export function OfficielsFilters({
             />
           </div>
 
-          <Select value={province} onValueChange={onProvinceChange}>
+          <Select value={entite} onValueChange={onEntiteChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Province" />
+              <SelectValue placeholder="Entite" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les provinces</SelectItem>
-              {provinceOptions.map((provinceNom) => (
-                <SelectItem key={provinceNom} value={provinceNom}>
-                  {provinceNom}
+              <SelectItem value="all">Toutes les entites</SelectItem>
+              {entiteOptions.map((entiteNom) => (
+                <SelectItem key={entiteNom} value={entiteNom}>
+                  {entiteNom}
                 </SelectItem>
               ))}
             </SelectContent>

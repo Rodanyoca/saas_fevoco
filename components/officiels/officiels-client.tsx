@@ -10,7 +10,7 @@ import { OfficielDetail } from "@/components/officiels/officiel-detail"
 export function OfficielsClient({ officiels }: { officiels: Officiel[] }) {
   const [selectedOfficiel, setSelectedOfficiel] = useState<Officiel | null>(null)
   const [search, setSearch] = useState("")
-  const [province, setProvince] = useState("all")
+  const [entite, setEntite] = useState("all")
   const [fonction, setFonction] = useState("all")
   const [statut, setStatut] = useState("all")
 
@@ -18,7 +18,7 @@ export function OfficielsClient({ officiels }: { officiels: Officiel[] }) {
     const term = search.trim().toLowerCase()
 
     return officiels.filter((officiel) => {
-      if (province !== "all" && officiel.provinceNom !== province) return false
+      if (entite !== "all" && officiel.entite !== entite) return false
       if (fonction !== "all" && officiel.fonction !== fonction) return false
       if (statut !== "all" && officiel.statut !== statut) return false
 
@@ -28,11 +28,9 @@ export function OfficielsClient({ officiels }: { officiels: Officiel[] }) {
           officiel.nomComplet,
           officiel.genre,
           officiel.fonction,
-          officiel.niveau,
-          officiel.provinceNom,
-          officiel.ententeNom,
-          officiel.clubNom,
+          officiel.entite,
           officiel.equipeFederal,
+          officiel.adresse,
           officiel.telephone,
           officiel.email,
           officiel.statut,
@@ -45,7 +43,7 @@ export function OfficielsClient({ officiels }: { officiels: Officiel[] }) {
 
       return true
     })
-  }, [fonction, officiels, province, search, statut])
+  }, [entite, fonction, officiels, search, statut])
 
   return (
     <div className="space-y-6">
@@ -57,11 +55,11 @@ export function OfficielsClient({ officiels }: { officiels: Officiel[] }) {
           <OfficielsFilters
             officiels={officiels}
             search={search}
-            province={province}
+            entite={entite}
             fonction={fonction}
             statut={statut}
             onSearchChange={setSearch}
-            onProvinceChange={setProvince}
+            onEntiteChange={setEntite}
             onFonctionChange={setFonction}
             onStatutChange={setStatut}
           />

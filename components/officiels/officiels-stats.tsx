@@ -10,7 +10,7 @@ export function OfficielsStats({ officiels }: { officiels: Officiel[] }) {
   const fonctionsUniques = new Set(officiels.map((officiel) => officiel.fonction).filter(Boolean)).size
   const entitesFederales = new Set(
     officiels
-      .map((officiel) => officiel.equipeFederal || officiel.clubNom || officiel.ententeNom || officiel.provinceNom)
+      .map((officiel) => officiel.equipeFederal || officiel.entite)
       .filter(Boolean)
   ).size
 

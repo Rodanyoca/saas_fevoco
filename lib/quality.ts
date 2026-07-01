@@ -94,7 +94,7 @@ export function createQualityStats(data: {
     buildQualityStat("Coachs", data.coachs, ["id", "nomComplet", "dateNaissance", "genre", "telephone", "email", "niveau", "specialisation", "statut"]),
     buildQualityStat("Arbitres", data.arbitres, ["id", "nomComplet", "dateNaissance", "genre", "grade", "ligueId", "ligueNom", "statut"]),
     buildQualityStat("Medecins", data.medecins, ["id", "nomComplet", "dateNaissance", "genre", "specialite", "niveau", "telephone", "email", "statut"]),
-    buildQualityStat("Officiels", data.officiels, ["id", "nomComplet", "dateNaissance", "genre", "fonction", "niveau", "provinceId", "provinceNom", "statut"]),
+    buildQualityStat("Officiels", data.officiels, ["id", "nomComplet", "dateNaissance", "genre", "telephone", "email", "fonction", "entite", "statut"]),
     buildQualityStat("Competitions", data.competitions ?? [], [
       "id",
       "nomCompetition",

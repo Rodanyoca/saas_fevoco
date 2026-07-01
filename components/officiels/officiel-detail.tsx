@@ -27,7 +27,6 @@ interface OfficielDetailProps {
 export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
   const age = calculateAgeFromSheetDate(officiel.dateNaissance)
   const mandatDuration = calculateDuration(officiel.dateNomination, officiel.dateFinMandat)
-  const federalEntity = getFederalEntity(officiel)
 
   const getInitials = (nomComplet: string) => {
     const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
@@ -43,7 +42,7 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
       case "inactif":
         return <Badge variant="secondary">Inactif</Badge>
       default:
-        return <Badge variant="outline">{statut || "Non défini"}</Badge>
+        return <Badge variant="outline">{statut || "Non defini"}</Badge>
     }
   }
 
@@ -78,18 +77,19 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
 
               <div className="mt-4 min-w-0">
                 <h2 className="text-xl font-semibold text-foreground">{officiel.nomComplet}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{officiel.fonction || "Fonction non définie"}</p>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">{officiel.id || "-"}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{officiel.fonction || "Fonction non definie"}</p>
               </div>
 
               <div className="mt-3 flex flex-wrap justify-center gap-2">
                 {getStatutBadge(officiel.statut)}
-                {officiel.niveau ? <Badge variant="outline">{officiel.niveau}</Badge> : null}
+                {officiel.entite ? <Badge variant="outline">{officiel.entite}</Badge> : null}
               </div>
             </div>
 
             <div className="mt-6 grid grid-cols-3 gap-2 text-center">
-              <MiniStat label="Âge" value={age !== null ? age : "-"} />
-              <MiniStat label="Niveau" value={officiel.niveau || "-"} />
+              <MiniStat label="Age" value={age !== null ? age : "-"} />
+              <MiniStat label="Entite" value={officiel.entite || "-"} />
               <MiniStat label="Mandat" value={mandatDuration} />
             </div>
 
@@ -97,7 +97,8 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
               <ContactLine icon={Phone} value={officiel.telephone || "-"} />
               <ContactLine icon={Mail} value={officiel.email || "-"} />
               <ContactLine icon={Briefcase} value={officiel.fonction || "-"} />
-              <ContactLine icon={Building2} value={federalEntity} />
+              <ContactLine icon={Building2} value={officiel.equipeFederal || officiel.entite || "-"} />
+              <ContactLine icon={MapPin} value={officiel.adresse || "-"} />
             </div>
           </CardContent>
         </Card>
@@ -115,14 +116,14 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <User className="h-4 w-4" />
-                      Identité
+                      Identite
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {infoRow("ID officiel", officiel.id)}
                     {infoRow("Nom complet", officiel.nomComplet)}
                     {infoRow("Date de naissance", formatSheetDate(officiel.dateNaissance))}
-                    {infoRow("Âge", age !== null ? `${age} ans` : "-")}
+                    {infoRow("Age", age !== null ? `${age} ans` : "-")}
                     {infoRow("Genre", formatGender(officiel.genre))}
                     {infoRow("Statut", officiel.statut)}
                   </CardContent>
@@ -136,8 +137,9 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {infoRow("Téléphone", officiel.telephone)}
+                    {infoRow("Telephone", officiel.telephone)}
                     {infoRow("Email", officiel.email)}
+                    {infoRow("Adresse", officiel.adresse)}
                   </CardContent>
                 </Card>
               </div>
@@ -154,10 +156,11 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {infoRow("Fonction", officiel.fonction)}
-                    {infoRow("Niveau", officiel.niveau)}
+                    {infoRow("Entite", officiel.entite)}
+                    {infoRow("Equipe federale", officiel.equipeFederal)}
                     {infoRow("Date nomination", formatSheetDate(officiel.dateNomination))}
                     {infoRow("Fin de mandat", officiel.dateFinMandat ? formatSheetDate(officiel.dateFinMandat) : "En cours")}
-                    {infoRow("Durée", mandatDuration)}
+                    {infoRow("Duree", mandatDuration)}
                   </CardContent>
                 </Card>
 
@@ -165,14 +168,13 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <MapPin className="h-4 w-4" />
-                      Entité membre fédérale
+                      Rattachement
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {infoRow("Entité fédérale", federalEntity)}
-                    {infoRow("Province", officiel.provinceNom)}
-                    {infoRow("Entente", officiel.ententeNom)}
-                    {infoRow("Club", officiel.clubNom)}
+                    {infoRow("Entite", officiel.entite)}
+                    {infoRow("Equipe federale", officiel.equipeFederal)}
+                    {infoRow("Adresse", officiel.adresse)}
                   </CardContent>
                 </Card>
               </div>
@@ -182,10 +184,6 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
       </div>
     </div>
   )
-}
-
-function getFederalEntity(officiel: Officiel) {
-  return officiel.equipeFederal || officiel.clubNom || officiel.ententeNom || officiel.provinceNom || "-"
 }
 
 function calculateDuration(dateDebut: string, dateFin: string) {
@@ -213,7 +211,7 @@ function calculateDuration(dateDebut: string, dateFin: string) {
 
 function formatGender(genre: string) {
   if (genre === "M") return "Masculin"
-  if (genre === "F") return "Féminin"
+  if (genre === "F") return "Feminin"
   return genre || "-"
 }
 

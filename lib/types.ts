@@ -154,18 +154,11 @@ export interface Officiel {
   nomComplet: string
   dateNaissance: string
   genre: string
-  fonction: string
-  niveau: string
-  provinceId: string
-  provinceNom: string
-  ligueId: string
-  ligueNom: string
-  ententeId: string
-  ententeNom: string
-  clubId: string
-  clubNom: string
   telephone: string
   email: string
+  adresse: string
+  fonction: string
+  entite: string
   dateNomination: string
   dateFinMandat: string
   equipeFederal: string
