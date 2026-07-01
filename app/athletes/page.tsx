@@ -4,6 +4,7 @@ import { AthletesClient } from "@/components/athletes/athletes-client"
 import { getAthletes, getTransferts } from "@/lib/data"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export default async function AthletesPage() {
   const [athletes, transferts] = await Promise.all([getAthletes(), getTransferts()])

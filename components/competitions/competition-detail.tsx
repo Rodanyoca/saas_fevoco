@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { Competition, CompetitionParticipant, CompetitionResult, CompetitionUnite } from "@/lib/types"
+import type { Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite } from "@/lib/types"
 import {
   ArrowLeft,
   CalendarDays,
@@ -102,6 +102,7 @@ type RankingRow = {
   setsAgainst: number
   pointsFor: number
   pointsAgainst: number
+  pointsClassement: number
 }
 
 const setKeys = [
@@ -233,6 +234,7 @@ function buildRanking(
       setsAgainst: 0,
       pointsFor: 0,
       pointsAgainst: 0,
+      pointsClassement: 0,
     }
 
     rows.set(rowId, row)
@@ -269,17 +271,24 @@ function buildRanking(
     rowB.played += 1
 
     if (winner === "A") {
+      const closeMatch = stats.setsB > 0 && stats.setsA - stats.setsB === 1
       rowA.won += 1
       rowB.lost += 1
+      rowA.pointsClassement += result.pointsClassementA ?? (closeMatch ? 2 : 3)
+      rowB.pointsClassement += result.pointsClassementB ?? (closeMatch ? 1 : 0)
     } else {
+      const closeMatch = stats.setsA > 0 && stats.setsB - stats.setsA === 1
       rowB.won += 1
       rowA.lost += 1
+      rowB.pointsClassement += result.pointsClassementB ?? (closeMatch ? 2 : 3)
+      rowA.pointsClassement += result.pointsClassementA ?? (closeMatch ? 1 : 0)
     }
   })
 
   return Array.from(rows.values()).sort((a, b) => {
     const pouleOrder = a.poule.localeCompare(b.poule)
     if (pouleOrder !== 0) return pouleOrder
+    if (b.pointsClassement !== a.pointsClassement) return b.pointsClassement - a.pointsClassement
     if (b.won !== a.won) return b.won - a.won
     if (b.setsFor - b.setsAgainst !== a.setsFor - a.setsAgainst) {
       return b.setsFor - b.setsAgainst - (a.setsFor - a.setsAgainst)
@@ -296,12 +305,14 @@ export function CompetitionDetail({
   participants,
   unites,
   results,
+  classements,
   onBack,
 }: {
   competition: Competition
   participants: CompetitionParticipant[]
   unites: CompetitionUnite[]
   results: CompetitionResult[]
+  classements: CompetitionClassement[]
   onBack: () => void
 }) {
   const [rankingPoule, setRankingPoule] = useState("all")
@@ -357,6 +368,28 @@ export function CompetitionDetail({
     return true
   })
   const ranking = buildRanking(rankingUnites, rankingResults)
+  const sheetRanking = classements
+    .filter((row) => {
+      if (row.idCompetition !== competition.id) return false
+      if (rankingPoule !== "all" && row.poule !== rankingPoule) return false
+      if (rankingPhase !== "all" && row.phase !== rankingPhase) return false
+      return true
+    })
+    .sort((a, b) => {
+      const rankA = a.rang ?? Number.MAX_SAFE_INTEGER
+      const rankB = b.rang ?? Number.MAX_SAFE_INTEGER
+      if (rankA !== rankB) return rankA - rankB
+      if ((b.pointsClassement ?? 0) !== (a.pointsClassement ?? 0)) {
+        return (b.pointsClassement ?? 0) - (a.pointsClassement ?? 0)
+      }
+      if ((b.differenceSets ?? 0) !== (a.differenceSets ?? 0)) {
+        return (b.differenceSets ?? 0) - (a.differenceSets ?? 0)
+      }
+      if ((b.differencePoints ?? 0) !== (a.differencePoints ?? 0)) {
+        return (b.differencePoints ?? 0) - (a.differencePoints ?? 0)
+      }
+      return a.nomUnite.localeCompare(b.nomUnite)
+    })
   const unitLabel = indoor ? "Clubs engages" : "Paires engagees"
   const unitCount = competitionUnites.length
   const displayedParticipants = indoor ? competitionParticipants : competitionUnites
@@ -478,8 +511,8 @@ export function CompetitionDetail({
                         label="Aucun participant disponible."
                       />
                     ) : indoor ? (
-                      competitionParticipants.map((participant) => (
-                        <TableRow key={participant.idParticipation}>
+                      competitionParticipants.map((participant, index) => (
+                        <TableRow key={`${participant.idParticipation || "participant"}-${participant.idClub || participant.idAthlete || "sans-id"}-${index}`}>
                           <TableCell className="font-medium">
                             {participant.nomClub || getParticipantLabel(participant)}
                           </TableCell>
@@ -496,12 +529,12 @@ export function CompetitionDetail({
                         </TableRow>
                       ))
                     ) : (
-                      competitionUnites.map((unite) => {
+                      competitionUnites.map((unite, index) => {
                         const status = getBeachUnitStatus(unite, competitionParticipants)
                         const athletes = [unite.nomAthleteA, unite.nomAthleteB].filter(Boolean).join(" / ")
 
                         return (
-                          <TableRow key={unite.idUnite}>
+                          <TableRow key={`${unite.idUnite || "unite"}-${unite.nomUnite || "sans-nom"}-${index}`}>
                             <TableCell className="font-medium">
                               {athletes || "-"}
                             </TableCell>
@@ -540,9 +573,9 @@ export function CompetitionDetail({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {competitionResults.map((result) => (
+                  {competitionResults.map((result, index) => (
                     <div
-                      key={result.idResultat}
+                      key={`${result.idResultat || "resultat"}-${result.idUniteA || "a"}-${result.idUniteB || "b"}-${index}`}
                       className="grid gap-3 rounded-md border px-3 py-2.5 md:grid-cols-[minmax(7rem,0.75fr)_minmax(0,1.45fr)_minmax(12rem,0.8fr)] md:items-center"
                     >
                       <div className="flex min-w-0 flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground md:block md:space-y-0.5">
@@ -678,16 +711,33 @@ export function CompetitionDetail({
                       <TableHead className="text-center">J</TableHead>
                       <TableHead className="text-center">G</TableHead>
                       <TableHead className="text-center">P</TableHead>
-                      <TableHead className="text-center">Sets</TableHead>
                       <TableHead className="text-center">Points</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {ranking.length === 0 ? (
-                      <EmptyTableRow colSpan={8} label="Aucun classement disponible." />
+                    {sheetRanking.length > 0 ? (
+                      sheetRanking.map((row, index) => (
+                        <TableRow key={`${row.idClassement || "classement"}-${row.idResultat || "sans-resultat"}-${row.idUnite || "sans-unite"}-${index}`}>
+                          <TableCell className="text-center font-mono text-muted-foreground">
+                            {row.rang ?? index + 1}
+                          </TableCell>
+                          <TableCell className="font-medium">{row.nomUnite || row.idUnite}</TableCell>
+                          <TableCell>{row.poule || "-"}</TableCell>
+                          <TableCell className="text-center">1</TableCell>
+                          <TableCell className="text-center">
+                            {normalizeValue(row.resultatMatch).startsWith("v") ? 1 : 0}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {normalizeValue(row.resultatMatch).startsWith("d") ? 1 : 0}
+                          </TableCell>
+                          <TableCell className="text-center">{row.pointsClassement ?? 0}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : ranking.length === 0 ? (
+                      <EmptyTableRow colSpan={7} label="Aucun classement disponible." />
                     ) : (
                       ranking.map((row, index) => (
-                        <TableRow key={row.id}>
+                        <TableRow key={`${row.id || "ranking"}-${row.participant || "sans-participant"}-${index}`}>
                           <TableCell className="text-center font-mono text-muted-foreground">
                             {index + 1}
                           </TableCell>
@@ -696,12 +746,7 @@ export function CompetitionDetail({
                           <TableCell className="text-center">{row.played}</TableCell>
                           <TableCell className="text-center">{row.won}</TableCell>
                           <TableCell className="text-center">{row.lost}</TableCell>
-                          <TableCell className="text-center">
-                            {row.setsFor}-{row.setsAgainst}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {row.pointsFor}
-                          </TableCell>
+                          <TableCell className="text-center">{row.pointsClassement}</TableCell>
                         </TableRow>
                       ))
                     )}

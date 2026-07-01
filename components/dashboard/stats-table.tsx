@@ -21,8 +21,8 @@ export function StatsTable({ provinces }: { provinces: Province[] }) {
               </tr>
             </thead>
             <tbody>
-              {provinces.map((province) => (
-                <tr key={province.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/30">
+              {provinces.map((province, index) => (
+                <tr key={`${province.id || "province"}-${province.nom || "sans-nom"}-${index}`} className="border-b border-border transition-colors last:border-0 hover:bg-muted/30">
                   <td className="px-4 py-3 font-medium text-foreground">{province.nom}</td>
                   <td className="px-4 py-3 text-center text-muted-foreground">{province.ligues}</td>
                   <td className="px-4 py-3 text-center text-muted-foreground">{province.clubs}</td>

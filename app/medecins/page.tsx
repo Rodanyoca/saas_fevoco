@@ -4,6 +4,7 @@ import { MedecinsClient } from "@/components/medecins/medecins-client"
 import { getMedecins } from "@/lib/data"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export default async function MedecinsPage() {
   const medecins = await getMedecins()

@@ -1,5 +1,5 @@
 import { getSheetData } from "@/lib/google-sheets"
-import type { Arbitre, Athlete, Club, Coach, CoachAffiliation, Competition, CompetitionParticipant, CompetitionResult, CompetitionUnite, Entente, Ligue, Medecin, Officiel, Province, Transfert } from "@/lib/types"
+import type { Arbitre, Athlete, Club, Coach, CoachAffiliation, Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite, Entente, EquipeNationale, EquipeNationaleSuivi, Ligue, Medecin, Officiel, Province, Transfert } from "@/lib/types"
 import { mapProvinceRow } from "@/lib/mappers/provinces"
 import { mapLigueRow } from "@/lib/mappers/ligues"
 import { mapEntenteRow } from "@/lib/mappers/ententes"
@@ -15,7 +15,10 @@ import { mapCompetitionRow } from "@/lib/mappers/competitions"
 import { mapCompetitionParticipantRow } from "@/lib/mappers/competition-participants"
 import { mapCompetitionUniteRow } from "@/lib/mappers/competition-unites"
 import { mapCompetitionResultRow } from "@/lib/mappers/competition-results"
+import { mapCompetitionClassementRow } from "@/lib/mappers/competition-classements"
 import { mapTransfertRow } from "@/lib/mappers/transferts"
+import { mapEquipeNationaleRow } from "@/lib/mappers/equipe-nationale"
+import { mapEquipeNationaleSuiviRow } from "@/lib/mappers/equipe-nationale-suivi"
 import { parseSheetDate } from "@/lib/date-utils"
 
 function computeProvinceCompletude(p: Province): number {
@@ -170,6 +173,13 @@ export async function getCompetitionResults(): Promise<CompetitionResult[]> {
     .filter((result) => result.idResultat && result.idCompetition)
 }
 
+export async function getCompetitionClassements(): Promise<CompetitionClassement[]> {
+  const rows = await getSheetData("COMPETITIONS_CLASSEMENT")
+  return rows
+    .map(mapCompetitionClassementRow)
+    .filter((classement) => classement.idClassement && classement.idResultat && classement.idUnite)
+}
+
 export async function getTransferts(): Promise<Transfert[]> {
   let rows = await getSheetData("TRANSGERT")
   if (rows.length === 0) rows = await getSheetData("TRANSFERTS")
@@ -178,4 +188,20 @@ export async function getTransferts(): Promise<Transfert[]> {
   return rows
     .map(mapTransfertRow)
     .filter((transfert) => transfert.id && transfert.athleteId)
+}
+
+export async function getEquipeNationale(): Promise<EquipeNationale[]> {
+  const rows = await getSheetData("EQUIPE_NATIONALE")
+  return rows
+    .map(mapEquipeNationaleRow)
+    .filter((selection) => selection.idSelection && selection.idAthlete)
+}
+
+export async function getEquipeNationaleSuivi(): Promise<EquipeNationaleSuivi[]> {
+  let rows = await getSheetData("EQUIPE_NATIONALE_SUIVI")
+  if (rows.length === 0) rows = await getSheetData("SUIVI_EQUIPE_NATIONALE")
+
+  return rows
+    .map(mapEquipeNationaleSuiviRow)
+    .filter((suivi) => suivi.idSuivi && suivi.idSelection)
 }

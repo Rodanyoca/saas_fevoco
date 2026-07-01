@@ -5,10 +5,13 @@ import {
   getAthletes,
   getClubs,
   getCoachs,
+  getCompetitionClassements,
   getCompetitionParticipants,
   getCompetitionResults,
   getCompetitions,
   getCompetitionUnites,
+  getEquipeNationale,
+  getEquipeNationaleSuivi,
   getEntentes,
   getLigues,
   getMedecins,
@@ -19,6 +22,7 @@ import {
 import { createQualityStats } from "@/lib/quality"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export default async function QualitePage() {
   const [
@@ -35,7 +39,10 @@ export default async function QualitePage() {
     competitionParticipants,
     competitionUnites,
     competitionResults,
+    competitionClassements,
     transferts,
+    equipeNationale,
+    equipeNationaleSuivi,
   ] = await Promise.all([
     getProvinces(),
     getLigues(),
@@ -50,7 +57,10 @@ export default async function QualitePage() {
     getCompetitionParticipants(),
     getCompetitionUnites(),
     getCompetitionResults(),
+    getCompetitionClassements(),
     getTransferts(),
+    getEquipeNationale(),
+    getEquipeNationaleSuivi(),
   ])
 
   const qualityStats = createQualityStats({
@@ -67,7 +77,10 @@ export default async function QualitePage() {
     competitionParticipants,
     competitionUnites,
     competitionResults,
+    competitionClassements,
     transferts,
+    equipeNationale,
+    equipeNationaleSuivi,
   })
 
   return (

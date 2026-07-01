@@ -4,6 +4,7 @@ import { OfficielsClient } from "@/components/officiels/officiels-client"
 import { getOfficiels } from "@/lib/data"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export default async function OfficielsPage() {
   const officiels = await getOfficiels()

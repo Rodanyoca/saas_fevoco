@@ -15,8 +15,6 @@ function toCellValue(value: unknown): string | number | boolean | null {
   if (s === "") return ""
   if (s === "true") return true
   if (s === "false") return false
-  const n = Number(s)
-  if (!Number.isNaN(n) && /^-?\d+(\.\d+)?$/.test(s)) return n
   return s
 }
 

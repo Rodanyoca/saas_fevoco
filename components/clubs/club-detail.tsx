@@ -86,7 +86,9 @@ export function ClubDetail({ club, athletes, onBack }: ClubDetailProps) {
               <p className="text-muted-foreground">{club.version || "-"}</p>
 
               <div className="mt-6 w-full space-y-3 text-left">
+                <InfoRow icon={Shield} label="ID club:" value={club.id} />
                 <InfoRow icon={Building2} label="Ligue:" value={club.ligueNom} />
+                <InfoRow icon={Shield} label="Categorie:" value={club.categorie} />
                 <InfoRow icon={Network} label="Entente:" value={club.ententeNom} />
                 <InfoRow icon={Network} label="Pseudo entente:" value={club.pseudoEntente} />
               </div>

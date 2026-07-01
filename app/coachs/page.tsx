@@ -4,6 +4,7 @@ import { CoachsClient } from "@/components/coachs/coachs-client"
 import { getCoachAffiliations, getCoachs } from "@/lib/data"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export default async function CoachsPage() {
   const [coachs, affiliations] = await Promise.all([

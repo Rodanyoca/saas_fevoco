@@ -18,7 +18,9 @@ export function mapClubRow(row: SheetRow): Club {
 
   return {
     id: str(row, "id_club"),
+    numeroOrdre: str(row, "numero_ordre_club"),
     nom: str(row, "nom_club"),
+    categorie: str(row, "categorie_club"),
     provinceId: str(row, "id_province"),
     provinceNom: str(row, "nom_province"),
     ligueId: str(row, "id_ligue"),
@@ -26,8 +28,8 @@ export function mapClubRow(row: SheetRow): Club {
     ententeId: str(row, "id_entente"),
     ententeNom: str(row, "nom_entente"),
     pseudoEntente: str(row, "pseudo_entente"),
-    version: str(row, "version"),
-    dateAffiliation: str(row, "date_affiliation"),
+    version: str(row, "version_club") || str(row, "version"),
+    dateAffiliation: str(row, "date_affiliation_club") || str(row, "date_affiliation"),
     personneContactNom: str(row, "nom_personne_contact"),
     personneContactTelephone: str(row, "telephone_personne_contact"),
     presidentId: str(row, "id_president_club"),

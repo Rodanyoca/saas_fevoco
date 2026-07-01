@@ -14,17 +14,12 @@ import {
 } from "@/components/ui/table"
 import { calculateAgeFromSheetDate } from "@/lib/date-utils"
 import type { Athlete } from "@/lib/types"
-import { Award, Eye, User } from "lucide-react"
+import { Eye } from "lucide-react"
 
 interface AthletesTableProps {
   athletes: Athlete[]
   title?: string
   onViewAthlete?: (athlete: Athlete) => void
-}
-
-function formatAthleteId(id: string) {
-  const numeric = id.replace(/\D/g, "")
-  return numeric ? numeric.padStart(10, "0") : id || "-"
 }
 
 function getInitials(nomComplet: string) {
@@ -41,7 +36,7 @@ function getStatusBadge(statut: string) {
     case "inactif":
       return <Badge variant="secondary">Inactif</Badge>
     case "blesse":
-      return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">Blessé</Badge>
+      return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">Blesse</Badge>
     default:
       return <Badge variant="outline">{statut || "-"}</Badge>
   }
@@ -49,7 +44,7 @@ function getStatusBadge(statut: string) {
 
 function getGenreLabel(genre: string) {
   if (genre === "M") return "Masculin"
-  if (genre === "F") return "Féminin"
+  if (genre === "F") return "Feminin"
   return genre || "-"
 }
 
@@ -64,7 +59,7 @@ function getPostesLabel(athlete: Athlete) {
 
 export function AthletesTable({
   athletes,
-  title = "Liste des Athlètes",
+  title = "Liste des Athletes",
   onViewAthlete,
 }: AthletesTableProps) {
   return (
@@ -78,22 +73,21 @@ export function AthletesTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Matricule</TableHead>
-                <TableHead>Athlète</TableHead>
-                <TableHead>Sexe / Âge</TableHead>
-                <TableHead className="text-center">Équipe nationale</TableHead>
+                <TableHead>Athlete</TableHead>
+                <TableHead>Sexe / age</TableHead>
                 <TableHead>Club / Discipline</TableHead>
                 <TableHead>Statut</TableHead>
                 {onViewAthlete && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {athletes.map((athlete) => {
+              {athletes.map((athlete, index) => {
                 const age = calculateAgeFromSheetDate(athlete.dateNaissance)
 
                 return (
-                  <TableRow key={athlete.id}>
+                  <TableRow key={`${athlete.id || "athlete"}-${athlete.nomComplet || "sans-nom"}-${index}`}>
                     <TableCell className="font-mono text-muted-foreground">
-                      {formatAthleteId(athlete.id)}
+                      {athlete.id || "-"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -116,19 +110,6 @@ export function AthletesTable({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">
-                      {athlete.selectionNationale === true ? (
-                        <Badge className="bg-accent text-accent-foreground">
-                          <Award className="mr-1 h-3 w-3" />
-                          Oui
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">
-                          <User className="mr-1 h-3 w-3" />
-                          Non
-                        </Badge>
-                      )}
-                    </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium">{athlete.clubNom || "-"}</span>
@@ -141,7 +122,7 @@ export function AthletesTable({
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => onViewAthlete(athlete)}>
                           <Eye className="h-4 w-4" />
-                          <span className="sr-only">Voir détails</span>
+                          <span className="sr-only">Voir details</span>
                         </Button>
                       </TableCell>
                     )}

@@ -13,6 +13,8 @@ import {
   getCompetitionResults,
   getCompetitions,
   getCompetitionUnites,
+  getEquipeNationale,
+  getEquipeNationaleSuivi,
   getEntentes,
   getLigues,
   getMedecins,
@@ -39,6 +41,7 @@ import {
 } from "lucide-react"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 function normalizeValue(value: string | null | undefined): string {
   return String(value ?? "")
@@ -85,6 +88,8 @@ export default async function DashboardPage() {
     competitionUnites,
     competitionResults,
     transferts,
+    equipeNationale,
+    equipeNationaleSuivi,
   ] = await Promise.all([
     getProvinces(),
     getLigues(),
@@ -99,6 +104,8 @@ export default async function DashboardPage() {
     getCompetitionUnites(),
     getCompetitionResults(),
     getTransferts(),
+    getEquipeNationale(),
+    getEquipeNationaleSuivi(),
   ])
 
   const qualityStats = createQualityStats({
@@ -115,6 +122,8 @@ export default async function DashboardPage() {
     competitionUnites,
     competitionResults,
     transferts,
+    equipeNationale,
+    equipeNationaleSuivi,
   })
   const totalRecords = qualityStats.reduce((acc, stat) => acc + stat.total, 0)
   const totalCompleteRecords = qualityStats.reduce((acc, stat) => acc + stat.complets, 0)
@@ -137,8 +146,8 @@ export default async function DashboardPage() {
   const medecinsFeminins = medecins.filter((medecin) => medecin.genre === "F").length
   const officielsMasculins = officiels.filter((officiel) => officiel.genre === "M").length
   const officielsFeminins = officiels.filter((officiel) => officiel.genre === "F").length
-  const selectionMasculins = athletes.filter((athlete) => athlete.selectionNationale && athlete.genre === "M").length
-  const selectionFeminins = athletes.filter((athlete) => athlete.selectionNationale && athlete.genre === "F").length
+  const selectionMasculins = equipeNationale.filter((selection) => selection.genre === "M").length
+  const selectionFeminins = equipeNationale.filter((selection) => selection.genre === "F").length
 
   const competitionsIndoor = competitions.filter((competition) => isIndoor(competition.discipline)).length
   const competitionsBeach = competitions.filter((competition) => isBeach(competition.discipline)).length
@@ -274,12 +283,13 @@ export default async function DashboardPage() {
             />
             <KpiCard
               title="Selection nationale"
-              value={selectionMasculins + selectionFeminins}
+              value={equipeNationale.length}
               icon={Target}
               variant="accent"
               subIndicators={[
                 { label: "Masculin", value: selectionMasculins },
                 { label: "Feminin", value: selectionFeminins },
+                { label: "Suivis", value: equipeNationaleSuivi.length },
               ]}
             />
             <div className="h-full rounded-xl border border-border/50 bg-card p-5 shadow-sm">

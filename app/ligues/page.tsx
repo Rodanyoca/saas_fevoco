@@ -5,6 +5,7 @@ import { getAthletes, getClubs, getEntentes, getLigues } from "@/lib/data"
 import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 function belongsToLigue(
   item: Pick<Entente | Club | Athlete, "ligueId" | "ligueNom">,

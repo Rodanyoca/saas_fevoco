@@ -86,7 +86,7 @@ export function CompetitionsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {competitions.map((competition) => {
+              {competitions.map((competition, index) => {
                 const indoor = isIndoor(competition.discipline)
                 const UnitIcon = indoor ? Shield : UserRound
                 const matchCount = results.filter(
@@ -94,7 +94,7 @@ export function CompetitionsTable({
                 ).length
 
                 return (
-                  <TableRow key={competition.id}>
+                  <TableRow key={`${competition.id || "competition"}-${competition.nomCompetition || "sans-nom"}-${index}`}>
                     <TableCell className="font-mono text-muted-foreground">
                       {competition.id}
                     </TableCell>

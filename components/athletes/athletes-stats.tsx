@@ -1,21 +1,20 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, UserCheck, UserX, Award } from "lucide-react"
 import type { Athlete } from "@/lib/types"
+import { UserCheck, Users, UserX } from "lucide-react"
 
 export function AthletesStats({ athletes }: { athletes: Athlete[] }) {
   const totalAthletes = athletes.length
-  const actifs = athletes.filter((a) => a.statut === "actif").length
-  const inactifs = athletes.filter((a) => a.statut === "inactif").length
-  const selectionNationale = athletes.filter((a) => a.selectionNationale === true).length
+  const actifs = athletes.filter((athlete) => athlete.statut === "actif").length
+  const inactifs = athletes.filter((athlete) => athlete.statut === "inactif").length
 
   const stats = [
     {
-      title: "Total Athlètes",
+      title: "Total Athletes",
       value: totalAthletes.toLocaleString(),
       icon: Users,
-      description: "Inscrits à la FEVOCO",
+      description: "Inscrits a la FEVOCO",
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
@@ -23,17 +22,9 @@ export function AthletesStats({ athletes }: { athletes: Athlete[] }) {
       title: "Actifs",
       value: actifs.toString(),
       icon: UserCheck,
-      description: "En activité",
+      description: "En activite",
       color: "text-green-600",
       bgColor: "bg-green-500/10",
-    },
-    {
-      title: "Sélection Nationale",
-      value: selectionNationale.toString(),
-      icon: Award,
-      description: "Membres de l'équipe nationale",
-      color: "text-accent",
-      bgColor: "bg-accent/10",
     },
     {
       title: "Inactifs",
@@ -46,7 +37,7 @@ export function AthletesStats({ athletes }: { athletes: Athlete[] }) {
   ]
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-3">
       {stats.map((stat) => (
         <Card key={stat.title} className="border-border/50 bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -59,7 +50,7 @@ export function AthletesStats({ athletes }: { athletes: Athlete[] }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stat.value}</div>
-            <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{stat.description}</p>
           </CardContent>
         </Card>
       ))}

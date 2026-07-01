@@ -18,6 +18,7 @@ export function mapEntenteRow(row: SheetRow): Entente {
 
   return {
     id: str(row, "id_entente"),
+    numeroOrdre: str(row, "numero_ordre_entente"),
     nom: str(row, "nom_entente"),
     pseudo: str(row, "pseudo_entente"),
     ligueId: str(row, "id_ligue"),

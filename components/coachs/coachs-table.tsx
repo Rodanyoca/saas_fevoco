@@ -86,11 +86,11 @@ export function CoachsTable({ coachs, onViewCoach }: CoachsTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {coachs.map((coach) => {
+              {coachs.map((coach, index) => {
                 const age = calculateAgeFromSheetDate(coach.dateNaissance)
 
                 return (
-                  <TableRow key={coach.id}>
+                  <TableRow key={`${coach.id || "coach"}-${coach.nomComplet || "sans-nom"}-${index}`}>
                     <TableCell className="font-mono text-muted-foreground">
                       {formatCoachId(coach.id)}
                     </TableCell>

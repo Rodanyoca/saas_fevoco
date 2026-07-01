@@ -19,7 +19,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Award,
   User,
   Ruler,
   Building2,
@@ -46,21 +45,10 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
     return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
   }
 
-  const formatAthleteId = (id: string) => {
-    const numeric = id.replace(/\D/g, "")
-    return numeric ? numeric.padStart(10, "0") : id || "-"
-  }
-
   const formatGender = (genre: string) => {
     if (genre === "M") return "Masculin"
     if (genre === "F") return "Féminin"
     return genre || "-"
-  }
-
-  const formatBoolean = (value: boolean | null) => {
-    if (value === true) return "Oui"
-    if (value === false) return "Non"
-    return "-"
   }
 
   const formatNumber = (value: number | null, suffix: string) => (
@@ -123,15 +111,9 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
               </Avatar>
               <h2 className="w-full break-words text-xl font-semibold">{athlete.nomComplet}</h2>
               <p className="text-muted-foreground">{athlete.disciplineActive || "-"}</p>
-              <p className="mt-1 font-mono text-xs text-muted-foreground">{formatAthleteId(athlete.id)}</p>
+              <p className="mt-1 font-mono text-xs text-muted-foreground">{athlete.id || "-"}</p>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 {getStatusBadge(athlete.statut)}
-                {athlete.selectionNationale === true && (
-                  <Badge className="bg-accent text-accent-foreground">
-                    <Award className="mr-1 h-3 w-3" />
-                    Sélection nationale
-                  </Badge>
-                )}
               </div>
 
               <div className="mt-6 w-full space-y-3">
@@ -224,7 +206,6 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
                     {infoRow("Numéro", athlete.numero)}
                     {infoRow("Taille", formatNumber(athlete.taille, "cm"))}
                     {infoRow("Poids", formatNumber(athlete.poids, "kg"))}
-                    {infoRow("Sélection nationale", formatBoolean(athlete.selectionNationale))}
                   </CardContent>
                 </Card>
               </div>
@@ -272,8 +253,8 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
                             </TableCell>
                           </TableRow>
                         ) : (
-                          athleteTransferts.map((transfert) => (
-                            <TableRow key={transfert.id}>
+                          athleteTransferts.map((transfert, index) => (
+                            <TableRow key={`${transfert.id || "transfert"}-${transfert.clubBeneficiaireId || "sans-club"}-${index}`}>
                               <TableCell className="whitespace-nowrap text-muted-foreground">
                                 {formatSheetDate(transfert.dateDebut)} - {formatSheetDate(transfert.dateFin)}
                               </TableCell>

@@ -199,8 +199,8 @@ export function CoachDetail({ coach, affiliations, onBack }: CoachDetailProps) {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {affiliations.length > 0 ? (
-                    affiliations.map((affiliation) => (
-                      <div key={affiliation.id} className="rounded-md border p-4">
+                    affiliations.map((affiliation, index) => (
+                      <div key={`${affiliation.id || "affiliation"}-${affiliation.coachId || "sans-coach"}-${index}`} className="rounded-md border p-4">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0">
                             <p className="truncate font-medium text-foreground">

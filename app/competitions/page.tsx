@@ -1,16 +1,18 @@
 import { CompetitionsClient } from "@/components/competitions/competitions-client"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
-import { getCompetitionParticipants, getCompetitionResults, getCompetitionUnites, getCompetitions } from "@/lib/data"
+import { getCompetitionClassements, getCompetitionParticipants, getCompetitionResults, getCompetitionUnites, getCompetitions } from "@/lib/data"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export default async function CompetitionsPage() {
-  const [competitions, participants, unites, results] = await Promise.all([
+  const [competitions, participants, unites, results, classements] = await Promise.all([
     getCompetitions(),
     getCompetitionParticipants(),
     getCompetitionUnites(),
     getCompetitionResults(),
+    getCompetitionClassements(),
   ])
 
   return (
@@ -26,6 +28,7 @@ export default async function CompetitionsPage() {
           participants={participants}
           unites={unites}
           results={results}
+          classements={classements}
         />
       </div>
     </DashboardLayout>

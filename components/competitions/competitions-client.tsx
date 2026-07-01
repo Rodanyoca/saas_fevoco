@@ -5,18 +5,20 @@ import { CompetitionDetail } from "@/components/competitions/competition-detail"
 import { CompetitionsFilters } from "@/components/competitions/competitions-filters"
 import { CompetitionsStats } from "@/components/competitions/competitions-stats"
 import { CompetitionsTable } from "@/components/competitions/competitions-table"
-import type { Competition, CompetitionParticipant, CompetitionResult, CompetitionUnite } from "@/lib/types"
+import type { Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite } from "@/lib/types"
 
 export function CompetitionsClient({
   competitions,
   participants,
   unites,
   results,
+  classements,
 }: {
   competitions: Competition[]
   participants: CompetitionParticipant[]
   unites: CompetitionUnite[]
   results: CompetitionResult[]
+  classements: CompetitionClassement[]
 }) {
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null)
   const [search, setSearch] = useState("")
@@ -59,6 +61,7 @@ export function CompetitionsClient({
         participants={participants}
         unites={unites}
         results={results}
+        classements={classements}
         onBack={() => setSelectedCompetition(null)}
       />
     )

@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Club } from "@/lib/types"
-import { Eye, Phone, Shield, User } from "lucide-react"
+import { Eye, Shield } from "lucide-react"
 
 interface ClubsTableProps {
   clubs: Club[]
@@ -20,11 +20,6 @@ interface ClubsTableProps {
 }
 
 export function ClubsTable({ clubs, onViewClub }: ClubsTableProps) {
-  const formatClubId = (id: string) => {
-    const numeric = id.replace(/\D/g, "")
-    return numeric.padStart(7, "0")
-  }
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -43,39 +38,28 @@ export function ClubsTable({ clubs, onViewClub }: ClubsTableProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[110px]">ID</TableHead>
-                <TableHead>Club</TableHead>
-                <TableHead>Ligue / Entente</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead className="text-center">Athlètes</TableHead>
-                <TableHead className="text-center">Statut</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead className="w-[120px]">ID</TableHead>
+                <TableHead className="min-w-[220px]">Club</TableHead>
+                <TableHead className="w-[140px]">Categorie</TableHead>
+                <TableHead className="min-w-[220px]">Ligue / Entente</TableHead>
+                <TableHead className="w-[110px]">Version</TableHead>
+                <TableHead className="w-[90px] text-center">Athlètes</TableHead>
+                <TableHead className="w-[110px] text-center">Statut</TableHead>
+                <TableHead className="w-[80px] text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clubs.map((club) => (
-                <TableRow key={club.id} className="hover:bg-muted/50">
+              {clubs.map((club, index) => (
+                <TableRow key={`${club.id || "club"}-${club.nom || "sans-nom"}-${index}`} className="hover:bg-muted/50">
                   <TableCell className="font-mono text-muted-foreground">
-                    {formatClubId(club.id)}
+                    {club.id || "-"}
                   </TableCell>
                   <TableCell className="font-medium">{club.nom}</TableCell>
+                  <TableCell>{club.categorie || "-"}</TableCell>
                   <TableCell>
-                    <div className="flex min-w-[180px] flex-col gap-1 leading-tight">
+                    <div className="flex flex-col gap-1 leading-tight">
                       <span className="font-medium">{club.ligueNom || "-"}</span>
                       <span className="text-sm text-muted-foreground">{club.pseudoEntente || "-"}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="flex items-center gap-1 text-sm">
-                        <User className="h-3 w-3 text-muted-foreground" />
-                        {club.personneContactNom || "-"}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        {club.personneContactTelephone || "-"}
-                      </span>
                     </div>
                   </TableCell>
                   <TableCell>{club.version || "-"}</TableCell>

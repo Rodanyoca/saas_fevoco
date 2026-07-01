@@ -4,6 +4,7 @@ import { ArbitresClient } from "@/components/arbitres/arbitres-client"
 import { getArbitres } from "@/lib/data"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export default async function ArbitresPage() {
   const arbitres = await getArbitres()

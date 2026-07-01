@@ -43,6 +43,7 @@ export interface Ligue {
 
 export interface Entente {
   id: string
+  numeroOrdre: string
   nom: string
   pseudo: string
   ligueId: string
@@ -69,7 +70,9 @@ export interface Entente {
 
 export interface Club {
   id: string
+  numeroOrdre: string
   nom: string
+  categorie: string
   provinceId: string
   provinceNom: string
   ligueId: string
@@ -94,6 +97,7 @@ export interface Club {
 
 export interface Athlete {
   id: string
+  numeroOrdre: string
   nomComplet: string
   dateNaissance: string
   lieuNaissance: string
@@ -116,7 +120,6 @@ export interface Athlete {
   poids: number | null
   telephone: string
   email: string
-  selectionNationale: boolean | null
   statut: Statut
 }
 
@@ -300,8 +303,35 @@ export interface CompetitionResult {
   set5B: number | null
   totalPointA: number | null
   totalPointB: number | null
+  pointsClassementA: number | null
+  pointsClassementB: number | null
   idUniteVainqueur: string
+  vainqueur: string
   statutMatch: string
+}
+
+export interface CompetitionClassement {
+  idClassement: string
+  idResultat: string
+  idCompetition: string
+  nomCompetition: string
+  discipline: CompetitionDiscipline
+  phase: string
+  poule: string
+  idUnite: string
+  nomUnite: string
+  typeUnite: string
+  adversaire: string
+  scoreGlobal: string
+  resultatMatch: string
+  setsGagnes: number | null
+  setsPerdus: number | null
+  pointsGagnes: number | null
+  pointsPerdus: number | null
+  differenceSets: number | null
+  differencePoints: number | null
+  pointsClassement: number | null
+  rang: number | null
 }
 
 export interface Transfert {
@@ -318,4 +348,36 @@ export interface Transfert {
   dateValidation: string
   dateDebut: string
   dateFin: string
+}
+
+export interface EquipeNationale {
+  idSelection: string
+  idAthlete: string
+  nomAthlete: string
+  genre: string
+  discipline: string
+  poste: string
+  idClub: string
+  nomClub: string
+  entiteNationale: string
+  statutSelection: Statut
+  saison: string
+  observations: string
+}
+
+export interface EquipeNationaleSuivi {
+  idSuivi: string
+  idSelection: string
+  idResultat: string
+  idAthlete: string
+  nomAthlete: string
+  entiteNationale: string
+  idCompetition: string
+  nomCompetition: string
+  niveauCompetition: string
+  dateMatch: string
+  adversaire: string
+  scoreGlobal: string
+  resultatMatch: string
+  pointsSuivi: number | null
 }

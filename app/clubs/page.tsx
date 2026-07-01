@@ -5,6 +5,7 @@ import { getAthletes, getClubs } from "@/lib/data"
 import type { Athlete, Club } from "@/lib/types"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 function belongsToClub(athlete: Pick<Athlete, "clubId" | "clubNom">, club: Club) {
   return Boolean(

@@ -21,8 +21,11 @@ export function mapTransfertRow(row: SheetRow): Transfert {
     athleteNom: str(row, "nom_athlete"),
     clubOrigineId: str(row, "id_club_origine"),
     clubOrigineNom: str(row, "nom_club_origine"),
-    clubBeneficiaireId: str(row, "id_club_beneficiaire"),
-    clubBeneficiaireNom: str(row, "nom_club_beneficiare") || str(row, "nom_club_beneficiaire"),
+    clubBeneficiaireId: str(row, "id_club_destination") || str(row, "id_club_beneficiaire"),
+    clubBeneficiaireNom:
+      str(row, "nom_club_destination") ||
+      str(row, "nom_club_beneficiare") ||
+      str(row, "nom_club_beneficiaire"),
     typeTransfert: str(row, "type_de_transfert"),
     duree: str(row, "duree"),
     statut: normalizeStatut(str(row, "statut_transfert")),

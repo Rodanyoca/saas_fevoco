@@ -6,16 +6,6 @@ function str(row: SheetRow, key: string): string {
   return v === null || v === undefined ? "" : String(v).trim()
 }
 
-function bool(row: SheetRow, key: string): boolean | null {
-  const v = row[key]
-  if (v === null || v === undefined || v === "") return null
-  if (typeof v === "boolean") return v
-  const s = String(v).trim().toLowerCase()
-  if (s === "true" || s === "vrai" || s === "1" || s === "oui") return true
-  if (s === "false" || s === "faux" || s === "0" || s === "non") return false
-  return null
-}
-
 function num(row: SheetRow, key: string): number | null {
   const v = row[key]
   if (v === null || v === undefined || v === "") return null
@@ -37,6 +27,7 @@ export function mapAthleteRow(row: SheetRow): Athlete {
 
   return {
     id: str(row, "id_athlete"),
+    numeroOrdre: str(row, "numer_ordre_athlete") || str(row, "numero_ordre_athlete"),
     nomComplet: str(row, "nom_complet"),
     dateNaissance: str(row, "date_de_naissance"),
     lieuNaissance: str(row, "lieu_de_naissance"),
@@ -51,15 +42,14 @@ export function mapAthleteRow(row: SheetRow): Athlete {
     ententeNom: str(row, "nom_entente"),
     clubId: str(row, "id_club"),
     clubNom: str(row, "nom_club"),
-    disciplineActive: str(row, "discipline_active"),
+    disciplineActive: str(row, "dicipline_active") || str(row, "discipline_active"),
     posteIndoor: str(row, "poste_indoor"),
     posteBeach: str(row, "poste_beach"),
-    numero: str(row, "numero"),
+    numero: str(row, "numero_maillot") || str(row, "numero"),
     taille: num(row, "taille"),
     poids: num(row, "poids"),
     telephone: str(row, "telephone"),
     email: str(row, "email"),
-    selectionNationale: bool(row, "selection_nationale"),
     statut: normalizeStatut(statutRaw),
   }
 }

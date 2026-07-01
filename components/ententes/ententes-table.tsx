@@ -20,11 +20,6 @@ export function EntentesTable({
   ententes: Entente[]
   totalCount: number
 }) {
-  const formatEntenteId = (id: string) => {
-    const numeric = id.replace(/\D/g, "")
-    return numeric.padStart(4, "0")
-  }
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -53,10 +48,10 @@ export function EntentesTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ententes.map((entente) => (
-                <TableRow key={entente.id}>
+              {ententes.map((entente, index) => (
+                <TableRow key={`${entente.id || "entente"}-${entente.nom || "sans-nom"}-${index}`}>
                   <TableCell className="font-mono text-muted-foreground">
-                    {formatEntenteId(entente.id)}
+                    {entente.id || "-"}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1 leading-none">

@@ -67,11 +67,11 @@ export function ArbitresTable({ arbitres, onViewArbitre }: ArbitresTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {arbitres.map((arbitre) => {
+            {arbitres.map((arbitre, index) => {
               const age = calculateAgeFromSheetDate(arbitre.dateNaissance)
 
               return (
-                <TableRow key={arbitre.id} className="hover:bg-muted/50">
+                <TableRow key={`${arbitre.id || "arbitre"}-${arbitre.nomComplet || "sans-nom"}-${index}`} className="hover:bg-muted/50">
                   <TableCell className="hidden font-mono text-xs text-muted-foreground lg:table-cell">
                     {formatArbitreId(arbitre.id)}
                   </TableCell>

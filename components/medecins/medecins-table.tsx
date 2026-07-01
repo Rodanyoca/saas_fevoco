@@ -66,11 +66,11 @@ export function MedecinsTable({ medecins, onViewMedecin }: MedecinsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {medecins.map((medecin) => {
+            {medecins.map((medecin, index) => {
               const age = calculateAgeFromSheetDate(medecin.dateNaissance)
 
               return (
-                <TableRow key={medecin.id} className="hover:bg-muted/50">
+                <TableRow key={`${medecin.id || "medecin"}-${medecin.nomComplet || "sans-nom"}-${index}`} className="hover:bg-muted/50">
                   <TableCell className="hidden font-mono text-xs text-muted-foreground lg:table-cell">
                     {formatMedecinId(medecin.id)}
                   </TableCell>

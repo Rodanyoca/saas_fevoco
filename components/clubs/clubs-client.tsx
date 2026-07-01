@@ -35,7 +35,7 @@ export function ClubsClient({
 
       if (s) {
         const haystack =
-          `${club.id} ${club.nom} ${club.ligueNom} ${club.ententeNom} ${club.pseudoEntente} ${club.version} ${club.personneContactNom} ${club.personneContactTelephone} ${club.adresse}`.toLowerCase()
+          `${club.id} ${club.nom} ${club.categorie} ${club.ligueNom} ${club.ententeNom} ${club.pseudoEntente} ${club.version} ${club.personneContactNom} ${club.personneContactTelephone} ${club.adresse}`.toLowerCase()
         if (!haystack.includes(s)) return false
       }
 

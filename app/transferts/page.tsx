@@ -4,6 +4,7 @@ import { TransfertsClient } from "@/components/transferts/transferts-client"
 import { getTransferts } from "@/lib/data"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export default async function TransfertsPage() {
   const transferts = await getTransferts()

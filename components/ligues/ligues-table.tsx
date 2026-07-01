@@ -23,11 +23,6 @@ export function LiguesTable({
   totalCount: number
   onViewLigue: (ligue: Ligue) => void
 }) {
-  const formatLigueId = (id: string) => {
-    const numeric = id.replace(/\D/g, "")
-    return numeric.padStart(2, "0")
-  }
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -57,10 +52,10 @@ export function LiguesTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ligues.map((ligue) => (
-                <TableRow key={ligue.id}>
+              {ligues.map((ligue, index) => (
+                <TableRow key={`${ligue.id || "ligue"}-${ligue.nom || "sans-nom"}-${index}`}>
                   <TableCell className="font-mono text-muted-foreground">
-                    {formatLigueId(ligue.id)}
+                    {ligue.id || "-"}
                   </TableCell>
                   <TableCell className="font-medium">{ligue.nom}</TableCell>
                   <TableCell className="text-muted-foreground">

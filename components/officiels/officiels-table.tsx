@@ -68,11 +68,11 @@ export function OfficielsTable({ officiels, onViewOfficiel }: OfficielsTableProp
             </TableRow>
           </TableHeader>
           <TableBody>
-            {officiels.map((officiel) => {
+            {officiels.map((officiel, index) => {
               const entity = getFederalEntity(officiel)
 
               return (
-                <TableRow key={officiel.id} className="hover:bg-muted/50">
+                <TableRow key={`${officiel.id || "officiel"}-${officiel.nomComplet || "sans-nom"}-${index}`} className="hover:bg-muted/50">
                   <TableCell>
                     <p className="truncate font-medium text-foreground">{officiel.nomComplet || "-"}</p>
                   </TableCell>

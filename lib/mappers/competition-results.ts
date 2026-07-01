@@ -46,7 +46,10 @@ export function mapCompetitionResultRow(row: SheetRow): CompetitionResult {
     set5B: num(row, "set5_b"),
     totalPointA: num(row, "total_point_a"),
     totalPointB: num(row, "total_point_b"),
+    pointsClassementA: num(row, "points_classement_a"),
+    pointsClassementB: num(row, "points_classement_b"),
     idUniteVainqueur: str(row, "id_unite_vainquer") || str(row, "id_unite_vainqueur"),
+    vainqueur: str(row, "vainqueur"),
     statutMatch: str(row, "statut_match"),
   }
 }

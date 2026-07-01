@@ -74,8 +74,8 @@ export function TransfertsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transferts.map((transfert) => (
-                <TableRow key={transfert.id}>
+              {transferts.map((transfert, index) => (
+                <TableRow key={`${transfert.id || "transfert"}-${transfert.athleteId || "sans-athlete"}-${index}`}>
                   <TableCell>
                     <div className="min-w-0">
                       <p className="font-medium leading-tight">{transfert.athleteNom || "-"}</p>
