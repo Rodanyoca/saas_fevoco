@@ -195,9 +195,9 @@ export function createQualityStats(data: {
     buildQualityStat("Selections equipe nationale", data.equipeNationaleSelections ?? [], [
       "idSelection",
       "idEquipeNationale",
-      "idAthlete",
       "nomAthlete",
-      "saison",
+      "poste",
+      "nomClub",
       "statutSelection",
     ]),
     buildQualityStat("Competitions equipe nationale", data.equipeNationaleCompetitions ?? [], [

@@ -178,7 +178,7 @@ export async function getEquipeNationaleSelections(): Promise<EquipeNationaleSel
   const rows = await getSheetData("EQUIPE_NATIONALE_SELECTIONS")
   return rows
     .map(mapEquipeNationaleSelectionRow)
-    .filter((selection) => selection.idSelection && selection.idEquipeNationale && selection.idAthlete)
+    .filter((selection) => selection.idSelection && selection.idEquipeNationale && selection.nomAthlete)
 }
 
 export async function getEquipeNationaleCompetitions(): Promise<EquipeNationaleCompetition[]> {

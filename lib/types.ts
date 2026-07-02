@@ -370,20 +370,12 @@ export interface EquipeNationaleSelection {
   idSelection: string
   idEquipeNationale: string
   nomEquipeNationale: string
-  discipline: string
-  categorie: string
-  genre: string
-  idAthlete: string
   nomAthlete: string
-  idClub: string
   nomClub: string
   poste: string
-  saison: string
   dateDebutSelection: string
   dateFinSelection: string
   statutSelection: Statut
-  typeSelection: string
-  observation: string
 }
 
 export interface EquipeNationaleCompetition {
