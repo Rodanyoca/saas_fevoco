@@ -6,13 +6,27 @@ import { getCompetitionClassements, getCompetitionParticipants, getCompetitionRe
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
+async function safeLoad<T>(loader: () => Promise<T[]>, timeoutMs = 12_000): Promise<T[]> {
+  try {
+    let timeoutId: NodeJS.Timeout | undefined
+    const timeout = new Promise<T[]>((resolve) => {
+      timeoutId = setTimeout(() => resolve([]), timeoutMs)
+    })
+    const result = await Promise.race([loader(), timeout])
+    if (timeoutId) clearTimeout(timeoutId)
+    return result
+  } catch {
+    return []
+  }
+}
+
 export default async function CompetitionsPage() {
   const [competitions, participants, unites, results, classements] = await Promise.all([
-    getCompetitions(),
-    getCompetitionParticipants(),
-    getCompetitionUnites(),
-    getCompetitionResults(),
-    getCompetitionClassements(),
+    safeLoad(getCompetitions),
+    safeLoad(getCompetitionParticipants),
+    safeLoad(getCompetitionUnites),
+    safeLoad(getCompetitionResults),
+    safeLoad(getCompetitionClassements),
   ])
 
   return (

@@ -125,6 +125,7 @@ export function createQualityStats(data: {
     buildQualityStat("Competitions", data.competitions ?? [], [
       "id",
       "nomCompetition",
+      "saison",
       "dateDebut",
       "dateFin",
       "discipline",
@@ -136,8 +137,7 @@ export function createQualityStats(data: {
       "idParticipation",
       "idCompetition",
       "discipline",
-      "typeParticipant",
-      "poule",
+      "nomClub",
       "statutParticipation",
     ]),
     buildQualityStat("Unites competitions", data.competitionUnites ?? [], [
@@ -147,13 +147,14 @@ export function createQualityStats(data: {
       "discipline",
       "typeUnite",
       "poule",
+      "statutUnite",
     ]),
     buildQualityStat("Resultats competitions", data.competitionResults ?? [], [
       "idResultat",
       "idCompetition",
       "discipline",
       "dateMatch",
-      "phase",
+      "classementPoule",
       "idUniteA",
       "idUniteB",
       "scoreGlobal",

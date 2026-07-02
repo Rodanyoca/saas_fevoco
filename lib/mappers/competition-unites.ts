@@ -16,17 +16,19 @@ function normalizeDiscipline(raw: string): string {
 export function mapCompetitionUniteRow(row: SheetRow): CompetitionUnite {
   return {
     idUnite: str(row, "id_unite"),
-    nomUnite: str(row, "nom_unite"),
     idCompetition: str(row, "id_competition"),
     nomCompetition: str(row, "nom_competition"),
     discipline: normalizeDiscipline(str(row, "discipline")),
     typeUnite: str(row, "type_unite"),
-    poule: str(row, "poule"),
     idClub: str(row, "id_club"),
     nomClub: str(row, "nom_club"),
     idAthleteA: str(row, "id_athlete_a"),
     nomAthleteA: str(row, "nom_athlete_a"),
     idAthleteB: str(row, "id_athlete_b"),
     nomAthleteB: str(row, "nom_athlete_b"),
+    nomUnite: str(row, "nom_unite"),
+    poule: str(row, "poule"),
+    statutUnite: str(row, "statut_unite"),
+    observation: str(row, "observation"),
   }
 }

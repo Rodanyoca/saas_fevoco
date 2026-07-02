@@ -27,7 +27,8 @@ export function mapCompetitionResultRow(row: SheetRow): CompetitionResult {
     nomCompetition: str(row, "nom_competition"),
     discipline: normalizeDiscipline(str(row, "discipline")),
     dateMatch: str(row, "date_match"),
-    phase: str(row, "phase"),
+    classementPoule: str(row, "classement_poule"),
+    phase: str(row, "phase") || str(row, "classement_poule"),
     poule: str(row, "poule"),
     idUniteA: str(row, "id_unite_a"),
     nomUniteA: str(row, "nom_unite_a"),
@@ -51,5 +52,6 @@ export function mapCompetitionResultRow(row: SheetRow): CompetitionResult {
     idUniteVainqueur: str(row, "id_unite_vainquer") || str(row, "id_unite_vainqueur"),
     vainqueur: str(row, "vainqueur"),
     statutMatch: str(row, "statut_match"),
+    observation: str(row, "observation"),
   }
 }

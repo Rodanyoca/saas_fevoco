@@ -347,16 +347,19 @@ export function CompetitionDetail({
     () =>
       Array.from(
         new Set(
-          competitionResults
-            .map((result) => result.phase.trim())
-            .filter(Boolean),
+          [
+            ...competitionResults.map((result) => (result.classementPoule || result.phase).trim()),
+            ...classements
+              .filter((row) => row.idCompetition === competition.id)
+              .map((row) => row.phase.trim()),
+          ].filter(Boolean),
         ),
       ).sort((a, b) => a.localeCompare(b)),
-    [competitionResults],
+    [classements, competition.id, competitionResults],
   )
   const rankingResults = competitionResults.filter((result) => {
     if (rankingPoule !== "all" && result.poule !== rankingPoule) return false
-    if (rankingPhase !== "all" && result.phase !== rankingPhase) return false
+    if (rankingPhase !== "all" && (result.classementPoule || result.phase) !== rankingPhase) return false
     return true
   })
   const rankingResultUnitIds = new Set(
@@ -382,17 +385,11 @@ export function CompetitionDetail({
       if ((b.pointsClassement ?? 0) !== (a.pointsClassement ?? 0)) {
         return (b.pointsClassement ?? 0) - (a.pointsClassement ?? 0)
       }
-      if ((b.differenceSets ?? 0) !== (a.differenceSets ?? 0)) {
-        return (b.differenceSets ?? 0) - (a.differenceSets ?? 0)
-      }
-      if ((b.differencePoints ?? 0) !== (a.differencePoints ?? 0)) {
-        return (b.differencePoints ?? 0) - (a.differencePoints ?? 0)
-      }
+      if ((b.pointsGagnes ?? 0) !== (a.pointsGagnes ?? 0)) return (b.pointsGagnes ?? 0) - (a.pointsGagnes ?? 0)
       return a.nomUnite.localeCompare(b.nomUnite)
     })
   const unitLabel = indoor ? "Clubs engages" : "Paires engagees"
   const unitCount = competitionUnites.length
-  const displayedParticipants = indoor ? competitionParticipants : competitionUnites
 
   return (
     <div className="space-y-6">
@@ -419,6 +416,7 @@ export function CompetitionDetail({
               <h2 className="text-xl font-bold text-foreground">{competition.nomCompetition}</h2>
               <p className="text-muted-foreground">{competition.niveau}</p>
               <div className="mt-6 w-full space-y-3 text-left">
+                <InfoRow icon={Trophy} label="Saison:" value={competition.saison} />
                 <InfoRow icon={MapPin} label="Lieu:" value={competition.lieu} />
                 <InfoRow icon={Medal} label="Statut:" value={competition.statut} />
               </div>
@@ -436,6 +434,7 @@ export function CompetitionDetail({
           <CardContent className="space-y-3">
             <InfoRow icon={CalendarDays} label="Debut:" value={formatDate(competition.dateDebut)} />
             <InfoRow icon={CalendarDays} label="Fin:" value={formatDate(competition.dateFin)} />
+            <InfoRow icon={ClipboardList} label="Observation:" value={competition.observation} />
           </CardContent>
         </Card>
 
@@ -489,34 +488,23 @@ export function CompetitionDetail({
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    {indoor ? (
-                      <TableRow>
-                        <TableHead>Nom</TableHead>
-                        <TableHead>Poule</TableHead>
-                        <TableHead>Statut</TableHead>
-                      </TableRow>
-                    ) : (
-                      <TableRow>
-                        <TableHead>Athlete</TableHead>
-                        <TableHead>Club</TableHead>
-                        <TableHead>Poule</TableHead>
-                        <TableHead>Statut</TableHead>
-                      </TableRow>
-                    )}
+                    <TableRow>
+                      <TableHead>Participant</TableHead>
+                      <TableHead>Club</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Observation</TableHead>
+                    </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {displayedParticipants.length === 0 ? (
-                      <EmptyTableRow
-                        colSpan={indoor ? 3 : 4}
-                        label="Aucun participant disponible."
-                      />
-                    ) : indoor ? (
+                    {competitionParticipants.length === 0 ? (
+                      <EmptyTableRow colSpan={4} label="Aucun participant disponible." />
+                    ) : (
                       competitionParticipants.map((participant, index) => (
-                        <TableRow key={`${participant.idParticipation || "participant"}-${participant.idClub || participant.idAthlete || "sans-id"}-${index}`}>
+                        <TableRow key={`${participant.idParticipation || "participant"}-${participant.idAthlete || participant.nomClub || "sans-id"}-${index}`}>
                           <TableCell className="font-medium">
-                            {participant.nomClub || getParticipantLabel(participant)}
+                            {participant.nomAthlete || getParticipantLabel(participant)}
                           </TableCell>
-                          <TableCell>{participant.poule || "-"}</TableCell>
+                          <TableCell>{participant.nomClub || "-"}</TableCell>
                           <TableCell>
                             {participant.statutParticipation ? (
                               <Badge className={getStatusClass(participant.statutParticipation)}>
@@ -526,30 +514,11 @@ export function CompetitionDetail({
                               "-"
                             )}
                           </TableCell>
+                          <TableCell className="max-w-[280px] text-muted-foreground">
+                            {participant.observation || "-"}
+                          </TableCell>
                         </TableRow>
                       ))
-                    ) : (
-                      competitionUnites.map((unite, index) => {
-                        const status = getBeachUnitStatus(unite, competitionParticipants)
-                        const athletes = [unite.nomAthleteA, unite.nomAthleteB].filter(Boolean).join(" / ")
-
-                        return (
-                          <TableRow key={`${unite.idUnite || "unite"}-${unite.nomUnite || "sans-nom"}-${index}`}>
-                            <TableCell className="font-medium">
-                              {athletes || "-"}
-                            </TableCell>
-                            <TableCell>{unite.nomClub || "-"}</TableCell>
-                            <TableCell>{unite.poule || "-"}</TableCell>
-                            <TableCell>
-                              {status ? (
-                                <Badge className={getStatusClass(status)}>{status}</Badge>
-                              ) : (
-                                "-"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })
                     )}
                   </TableBody>
                 </Table>
@@ -580,7 +549,7 @@ export function CompetitionDetail({
                     >
                       <div className="flex min-w-0 flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground md:block md:space-y-0.5">
                         <p>{formatDate(result.dateMatch)}</p>
-                        <p>{result.phase || "-"} / Poule {result.poule || "-"}</p>
+                        <p>{result.classementPoule || result.phase || "-"} / Poule {result.poule || "-"}</p>
                       </div>
                       <div className="min-w-0 space-y-1.5 md:col-span-2">
                         <div
@@ -707,11 +676,12 @@ export function CompetitionDetail({
                     <TableRow>
                       <TableHead className="w-[72px] text-center">Rang</TableHead>
                       <TableHead>Participant</TableHead>
+                      <TableHead>Adversaire</TableHead>
+                      <TableHead>Resultat</TableHead>
                       <TableHead>Poule</TableHead>
-                      <TableHead className="text-center">J</TableHead>
-                      <TableHead className="text-center">G</TableHead>
-                      <TableHead className="text-center">P</TableHead>
-                      <TableHead className="text-center">Points</TableHead>
+                      <TableHead className="text-center">Sets</TableHead>
+                      <TableHead className="text-center">Pts match</TableHead>
+                      <TableHead className="text-center">Pts classement</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -722,19 +692,16 @@ export function CompetitionDetail({
                             {row.rang ?? index + 1}
                           </TableCell>
                           <TableCell className="font-medium">{row.nomUnite || row.idUnite}</TableCell>
+                          <TableCell>{row.nomAdversaire || row.idAdversaire || "-"}</TableCell>
+                          <TableCell>{row.resultatMatch || "-"}</TableCell>
                           <TableCell>{row.poule || "-"}</TableCell>
-                          <TableCell className="text-center">1</TableCell>
-                          <TableCell className="text-center">
-                            {normalizeValue(row.resultatMatch).startsWith("v") ? 1 : 0}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {normalizeValue(row.resultatMatch).startsWith("d") ? 1 : 0}
-                          </TableCell>
+                          <TableCell className="text-center">{row.setsGagnes ?? 0}-{row.setsPerdus ?? 0}</TableCell>
+                          <TableCell className="text-center">{row.pointsGagnes ?? 0}-{row.pointsPerdus ?? 0}</TableCell>
                           <TableCell className="text-center">{row.pointsClassement ?? 0}</TableCell>
                         </TableRow>
                       ))
                     ) : ranking.length === 0 ? (
-                      <EmptyTableRow colSpan={7} label="Aucun classement disponible." />
+                      <EmptyTableRow colSpan={8} label="Aucun classement disponible." />
                     ) : (
                       ranking.map((row, index) => (
                         <TableRow key={`${row.id || "ranking"}-${row.participant || "sans-participant"}-${index}`}>
@@ -742,10 +709,11 @@ export function CompetitionDetail({
                             {index + 1}
                           </TableCell>
                           <TableCell className="font-medium">{row.participant}</TableCell>
+                          <TableCell>-</TableCell>
+                          <TableCell>-</TableCell>
                           <TableCell>{row.poule || "-"}</TableCell>
-                          <TableCell className="text-center">{row.played}</TableCell>
-                          <TableCell className="text-center">{row.won}</TableCell>
-                          <TableCell className="text-center">{row.lost}</TableCell>
+                          <TableCell className="text-center">{row.setsFor}-{row.setsAgainst}</TableCell>
+                          <TableCell className="text-center">{row.pointsFor}-{row.pointsAgainst}</TableCell>
                           <TableCell className="text-center">{row.pointsClassement}</TableCell>
                         </TableRow>
                       ))

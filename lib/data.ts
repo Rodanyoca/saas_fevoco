@@ -145,7 +145,7 @@ export async function getCompetitionClassements(): Promise<CompetitionClassement
   const rows = await getSheetData("COMPETITIONS_CLASSEMENT")
   return rows
     .map(mapCompetitionClassementRow)
-    .filter((classement) => classement.idClassement && classement.idResultat && classement.idUnite)
+    .filter((classement) => classement.idClassement && classement.idCompetition && classement.idUnite)
 }
 
 export async function getTransferts(): Promise<Transfert[]> {

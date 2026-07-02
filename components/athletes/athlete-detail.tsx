@@ -21,7 +21,6 @@ import {
   Ruler,
   Building2,
   FileText,
-  Activity,
 } from "lucide-react"
 import type { Athlete, Transfert } from "@/lib/types"
 import { calculateAgeFromSheetDate, formatSheetDate } from "@/lib/date-utils"
@@ -128,9 +127,8 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
 
         <div className="min-w-0">
           <Tabs defaultValue="infos" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="infos">Informations</TabsTrigger>
-              <TabsTrigger value="stats">Statistiques</TabsTrigger>
               <TabsTrigger value="historique">Historique</TabsTrigger>
             </TabsList>
 
@@ -202,22 +200,6 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
               </div>
             </TabsContent>
 
-            <TabsContent value="stats" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Activity className="h-4 w-4" />
-                    Statistiques de performance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="py-10 text-center text-sm text-muted-foreground">
-                    Statistiques bientot disponibles.
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
             <TabsContent value="historique" className="mt-4">
               <Card>
                 <CardHeader>
@@ -232,16 +214,14 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
                       <TableHeader>
                         <TableRow>
                           <TableHead>Periode</TableHead>
-                          <TableHead>Saison</TableHead>
                           <TableHead>Club d'origine</TableHead>
                           <TableHead>Matricule</TableHead>
-                          <TableHead>Observation</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {athleteTransferts.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="h-24 text-center text-sm text-muted-foreground">
+                            <TableCell colSpan={3} className="h-24 text-center text-sm text-muted-foreground">
                               Aucun transfert disponible.
                             </TableCell>
                           </TableRow>
@@ -251,17 +231,11 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
                               <TableCell className="whitespace-nowrap text-muted-foreground">
                                 {formatSheetDate(transfert.dateDebut)} - {formatSheetDate(transfert.dateFin)}
                               </TableCell>
-                              <TableCell className="whitespace-nowrap text-muted-foreground">
-                                {transfert.saison || "-"}
-                              </TableCell>
                               <TableCell className="font-medium">
                                 {transfert.clubOrigineNom || "-"}
                               </TableCell>
                               <TableCell className="font-mono text-muted-foreground">
                                 {transfert.id || "-"}
-                              </TableCell>
-                              <TableCell className="max-w-[240px] whitespace-normal text-sm text-muted-foreground">
-                                {transfert.observation || "-"}
                               </TableCell>
                             </TableRow>
                           ))

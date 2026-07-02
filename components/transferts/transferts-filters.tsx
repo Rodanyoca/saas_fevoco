@@ -16,21 +16,21 @@ export function TransfertsFilters({
   transferts,
   search,
   statut,
-  type,
+  saison,
   onSearchChange,
   onStatutChange,
-  onTypeChange,
+  onSaisonChange,
 }: {
   transferts: Transfert[]
   search: string
   statut: string
-  type: string
+  saison: string
   onSearchChange: (value: string) => void
   onStatutChange: (value: string) => void
-  onTypeChange: (value: string) => void
+  onSaisonChange: (value: string) => void
 }) {
   const statuts = Array.from(new Set(transferts.map((transfert) => transfert.statut).filter(Boolean))).sort()
-  const types = Array.from(new Set(transferts.map((transfert) => transfert.typeTransfert).filter(Boolean))).sort()
+  const saisons = Array.from(new Set(transferts.map((transfert) => transfert.saison).filter(Boolean))).sort()
 
   return (
     <Card>
@@ -46,13 +46,13 @@ export function TransfertsFilters({
             />
           </div>
 
-          <Select value={type} onValueChange={onTypeChange}>
+          <Select value={saison} onValueChange={onSaisonChange}>
             <SelectTrigger className="w-full lg:w-[190px]">
-              <SelectValue placeholder="Type" />
+              <SelectValue placeholder="Saison" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les types</SelectItem>
-              {types.map((value) => (
+              <SelectItem value="all">Toutes les saisons</SelectItem>
+              {saisons.map((value) => (
                 <SelectItem key={value} value={value}>
                   {value}
                 </SelectItem>

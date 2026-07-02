@@ -233,13 +233,15 @@ export type CompetitionDiscipline = "INDOOR" | "BEACH" | string
 export interface Competition {
   id: string
   nomCompetition: string
+  saison: string
   dateDebut: string
   dateFin: string
   discipline: CompetitionDiscipline
   lieu: string
   niveau: string
   statut: Statut
-  suiviCno: string
+  observation: string
+  suiviCno?: string
 }
 
 export interface CompetitionParticipant {
@@ -247,30 +249,33 @@ export interface CompetitionParticipant {
   idCompetition: string
   nomCompetition: string
   discipline: CompetitionDiscipline
-  typeParticipant: string
-  idClub: string
-  nomClub: string
-  poule: string
   idAthlete: string
   nomAthlete: string
+  nomClub: string
   statutParticipation: string
-  exportCoc: string
+  observation: string
+  typeParticipant?: string
+  idClub?: string
+  poule?: string
+  exportCoc?: string
 }
 
 export interface CompetitionUnite {
   idUnite: string
-  nomUnite: string
   idCompetition: string
   nomCompetition: string
   discipline: CompetitionDiscipline
   typeUnite: string
-  poule: string
   idClub: string
   nomClub: string
   idAthleteA: string
   nomAthleteA: string
   idAthleteB: string
   nomAthleteB: string
+  nomUnite: string
+  poule: string
+  statutUnite: string
+  observation: string
 }
 
 export interface CompetitionResult {
@@ -279,6 +284,7 @@ export interface CompetitionResult {
   nomCompetition: string
   discipline: CompetitionDiscipline
   dateMatch: string
+  classementPoule: string
   phase: string
   poule: string
   idUniteA: string
@@ -303,6 +309,7 @@ export interface CompetitionResult {
   idUniteVainqueur: string
   vainqueur: string
   statutMatch: string
+  observation: string
 }
 
 export interface CompetitionClassement {
@@ -315,18 +322,21 @@ export interface CompetitionClassement {
   poule: string
   idUnite: string
   nomUnite: string
-  typeUnite: string
-  adversaire: string
+  idAdversaire: string
+  nomAdversaire: string
   scoreGlobal: string
   resultatMatch: string
   setsGagnes: number | null
   setsPerdus: number | null
   pointsGagnes: number | null
   pointsPerdus: number | null
-  differenceSets: number | null
-  differencePoints: number | null
   pointsClassement: number | null
   rang: number | null
+  observation: string
+  typeUnite?: string
+  adversaire?: string
+  differenceSets?: number | null
+  differencePoints?: number | null
 }
 
 export interface Transfert {

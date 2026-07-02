@@ -19,13 +19,14 @@ export function mapCompetitionParticipantRow(row: SheetRow): CompetitionParticip
     idCompetition: str(row, "id_competition"),
     nomCompetition: str(row, "nom_competition"),
     discipline: normalizeDiscipline(str(row, "discipline")),
-    typeParticipant: str(row, "type_participant"),
-    idClub: str(row, "id_club"),
-    nomClub: str(row, "nom_club"),
-    poule: str(row, "poule"),
     idAthlete: str(row, "id_athlete"),
     nomAthlete: str(row, "nom_athlete"),
+    nomClub: str(row, "nom_club"),
     statutParticipation: str(row, "statut_participation"),
+    observation: str(row, "observation"),
+    typeParticipant: str(row, "type_participant"),
+    idClub: str(row, "id_club"),
+    poule: str(row, "poule"),
     exportCoc: str(row, "export_coc"),
   }
 }

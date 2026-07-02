@@ -77,6 +77,7 @@ export function CompetitionsTable({
               <TableRow>
                 <TableHead>ID</TableHead>
                 <TableHead>Competition</TableHead>
+                <TableHead>Saison</TableHead>
                 <TableHead>Discipline</TableHead>
                 <TableHead>Periode</TableHead>
                 <TableHead className="text-center">Unites</TableHead>
@@ -101,6 +102,7 @@ export function CompetitionsTable({
                     <TableCell className="whitespace-normal break-words font-medium leading-snug">
                       {competition.nomCompetition}
                     </TableCell>
+                    <TableCell className="text-muted-foreground">{competition.saison || "-"}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{competition.discipline}</Badge>
                     </TableCell>

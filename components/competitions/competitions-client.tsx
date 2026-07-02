@@ -48,7 +48,7 @@ export function CompetitionsClient({
 
         if (s) {
           const haystack =
-            `${competition.id} ${competition.nomCompetition} ${competition.discipline} ${competition.lieu} ${competition.niveau} ${competition.statut}`.toLowerCase()
+            `${competition.id} ${competition.nomCompetition} ${competition.saison} ${competition.discipline} ${competition.lieu} ${competition.niveau} ${competition.statut} ${competition.observation}`.toLowerCase()
           if (!haystack.includes(s)) return false
         }
 
