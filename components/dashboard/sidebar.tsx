@@ -55,6 +55,7 @@ const groupedNavigation = [
     icon: Target,
     items: [
       { name: "Leopards RDC", href: "/equipe-nationale", icon: Target },
+      { name: "Performance", href: "/suivi-equipe-nationale", icon: Trophy },
     ],
   },
 ]
