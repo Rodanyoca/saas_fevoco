@@ -15,11 +15,11 @@ import type { Arbitre } from "@/lib/types"
 interface ArbitresFiltersProps {
   arbitres: Arbitre[]
   search: string
-  ligue: string
+  equipeNationale: string
   grade: string
   statut: string
   onSearchChange: (value: string) => void
-  onLigueChange: (value: string) => void
+  onEquipeNationaleChange: (value: string) => void
   onGradeChange: (value: string) => void
   onStatutChange: (value: string) => void
 }
@@ -27,16 +27,16 @@ interface ArbitresFiltersProps {
 export function ArbitresFilters({
   arbitres,
   search,
-  ligue,
+  equipeNationale,
   grade,
   statut,
   onSearchChange,
-  onLigueChange,
+  onEquipeNationaleChange,
   onGradeChange,
   onStatutChange,
 }: ArbitresFiltersProps) {
-  const ligueOptions = Array.from(
-    new Set(arbitres.map((arbitre) => arbitre.ligueNom).filter(Boolean))
+  const equipeOptions = Array.from(
+    new Set(arbitres.map((arbitre) => arbitre.equipeNational).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b))
 
   const gradeOptions = Array.from(
@@ -46,7 +46,7 @@ export function ArbitresFilters({
   return (
     <Card className="border-border/50">
       <CardContent className="p-4">
-        <div className="grid gap-3 md:grid-cols-[1fr_180px_160px_132px]">
+        <div className="grid gap-3 md:grid-cols-[1fr_190px_160px_132px]">
           <div className="relative min-w-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -57,15 +57,15 @@ export function ArbitresFilters({
             />
           </div>
 
-          <Select value={ligue} onValueChange={onLigueChange}>
+          <Select value={equipeNationale} onValueChange={onEquipeNationaleChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Ligue" />
+              <SelectValue placeholder="Equipe" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les ligues</SelectItem>
-              {ligueOptions.map((ligueNom) => (
-                <SelectItem key={ligueNom} value={ligueNom}>
-                  {ligueNom}
+              <SelectItem value="all">Toutes les equipes</SelectItem>
+              {equipeOptions.map((equipeNom) => (
+                <SelectItem key={equipeNom} value={equipeNom}>
+                  {equipeNom}
                 </SelectItem>
               ))}
             </SelectContent>

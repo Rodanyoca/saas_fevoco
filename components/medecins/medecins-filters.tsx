@@ -15,32 +15,32 @@ import type { Medecin } from "@/lib/types"
 interface MedecinsFiltersProps {
   medecins: Medecin[]
   search: string
-  ligue: string
-  club: string
+  niveau: string
+  specialite: string
   statut: string
   onSearchChange: (value: string) => void
-  onLigueChange: (value: string) => void
-  onClubChange: (value: string) => void
+  onNiveauChange: (value: string) => void
+  onSpecialiteChange: (value: string) => void
   onStatutChange: (value: string) => void
 }
 
 export function MedecinsFilters({
   medecins,
   search,
-  ligue,
-  club,
+  niveau,
+  specialite,
   statut,
   onSearchChange,
-  onLigueChange,
-  onClubChange,
+  onNiveauChange,
+  onSpecialiteChange,
   onStatutChange,
 }: MedecinsFiltersProps) {
-  const ligueOptions = Array.from(
-    new Set(medecins.map((medecin) => medecin.ligueNom).filter(Boolean))
+  const niveauOptions = Array.from(
+    new Set(medecins.map((medecin) => medecin.niveau).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b))
 
-  const clubOptions = Array.from(
-    new Set(medecins.map((medecin) => medecin.clubNom).filter(Boolean))
+  const specialiteOptions = Array.from(
+    new Set(medecins.map((medecin) => medecin.specialite).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b))
 
   return (
@@ -57,29 +57,29 @@ export function MedecinsFilters({
             />
           </div>
 
-          <Select value={ligue} onValueChange={onLigueChange}>
+          <Select value={niveau} onValueChange={onNiveauChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Ligue" />
+              <SelectValue placeholder="Niveau" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les ligues</SelectItem>
-              {ligueOptions.map((ligueNom) => (
-                <SelectItem key={ligueNom} value={ligueNom}>
-                  {ligueNom}
+              <SelectItem value="all">Tous les niveaux</SelectItem>
+              {niveauOptions.map((niveauNom) => (
+                <SelectItem key={niveauNom} value={niveauNom}>
+                  {niveauNom}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={club} onValueChange={onClubChange}>
+          <Select value={specialite} onValueChange={onSpecialiteChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Club" />
+              <SelectValue placeholder="Specialite" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les clubs</SelectItem>
-              {clubOptions.map((clubNom) => (
-                <SelectItem key={clubNom} value={clubNom}>
-                  {clubNom}
+              <SelectItem value="all">Toutes les specialites</SelectItem>
+              {specialiteOptions.map((specialiteNom) => (
+                <SelectItem key={specialiteNom} value={specialiteNom}>
+                  {specialiteNom}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -29,6 +29,7 @@ export function OfficielsClient({ officiels }: { officiels: Officiel[] }) {
           officiel.genre,
           officiel.fonction,
           officiel.entite,
+          officiel.rattachement,
           officiel.equipeFederal,
           officiel.adresse,
           officiel.telephone,

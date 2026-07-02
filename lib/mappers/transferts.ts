@@ -6,6 +6,14 @@ function str(row: SheetRow, key: string): string {
   return v === null || v === undefined ? "" : String(v).trim()
 }
 
+function first(row: SheetRow, keys: string[]): string {
+  for (const key of keys) {
+    const value = str(row, key)
+    if (value) return value
+  }
+  return ""
+}
+
 function normalizeStatut(raw: string): string {
   const value = raw.trim().toLowerCase()
   if (value === "valide" || value === "validé" || value === "validee" || value === "validée") return "valide"
@@ -16,21 +24,23 @@ function normalizeStatut(raw: string): string {
 
 export function mapTransfertRow(row: SheetRow): Transfert {
   return {
-    id: str(row, "id_transfert"),
-    athleteId: str(row, "id_athlete"),
-    athleteNom: str(row, "nom_athlete"),
-    clubOrigineId: str(row, "id_club_origine"),
-    clubOrigineNom: str(row, "nom_club_origine"),
-    clubBeneficiaireId: str(row, "id_club_destination") || str(row, "id_club_beneficiaire"),
-    clubBeneficiaireNom:
-      str(row, "nom_club_destination") ||
-      str(row, "nom_club_beneficiare") ||
-      str(row, "nom_club_beneficiaire"),
-    typeTransfert: str(row, "type_de_transfert"),
-    duree: str(row, "duree"),
-    statut: normalizeStatut(str(row, "statut_transfert")),
-    dateValidation: str(row, "date_de_validation"),
-    dateDebut: str(row, "date_debut"),
-    dateFin: str(row, "date_fin"),
+    id: first(row, ["id_transfert", "matricule", "numero_transfert"]),
+    athleteId: first(row, ["id_athlete", "matricule_athlete", "id_ancien_athlete"]),
+    athleteNom: first(row, ["nom_athlete", "nom_complet", "athlete"]),
+    clubOrigineId: first(row, ["id_club_origine"]),
+    clubOrigineNom: first(row, ["nom_club_origine"]),
+    clubBeneficiaireId: first(row, ["id_club_destination", "id_club_beneficiaire"]),
+    clubBeneficiaireNom: first(row, [
+      "nom_club_destination",
+      "nom_club_beneficiare",
+      "nom_club_beneficiaire",
+    ]),
+    typeTransfert: first(row, ["type_de_transfert", "type_transfert"]),
+    saison: first(row, ["saison"]),
+    statut: normalizeStatut(first(row, ["statut_transfert", "statut"])),
+    dateValidation: first(row, ["date_de_validation", "date_validation"]),
+    dateDebut: first(row, ["date_debut", "date_de_début", "date_debut_transfert"]),
+    dateFin: first(row, ["date_fin", "date_de_fin", "date_fin_transfert"]),
+    observation: first(row, ["observation", "observations"]),
   }
 }

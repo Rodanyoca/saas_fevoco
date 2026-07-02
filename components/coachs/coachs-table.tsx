@@ -21,11 +21,6 @@ interface CoachsTableProps {
   onViewCoach: (coach: Coach) => void
 }
 
-function formatCoachId(id: string) {
-  const numeric = id.replace(/\D/g, "")
-  return numeric ? numeric.padStart(9, "0") : id || "-"
-}
-
 function getInitials(nomComplet: string) {
   const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return "C"
@@ -92,7 +87,7 @@ export function CoachsTable({ coachs, onViewCoach }: CoachsTableProps) {
                 return (
                   <TableRow key={`${coach.id || "coach"}-${coach.nomComplet || "sans-nom"}-${index}`}>
                     <TableCell className="font-mono text-muted-foreground">
-                      {formatCoachId(coach.id)}
+                      {coach.id || "-"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">

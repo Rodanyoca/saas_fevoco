@@ -27,6 +27,7 @@ export function mapOfficielRow(row: SheetRow): Officiel {
     adresse: str(row, "adresse"),
     fonction: str(row, "fonction"),
     entite: str(row, "entite"),
+    rattachement: str(row, "rattachement"),
     dateNomination: str(row, "date_de_nomination"),
     dateFinMandat: str(row, "date_de_fin_de_mandat"),
     equipeFederal: str(row, "equipe_federal"),

@@ -1,6 +1,9 @@
 "use client"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -9,12 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Eye, Mail, Phone } from "lucide-react"
+import { calculateAgeFromSheetDate, formatSheetDate } from "@/lib/date-utils"
 import type { Medecin } from "@/lib/types"
-import { calculateAgeFromSheetDate } from "@/lib/date-utils"
+import { Eye, Mail, Phone } from "lucide-react"
 
 interface MedecinsTableProps {
   medecins: Medecin[]
@@ -22,11 +22,6 @@ interface MedecinsTableProps {
 }
 
 export function MedecinsTable({ medecins, onViewMedecin }: MedecinsTableProps) {
-  const formatMedecinId = (id: string) => {
-    const numeric = id.replace(/\D/g, "")
-    return numeric ? numeric.padStart(7, "0") : id
-  }
-
   const getInitials = (nomComplet: string) => {
     const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
     if (parts.length === 0) return "M"
@@ -41,27 +36,26 @@ export function MedecinsTable({ medecins, onViewMedecin }: MedecinsTableProps) {
       case "inactif":
         return <Badge variant="secondary">Inactif</Badge>
       default:
-        return <Badge variant="outline">{statut || "Non défini"}</Badge>
+        return <Badge variant="outline">{statut || "Non defini"}</Badge>
     }
   }
 
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold">
-          Liste des médecins ({medecins.length})
-        </CardTitle>
+        <CardTitle className="text-lg font-semibold">Liste des medecins ({medecins.length})</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <Table className="table-fixed">
+      <CardContent className="overflow-x-auto p-0">
+        <Table className="min-w-[980px]">
           <TableHeader>
             <TableRow className="bg-muted/30">
-              <TableHead className="hidden w-[84px] lg:table-cell">ID</TableHead>
-              <TableHead>Médecin</TableHead>
-              <TableHead className="hidden w-[18%] md:table-cell">Profil</TableHead>
-              <TableHead className="hidden w-[18%] lg:table-cell">Contact</TableHead>
-              <TableHead className="w-[26%] md:w-[22%]">Affiliation active</TableHead>
-              <TableHead className="w-[84px]">Statut</TableHead>
+              <TableHead className="w-[110px]">ID</TableHead>
+              <TableHead className="min-w-[240px]">Medecin</TableHead>
+              <TableHead className="w-[190px]">Profil</TableHead>
+              <TableHead className="w-[210px]">Contact</TableHead>
+              <TableHead className="w-[140px]">Affiliation</TableHead>
+              <TableHead className="w-[180px]">Equipe nationale</TableHead>
+              <TableHead className="w-[96px]">Statut</TableHead>
               <TableHead className="w-[44px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -70,9 +64,12 @@ export function MedecinsTable({ medecins, onViewMedecin }: MedecinsTableProps) {
               const age = calculateAgeFromSheetDate(medecin.dateNaissance)
 
               return (
-                <TableRow key={`${medecin.id || "medecin"}-${medecin.nomComplet || "sans-nom"}-${index}`} className="hover:bg-muted/50">
-                  <TableCell className="hidden font-mono text-xs text-muted-foreground lg:table-cell">
-                    {formatMedecinId(medecin.id)}
+                <TableRow
+                  key={`${medecin.id || "medecin"}-${medecin.nomComplet || "sans-nom"}-${index}`}
+                  className="hover:bg-muted/50"
+                >
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {medecin.id || "-"}
                   </TableCell>
                   <TableCell>
                     <div className="flex min-w-0 items-center gap-3">
@@ -84,42 +81,43 @@ export function MedecinsTable({ medecins, onViewMedecin }: MedecinsTableProps) {
                       <div className="min-w-0">
                         <p className="truncate font-medium text-foreground">Dr. {medecin.nomComplet}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {medecin.genre || "Genre non défini"}
-                          {age !== null ? ` · ${age} ans` : ""}
+                          {medecin.genre || "Genre non defini"}
+                          {age !== null ? ` - ${age} ans` : ""}
                         </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground">
-                        {medecin.specialite || "Spécialité non définie"}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {medecin.niveau || "Niveau non défini"}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <div className="min-w-0 space-y-1 text-xs text-muted-foreground">
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <Phone className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{medecin.telephone || "-"}</span>
-                      </div>
-                      <div className="hidden min-w-0 items-center gap-1.5 xl:flex">
-                        <Mail className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{medecin.email || "-"}</span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground" title={medecin.clubNom || undefined}>
-                        {medecin.clubNom || "-"}
+                      <p className="truncate font-medium text-foreground">
+                        {medecin.specialite || "Specialite non definie"}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground" title={medecin.pseudoEntente || undefined}>
-                        {medecin.pseudoEntente || "Pseudo non défini"}
+                      <p className="truncate text-xs text-muted-foreground">
+                        {medecin.niveau || "Niveau non defini"}
                       </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="min-w-0 space-y-1 text-xs text-muted-foreground">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <Phone className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{medecin.telephone || "-"}</span>
+                      </div>
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <Mail className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{medecin.email || "-"}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
+                    {formatSheetDate(medecin.dateAffiliation)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-foreground">
+                        {medecin.equipeNationale || "-"}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{medecin.numeroOrdre || "-"}</p>
                     </div>
                   </TableCell>
                   <TableCell>{getStatutBadge(medecin.statut)}</TableCell>

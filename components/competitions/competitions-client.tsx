@@ -5,6 +5,7 @@ import { CompetitionDetail } from "@/components/competitions/competition-detail"
 import { CompetitionsFilters } from "@/components/competitions/competitions-filters"
 import { CompetitionsStats } from "@/components/competitions/competitions-stats"
 import { CompetitionsTable } from "@/components/competitions/competitions-table"
+import { parseSheetDate } from "@/lib/date-utils"
 import type { Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite } from "@/lib/types"
 
 export function CompetitionsClient({
@@ -40,18 +41,24 @@ export function CompetitionsClient({
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
 
-    return competitions.filter((competition) => {
-      if (discipline !== "all" && competition.discipline !== discipline) return false
-      if (statut !== "all" && competition.statut !== statut) return false
+    return competitions
+      .filter((competition) => {
+        if (discipline !== "all" && competition.discipline !== discipline) return false
+        if (statut !== "all" && competition.statut !== statut) return false
 
-      if (s) {
-        const haystack =
-          `${competition.id} ${competition.nomCompetition} ${competition.discipline} ${competition.lieu} ${competition.niveau} ${competition.statut}`.toLowerCase()
-        if (!haystack.includes(s)) return false
-      }
+        if (s) {
+          const haystack =
+            `${competition.id} ${competition.nomCompetition} ${competition.discipline} ${competition.lieu} ${competition.niveau} ${competition.statut}`.toLowerCase()
+          if (!haystack.includes(s)) return false
+        }
 
-      return true
-    })
+        return true
+      })
+      .sort((a, b) => {
+        const dateA = parseSheetDate(a.dateDebut)?.getTime() ?? 0
+        const dateB = parseSheetDate(b.dateDebut)?.getTime() ?? 0
+        return dateB - dateA
+      })
   }, [competitions, discipline, search, statut])
 
   if (selectedCompetition) {

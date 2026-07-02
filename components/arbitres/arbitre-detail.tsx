@@ -1,17 +1,12 @@
 "use client"
 
-import type { ComponentType } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   ArrowLeft,
-  Award,
-  Building2,
   Edit,
-  Mail,
   Phone,
   Shield,
   Trophy,
@@ -28,13 +23,12 @@ interface ArbitreDetailProps {
 export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
   const age = calculateAgeFromSheetDate(arbitre.dateNaissance)
   const experience = calculateExperience(arbitre.dateHomologation)
-  const isEquipeNationale = isNationalTeam(arbitre.equipeNational)
 
   const getInitials = (nomComplet: string) => {
     const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
-    const first = parts[0]?.charAt(0) ?? ""
-    const second = parts[1]?.charAt(0) ?? parts[0]?.charAt(1) ?? ""
-    return `${first}${second}`.toUpperCase()
+    if (parts.length === 0) return "A"
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+    return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
   }
 
   const getStatutBadge = (statut: Arbitre["statut"]) => {
@@ -46,7 +40,7 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
       case "suspendu":
         return <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">Suspendu</Badge>
       default:
-        return <Badge variant="outline">{statut || "Non défini"}</Badge>
+        return <Badge variant="outline">{statut || "Non defini"}</Badge>
     }
   }
 
@@ -81,7 +75,8 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
 
               <div className="mt-4 min-w-0">
                 <h2 className="text-xl font-semibold text-foreground">{arbitre.nomComplet}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{arbitre.grade || "Grade non défini"}</p>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">{arbitre.id || "-"}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{arbitre.grade || "Grade non defini"}</p>
               </div>
 
               <div className="mt-3 flex flex-wrap justify-center gap-2">
@@ -89,96 +84,65 @@ export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
                 {arbitre.grade ? <Badge variant="outline">{arbitre.grade}</Badge> : null}
               </div>
             </div>
-
-            <div className="mt-6 grid grid-cols-3 gap-2 text-center">
-              <MiniStat label="Âge" value={age !== null ? age : "-"} />
-              <MiniStat label="Exp." value={experience} />
-              <MiniStat label="EN" value={isEquipeNationale ? "Oui" : "Non"} />
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <ContactLine icon={Phone} value={arbitre.telephone || "-"} />
-              <ContactLine icon={Mail} value={arbitre.email || "-"} />
-              <ContactLine icon={Award} value={arbitre.grade || "-"} />
-              <ContactLine icon={Building2} value={arbitre.ligueNom || "-"} />
-            </div>
           </CardContent>
         </Card>
 
-        <div className="min-w-0">
-          <Tabs defaultValue="infos" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="infos">Informations</TabsTrigger>
-              <TabsTrigger value="profil">Profil arbitral</TabsTrigger>
-            </TabsList>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <User className="h-4 w-4" />
+                Informations
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {infoRow("ID arbitre", arbitre.id)}
+              {infoRow("Nom complet", arbitre.nomComplet)}
+              {infoRow("Date de naissance", formatSheetDate(arbitre.dateNaissance))}
+              {infoRow("Age", age !== null ? `${age} ans` : "-")}
+              {infoRow("Genre", formatGender(arbitre.genre))}
+              {infoRow("Statut", arbitre.statut)}
+            </CardContent>
+          </Card>
 
-            <TabsContent value="infos" className="mt-4">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <User className="h-4 w-4" />
-                      Identité
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("ID arbitre", arbitre.id)}
-                    {infoRow("Nom complet", arbitre.nomComplet)}
-                    {infoRow("Date de naissance", formatSheetDate(arbitre.dateNaissance))}
-                    {infoRow("Âge", age !== null ? `${age} ans` : "-")}
-                    {infoRow("Genre", formatGender(arbitre.genre))}
-                    {infoRow("Statut", arbitre.statut)}
-                  </CardContent>
-                </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Phone className="h-4 w-4" />
+                Contact
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {infoRow("Telephone", arbitre.telephone)}
+              {infoRow("Email", arbitre.email)}
+            </CardContent>
+          </Card>
 
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Phone className="h-4 w-4" />
-                      Contact
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Téléphone", arbitre.telephone)}
-                    {infoRow("Email", arbitre.email)}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Shield className="h-4 w-4" />
+                Homologation
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {infoRow("Grade", arbitre.grade)}
+              {infoRow("Date homologation", formatSheetDate(arbitre.dateHomologation))}
+              {infoRow("Experience", experience)}
+            </CardContent>
+          </Card>
 
-            <TabsContent value="profil" className="mt-4">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Shield className="h-4 w-4" />
-                      Homologation
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Grade", arbitre.grade)}
-                    {infoRow("Ligue", arbitre.ligueNom)}
-                    {infoRow("Date homologation", formatSheetDate(arbitre.dateHomologation))}
-                    {infoRow("Expérience", experience)}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Trophy className="h-4 w-4" />
-                      Sélection
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Équipe nationale", arbitre.equipeNational || "-")}
-                    {infoRow("Statut", isEquipeNationale ? "Oui" : "Non")}
-                    {infoRow("Statut arbitre", arbitre.statut)}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Trophy className="h-4 w-4" />
+                Equipe nationale
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {infoRow("Equipe nationale", arbitre.equipeNational)}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
@@ -202,36 +166,8 @@ function calculateExperience(dateHomologation: string) {
 
 function formatGender(genre: string) {
   if (genre === "M") return "Masculin"
-  if (genre === "F") return "Féminin"
+  if (genre === "F") return "Feminin"
   return genre || "-"
-}
-
-function isNationalTeam(value: string) {
-  return ["oui", "yes", "true", "1", "x"].includes(value.trim().toLowerCase())
-}
-
-function MiniStat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-md border bg-muted/20 px-2 py-3">
-      <p className="text-lg font-semibold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </div>
-  )
-}
-
-function ContactLine({
-  icon: Icon,
-  value,
-}: {
-  icon: ComponentType<{ className?: string }>
-  value: string
-}) {
-  return (
-    <div className="flex min-w-0 items-start gap-3 text-sm">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="min-w-0 whitespace-normal break-words text-left [overflow-wrap:anywhere]">{value}</span>
-    </div>
-  )
 }
 
 function infoRow(label: string, value: string) {

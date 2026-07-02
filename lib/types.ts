@@ -159,6 +159,7 @@ export interface Officiel {
   adresse: string
   fonction: string
   entite: string
+  rattachement: string
   dateNomination: string
   dateFinMandat: string
   equipeFederal: string
@@ -175,6 +176,7 @@ export interface Medecin {
   telephone: string
   email: string
   numeroOrdre: string
+  equipeNationale: string
   provinceId: string
   provinceNom: string
   ligueId: string
@@ -336,41 +338,90 @@ export interface Transfert {
   clubBeneficiaireId: string
   clubBeneficiaireNom: string
   typeTransfert: string
-  duree: string
+  saison: string
   statut: Statut
   dateValidation: string
   dateDebut: string
   dateFin: string
+  observation: string
 }
 
 export interface EquipeNationale {
-  idSelection: string
-  idAthlete: string
-  nomAthlete: string
-  genre: string
+  idEquipeNationale: string
+  nomEquipeNationale: string
   discipline: string
-  poste: string
-  idClub: string
-  nomClub: string
-  entiteNationale: string
-  statutSelection: Statut
+  categorie: string
+  genre: string
   saison: string
-  observations: string
+  statutEquipe: Statut
 }
 
-export interface EquipeNationaleSuivi {
-  idSuivi: string
+export interface EquipeNationaleSelection {
   idSelection: string
-  idResultat: string
+  idEquipeNationale: string
+  nomEquipeNationale: string
+  discipline: string
+  categorie: string
+  genre: string
   idAthlete: string
   nomAthlete: string
-  entiteNationale: string
+  idClub: string
+  nomClub: string
+  poste: string
+  saison: string
+  dateDebutSelection: string
+  dateFinSelection: string
+  statutSelection: Statut
+  typeSelection: string
+  observation: string
+}
+
+export interface EquipeNationaleCompetition {
+  idParticipationEn: string
+  idEquipeNationale: string
+  nomEquipeNationale: string
+  discipline: string
+  categorie: string
+  genre: string
   idCompetition: string
   nomCompetition: string
   niveauCompetition: string
+  dateDebut: string
+  dateFin: string
+  lieu: string
+  statutParticipation: Statut
+  observation: string
+}
+
+export interface EquipeNationaleResultat {
+  idResultatEn: string
+  idParticipationEn: string
+  idEquipeNationale: string
+  nomEquipeNationale: string
+  discipline: string
+  categorie: string
+  genre: string
+  idCompetition: string
+  nomCompetition: string
   dateMatch: string
+  phase: string
+  poule: string
   adversaire: string
+  paysAdversaire: string
   scoreGlobal: string
+  set1Rdc: number | null
+  set1Adv: number | null
+  set2Rdc: number | null
+  set2Adv: number | null
+  set3Rdc: number | null
+  set3Adv: number | null
+  set4Rdc: number | null
+  set4Adv: number | null
+  set5Rdc: number | null
+  set5Adv: number | null
+  totalPointRdc: number | null
+  totalPointAdv: number | null
   resultatMatch: string
-  pointsSuivi: number | null
+  statutMatch: string
+  observation: string
 }

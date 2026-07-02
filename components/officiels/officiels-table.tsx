@@ -1,6 +1,7 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -20,6 +21,13 @@ interface OfficielsTableProps {
 }
 
 export function OfficielsTable({ officiels, onViewOfficiel }: OfficielsTableProps) {
+  const getInitials = (nomComplet: string) => {
+    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
+    if (parts.length === 0) return "O"
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+    return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
+  }
+
   const getStatutBadge = (statut: Officiel["statut"]) => {
     switch (statut) {
       case "actif":
@@ -41,6 +49,7 @@ export function OfficielsTable({ officiels, onViewOfficiel }: OfficielsTableProp
           <TableHeader>
             <TableRow className="bg-muted/30">
               <TableHead className="w-[110px]">ID</TableHead>
+              <TableHead className="w-[58px]"></TableHead>
               <TableHead>Nom</TableHead>
               <TableHead className="w-[28%]">Fonction</TableHead>
               <TableHead className="w-[26%]">Equipe federale</TableHead>
@@ -56,6 +65,13 @@ export function OfficielsTable({ officiels, onViewOfficiel }: OfficielsTableProp
               >
                 <TableCell className="font-mono text-muted-foreground">
                   {officiel.id || "-"}
+                </TableCell>
+                <TableCell>
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                      {getInitials(officiel.nomComplet)}
+                    </AvatarFallback>
+                  </Avatar>
                 </TableCell>
                 <TableCell>
                   <p className="truncate font-medium text-foreground">{officiel.nomComplet || "-"}</p>

@@ -1,6 +1,5 @@
 "use client"
 
-import type { ComponentType } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,12 +10,9 @@ import type { Coach, CoachAffiliation } from "@/lib/types"
 import {
   Activity,
   ArrowLeft,
-  Award,
   Briefcase,
   Edit,
   GraduationCap,
-  Mail,
-  MapPin,
   Phone,
   User,
 } from "lucide-react"
@@ -98,18 +94,6 @@ export function CoachDetail({ coach, affiliations, onBack }: CoachDetailProps) {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-3 gap-2 text-center">
-              <MiniStat label="Âge" value={age !== null ? age : "-"} />
-              <MiniStat label="Équipes" value={teamsCount} />
-              <MiniStat label="Actives" value={activeAffiliations.length} />
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <ContactLine icon={Phone} value={coach.telephone || "-"} />
-              <ContactLine icon={Mail} value={coach.email || "-"} />
-              <ContactLine icon={Award} value={coach.niveau || "-"} />
-              <ContactLine icon={MapPin} value={coach.nationalite || "-"} />
-            </div>
           </CardContent>
         </Card>
 
@@ -254,30 +238,6 @@ function formatDuration(dateDebut: string, dateFin: string) {
   ]
     .filter(Boolean)
     .join(" ")
-}
-
-function MiniStat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-md border bg-muted/20 px-2 py-3">
-      <p className="text-lg font-semibold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </div>
-  )
-}
-
-function ContactLine({
-  icon: Icon,
-  value,
-}: {
-  icon: ComponentType<{ className?: string }>
-  value: string
-}) {
-  return (
-    <div className="flex min-w-0 items-start gap-3 text-sm">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="min-w-0 break-words text-left">{value}</span>
-    </div>
-  )
 }
 
 function infoRow(label: string, value: string) {

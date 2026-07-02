@@ -1,18 +1,14 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Activity, Building2, Stethoscope, Users } from "lucide-react"
+import { BadgeCheck, Stethoscope, Trophy, Users } from "lucide-react"
 import type { Medecin } from "@/lib/types"
 
 export function MedecinsStats({ medecins }: { medecins: Medecin[] }) {
   const totalMedecins = medecins.length
-  const affiliationsActives = medecins.reduce(
-    (total, medecin) =>
-      total + medecin.affiliations.filter((affiliation) => affiliation.statut === "actif").length,
-    0
-  )
-  const liguesCouvertes = new Set(medecins.map((medecin) => medecin.ligueNom).filter(Boolean)).size
-  const clubsSuivis = new Set(medecins.map((medecin) => medecin.clubNom).filter(Boolean)).size
+  const medecinsActifs = medecins.filter((medecin) => medecin.statut === "actif").length
+  const specialites = new Set(medecins.map((medecin) => medecin.specialite).filter(Boolean)).size
+  const equipeNationale = medecins.filter((medecin) => medecin.equipeNationale).length
 
   const stats = [
     {
@@ -23,23 +19,23 @@ export function MedecinsStats({ medecins }: { medecins: Medecin[] }) {
       bgColor: "bg-primary/10",
     },
     {
-      title: "Affiliations actives",
-      value: affiliationsActives,
-      icon: Activity,
+      title: "Actifs",
+      value: medecinsActifs,
+      icon: BadgeCheck,
       color: "text-green-700",
       bgColor: "bg-green-500/10",
     },
     {
-      title: "Ligues couvertes",
-      value: liguesCouvertes,
-      icon: Building2,
+      title: "Specialites",
+      value: specialites,
+      icon: Users,
       color: "text-blue-700",
       bgColor: "bg-blue-500/10",
     },
     {
-      title: "Clubs suivis",
-      value: clubsSuivis,
-      icon: Users,
+      title: "Equipe nationale",
+      value: equipeNationale,
+      icon: Trophy,
       color: "text-amber-700",
       bgColor: "bg-amber-500/10",
     },

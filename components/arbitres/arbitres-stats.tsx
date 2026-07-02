@@ -7,11 +7,8 @@ import type { Arbitre } from "@/lib/types"
 export function ArbitresStats({ arbitres }: { arbitres: Arbitre[] }) {
   const totalArbitres = arbitres.length
   const arbitresActifs = arbitres.filter((arbitre) => arbitre.statut === "actif").length
-  const liguesCouvertes = new Set(arbitres.map((arbitre) => arbitre.ligueNom).filter(Boolean)).size
-  const equipeNationale = arbitres.filter((arbitre) => {
-    const value = arbitre.equipeNational.trim().toLowerCase()
-    return ["oui", "yes", "true", "1", "x"].includes(value)
-  }).length
+  const grades = new Set(arbitres.map((arbitre) => arbitre.grade).filter(Boolean)).size
+  const equipeNationale = arbitres.filter((arbitre) => arbitre.equipeNational).length
 
   const stats = [
     {
@@ -27,8 +24,8 @@ export function ArbitresStats({ arbitres }: { arbitres: Arbitre[] }) {
       color: "bg-green-500/10 text-green-700",
     },
     {
-      label: "Ligues couvertes",
-      value: liguesCouvertes,
+      label: "Grades",
+      value: grades,
       icon: Award,
       color: "bg-blue-500/10 text-blue-700",
     },

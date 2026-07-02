@@ -10,16 +10,16 @@ import { MedecinDetail } from "@/components/medecins/medecin-detail"
 export function MedecinsClient({ medecins }: { medecins: Medecin[] }) {
   const [selectedMedecin, setSelectedMedecin] = useState<Medecin | null>(null)
   const [search, setSearch] = useState("")
-  const [ligue, setLigue] = useState("all")
-  const [club, setClub] = useState("all")
+  const [niveau, setNiveau] = useState("all")
+  const [specialite, setSpecialite] = useState("all")
   const [statut, setStatut] = useState("all")
 
   const filteredMedecins = useMemo(() => {
     const term = search.trim().toLowerCase()
 
     return medecins.filter((medecin) => {
-      if (ligue !== "all" && medecin.ligueNom !== ligue) return false
-      if (club !== "all" && medecin.clubNom !== club) return false
+      if (niveau !== "all" && medecin.niveau !== niveau) return false
+      if (specialite !== "all" && medecin.specialite !== specialite) return false
       if (statut !== "all" && medecin.statut !== statut) return false
 
       if (term) {
@@ -31,10 +31,9 @@ export function MedecinsClient({ medecins }: { medecins: Medecin[] }) {
           medecin.numeroOrdre,
           medecin.specialite,
           medecin.niveau,
-          medecin.ligueNom,
-          medecin.ententeNom,
-          medecin.pseudoEntente,
-          medecin.clubNom,
+          medecin.dateAffiliation,
+          medecin.equipeNationale,
+          medecin.statut,
         ]
           .join(" ")
           .toLowerCase()
@@ -44,7 +43,7 @@ export function MedecinsClient({ medecins }: { medecins: Medecin[] }) {
 
       return true
     })
-  }, [club, ligue, medecins, search, statut])
+  }, [medecins, niveau, search, specialite, statut])
 
   return (
     <div className="space-y-6">
@@ -56,12 +55,12 @@ export function MedecinsClient({ medecins }: { medecins: Medecin[] }) {
           <MedecinsFilters
             medecins={medecins}
             search={search}
-            ligue={ligue}
-            club={club}
+            niveau={niveau}
+            specialite={specialite}
             statut={statut}
             onSearchChange={setSearch}
-            onLigueChange={setLigue}
-            onClubChange={setClub}
+            onNiveauChange={setNiveau}
+            onSpecialiteChange={setSpecialite}
             onStatutChange={setStatut}
           />
           <MedecinsTable medecins={filteredMedecins} onViewMedecin={setSelectedMedecin} />

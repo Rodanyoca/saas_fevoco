@@ -1,5 +1,5 @@
 import { getSheetData } from "@/lib/google-sheets"
-import type { Arbitre, Athlete, Club, Coach, CoachAffiliation, Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite, Entente, EquipeNationale, EquipeNationaleSuivi, Ligue, Medecin, Officiel, Province, Transfert } from "@/lib/types"
+import type { Arbitre, Athlete, Club, Coach, CoachAffiliation, Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite, Entente, EquipeNationale, EquipeNationaleCompetition, EquipeNationaleResultat, EquipeNationaleSelection, Ligue, Medecin, Officiel, Province, Transfert } from "@/lib/types"
 import { mapProvinceRow } from "@/lib/mappers/provinces"
 import { mapLigueRow } from "@/lib/mappers/ligues"
 import { mapEntenteRow } from "@/lib/mappers/ententes"
@@ -9,7 +9,6 @@ import { mapCoachRow } from "@/lib/mappers/coachs"
 import { mapCoachAffiliationRow } from "@/lib/mappers/coach-affiliations"
 import { mapOfficielRow } from "@/lib/mappers/officiels"
 import { mapMedecinRow } from "@/lib/mappers/medecins"
-import { mapMedecinAffiliationRow } from "@/lib/mappers/medecin-affiliations"
 import { mapArbitreRow } from "@/lib/mappers/arbitres"
 import { mapCompetitionRow } from "@/lib/mappers/competitions"
 import { mapCompetitionParticipantRow } from "@/lib/mappers/competition-participants"
@@ -18,8 +17,9 @@ import { mapCompetitionResultRow } from "@/lib/mappers/competition-results"
 import { mapCompetitionClassementRow } from "@/lib/mappers/competition-classements"
 import { mapTransfertRow } from "@/lib/mappers/transferts"
 import { mapEquipeNationaleRow } from "@/lib/mappers/equipe-nationale"
-import { mapEquipeNationaleSuiviRow } from "@/lib/mappers/equipe-nationale-suivi"
-import { parseSheetDate } from "@/lib/date-utils"
+import { mapEquipeNationaleSelectionRow } from "@/lib/mappers/equipe-nationale-selections"
+import { mapEquipeNationaleCompetitionRow } from "@/lib/mappers/equipe-nationale-competitions"
+import { mapEquipeNationaleResultatRow } from "@/lib/mappers/equipe-nationale-resultats"
 
 function computeProvinceCompletude(p: Province): number {
   const fields: Array<string> = [p.id, p.nom, p.chefLieu, p.responsable, p.telephone, p.email, String(p.statut)]
@@ -106,40 +106,8 @@ export async function getOfficiels(): Promise<Officiel[]> {
 }
 
 export async function getMedecins(): Promise<Medecin[]> {
-  const [medecinRows, affiliationRows] = await Promise.all([
-    getSheetData("MEDECINS"),
-    getSheetData("MEDECINS_AFFILIATION"),
-  ])
-  const affiliations = affiliationRows.map(mapMedecinAffiliationRow).filter((a) => a.medecinId)
-
-  return medecinRows
-    .map(mapMedecinRow)
-    .filter((m) => m.id && m.nomComplet)
-    .map((medecin) => {
-      const medecinAffiliations = affiliations
-        .filter((affiliation) => affiliation.medecinId === medecin.id)
-        .sort((a, b) => {
-          const dateA = parseSheetDate(a.dateDebut)?.getTime() ?? 0
-          const dateB = parseSheetDate(b.dateDebut)?.getTime() ?? 0
-          return dateB - dateA
-        })
-      const activeAffiliation =
-        medecinAffiliations.find((affiliation) => affiliation.statut === "actif") ?? medecinAffiliations[0]
-
-      return {
-        ...medecin,
-        ligueId: activeAffiliation?.ligueId || medecin.ligueId,
-        ligueNom: activeAffiliation?.ligueNom || medecin.ligueNom,
-        ententeId: activeAffiliation?.ententeId || medecin.ententeId,
-        ententeNom: activeAffiliation?.ententeNom || medecin.ententeNom,
-        pseudoEntente: activeAffiliation?.pseudoEntente || medecin.pseudoEntente,
-        clubId: activeAffiliation?.clubId || medecin.clubId,
-        clubNom: activeAffiliation?.clubNom || medecin.clubNom,
-        dateAffiliation: activeAffiliation?.dateDebut || medecin.dateAffiliation,
-        statut: medecin.statut || activeAffiliation?.statut || "",
-        affiliations: medecinAffiliations,
-      }
-    })
+  const rows = await getSheetData("MEDECINS")
+  return rows.map(mapMedecinRow).filter((m) => m.id && m.nomComplet)
 }
 
 export async function getArbitres(): Promise<Arbitre[]> {
@@ -182,26 +150,47 @@ export async function getCompetitionClassements(): Promise<CompetitionClassement
 
 export async function getTransferts(): Promise<Transfert[]> {
   let rows = await getSheetData("TRANSGERT")
+  if (rows.length === 0) rows = await getSheetData("TRANSGERTS")
   if (rows.length === 0) rows = await getSheetData("TRANSFERTS")
   if (rows.length === 0) rows = await getSheetData("TRANSFERT")
 
   return rows
     .map(mapTransfertRow)
-    .filter((transfert) => transfert.id && transfert.athleteId)
+    .filter((transfert) =>
+      Boolean(
+        transfert.id ||
+          transfert.athleteId ||
+          transfert.athleteNom ||
+          transfert.clubOrigineNom ||
+          transfert.clubBeneficiaireNom,
+      ),
+    )
 }
 
 export async function getEquipeNationale(): Promise<EquipeNationale[]> {
   const rows = await getSheetData("EQUIPE_NATIONALE")
   return rows
     .map(mapEquipeNationaleRow)
-    .filter((selection) => selection.idSelection && selection.idAthlete)
+    .filter((equipe) => equipe.idEquipeNationale && equipe.nomEquipeNationale)
 }
 
-export async function getEquipeNationaleSuivi(): Promise<EquipeNationaleSuivi[]> {
-  let rows = await getSheetData("EQUIPE_NATIONALE_SUIVI")
-  if (rows.length === 0) rows = await getSheetData("SUIVI_EQUIPE_NATIONALE")
-
+export async function getEquipeNationaleSelections(): Promise<EquipeNationaleSelection[]> {
+  const rows = await getSheetData("EQUIPE_NATIONALE_SELECTIONS")
   return rows
-    .map(mapEquipeNationaleSuiviRow)
-    .filter((suivi) => suivi.idSuivi && suivi.idSelection)
+    .map(mapEquipeNationaleSelectionRow)
+    .filter((selection) => selection.idSelection && selection.idEquipeNationale && selection.idAthlete)
+}
+
+export async function getEquipeNationaleCompetitions(): Promise<EquipeNationaleCompetition[]> {
+  const rows = await getSheetData("EQUIPE_NATIONALE_COMPETITIONS")
+  return rows
+    .map(mapEquipeNationaleCompetitionRow)
+    .filter((participation) => participation.idParticipationEn && participation.idEquipeNationale)
+}
+
+export async function getEquipeNationaleResultats(): Promise<EquipeNationaleResultat[]> {
+  const rows = await getSheetData("EQUIPE_NATIONALE_RESULTATS")
+  return rows
+    .map(mapEquipeNationaleResultatRow)
+    .filter((resultat) => resultat.idResultatEn && resultat.idEquipeNationale)
 }

@@ -1,6 +1,9 @@
 "use client"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -9,12 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, Mail, Phone } from "lucide-react"
-import type { Arbitre } from "@/lib/types"
 import { calculateAgeFromSheetDate, formatSheetDate } from "@/lib/date-utils"
+import type { Arbitre } from "@/lib/types"
+import { Eye, Mail, Phone } from "lucide-react"
 
 interface ArbitresTableProps {
   arbitres: Arbitre[]
@@ -22,11 +22,6 @@ interface ArbitresTableProps {
 }
 
 export function ArbitresTable({ arbitres, onViewArbitre }: ArbitresTableProps) {
-  const formatArbitreId = (id: string) => {
-    const numeric = id.replace(/\D/g, "")
-    return numeric ? numeric.padStart(7, "0") : id
-  }
-
   const getInitials = (nomComplet: string) => {
     const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
     if (parts.length === 0) return "A"
@@ -43,7 +38,7 @@ export function ArbitresTable({ arbitres, onViewArbitre }: ArbitresTableProps) {
       case "suspendu":
         return <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">Suspendu</Badge>
       default:
-        return <Badge variant="outline">{statut || "Non défini"}</Badge>
+        return <Badge variant="outline">{statut || "Non defini"}</Badge>
     }
   }
 
@@ -52,17 +47,17 @@ export function ArbitresTable({ arbitres, onViewArbitre }: ArbitresTableProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold">Liste des arbitres ({arbitres.length})</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <Table className="table-fixed">
+      <CardContent className="overflow-x-auto p-0">
+        <Table className="min-w-[920px]">
           <TableHeader>
             <TableRow className="bg-muted/30">
-              <TableHead className="hidden w-[84px] lg:table-cell">ID</TableHead>
-              <TableHead>Arbitre</TableHead>
-              <TableHead className="w-[15%]">Grade</TableHead>
-              <TableHead className="hidden w-[24%] md:table-cell">Ligue</TableHead>
-              <TableHead className="hidden w-[18%] lg:table-cell">Contact</TableHead>
-              <TableHead className="hidden w-[130px] xl:table-cell">Homologation</TableHead>
-              <TableHead className="w-[92px]">Statut</TableHead>
+              <TableHead className="w-[110px]">ID</TableHead>
+              <TableHead className="min-w-[230px]">Arbitre</TableHead>
+              <TableHead className="w-[150px]">Grade</TableHead>
+              <TableHead className="w-[190px]">Equipe nationale</TableHead>
+              <TableHead className="w-[210px]">Contact</TableHead>
+              <TableHead className="w-[132px]">Homologation</TableHead>
+              <TableHead className="w-[96px]">Statut</TableHead>
               <TableHead className="w-[44px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -71,9 +66,12 @@ export function ArbitresTable({ arbitres, onViewArbitre }: ArbitresTableProps) {
               const age = calculateAgeFromSheetDate(arbitre.dateNaissance)
 
               return (
-                <TableRow key={`${arbitre.id || "arbitre"}-${arbitre.nomComplet || "sans-nom"}-${index}`} className="hover:bg-muted/50">
-                  <TableCell className="hidden font-mono text-xs text-muted-foreground lg:table-cell">
-                    {formatArbitreId(arbitre.id)}
+                <TableRow
+                  key={`${arbitre.id || "arbitre"}-${arbitre.nomComplet || "sans-nom"}-${index}`}
+                  className="hover:bg-muted/50"
+                >
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {arbitre.id || "-"}
                   </TableCell>
                   <TableCell>
                     <div className="flex min-w-0 items-center gap-3">
@@ -84,10 +82,10 @@ export function ArbitresTable({ arbitres, onViewArbitre }: ArbitresTableProps) {
                       </Avatar>
                       <div className="min-w-0">
                         <p className="truncate font-medium text-foreground">{arbitre.nomComplet}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {arbitre.genre || "Genre non défini"}
-                        {age !== null ? ` · ${age} ans` : ""}
-                      </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {arbitre.genre || "Genre non defini"}
+                          {age !== null ? ` - ${age} ans` : ""}
+                        </p>
                       </div>
                     </div>
                   </TableCell>
@@ -96,29 +94,22 @@ export function ArbitresTable({ arbitres, onViewArbitre }: ArbitresTableProps) {
                       {arbitre.grade || "-"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="hidden whitespace-normal md:table-cell">
-                    <div className="min-w-0">
-                      <p className="whitespace-normal break-words font-medium leading-snug text-foreground [overflow-wrap:anywhere]">
-                        {arbitre.ligueNom || "-"}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {arbitre.equipeNational || "Équipe nationale non définie"}
-                      </p>
-                    </div>
+                  <TableCell>
+                    <p className="truncate font-medium text-foreground">{arbitre.equipeNational || "-"}</p>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell">
+                  <TableCell>
                     <div className="min-w-0 space-y-1 text-xs text-muted-foreground">
                       <div className="flex min-w-0 items-center gap-1.5">
                         <Phone className="h-3.5 w-3.5 shrink-0" />
                         <span className="truncate">{arbitre.telephone || "-"}</span>
                       </div>
-                      <div className="hidden min-w-0 items-center gap-1.5 xl:flex">
+                      <div className="flex min-w-0 items-center gap-1.5">
                         <Mail className="h-3.5 w-3.5 shrink-0" />
                         <span className="truncate">{arbitre.email || "-"}</span>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden text-muted-foreground xl:table-cell">
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
                     {formatSheetDate(arbitre.dateHomologation)}
                   </TableCell>
                   <TableCell>{getStatutBadge(arbitre.statut)}</TableCell>

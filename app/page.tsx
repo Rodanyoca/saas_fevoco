@@ -14,7 +14,9 @@ import {
   getCompetitions,
   getCompetitionUnites,
   getEquipeNationale,
-  getEquipeNationaleSuivi,
+  getEquipeNationaleCompetitions,
+  getEquipeNationaleResultats,
+  getEquipeNationaleSelections,
   getEntentes,
   getLigues,
   getMedecins,
@@ -89,7 +91,9 @@ export default async function DashboardPage() {
     competitionResults,
     transferts,
     equipeNationale,
-    equipeNationaleSuivi,
+    equipeNationaleSelections,
+    equipeNationaleCompetitions,
+    equipeNationaleResultats,
   ] = await Promise.all([
     getProvinces(),
     getLigues(),
@@ -105,7 +109,9 @@ export default async function DashboardPage() {
     getCompetitionResults(),
     getTransferts(),
     getEquipeNationale(),
-    getEquipeNationaleSuivi(),
+    getEquipeNationaleSelections(),
+    getEquipeNationaleCompetitions(),
+    getEquipeNationaleResultats(),
   ])
 
   const qualityStats = createQualityStats({
@@ -123,7 +129,9 @@ export default async function DashboardPage() {
     competitionResults,
     transferts,
     equipeNationale,
-    equipeNationaleSuivi,
+    equipeNationaleSelections,
+    equipeNationaleCompetitions,
+    equipeNationaleResultats,
   })
   const totalRecords = qualityStats.reduce((acc, stat) => acc + stat.total, 0)
   const totalCompleteRecords = qualityStats.reduce((acc, stat) => acc + stat.complets, 0)
@@ -146,9 +154,6 @@ export default async function DashboardPage() {
   const medecinsFeminins = medecins.filter((medecin) => medecin.genre === "F").length
   const officielsMasculins = officiels.filter((officiel) => officiel.genre === "M").length
   const officielsFeminins = officiels.filter((officiel) => officiel.genre === "F").length
-  const selectionMasculins = equipeNationale.filter((selection) => selection.genre === "M").length
-  const selectionFeminins = equipeNationale.filter((selection) => selection.genre === "F").length
-
   const competitionsIndoor = competitions.filter((competition) => isIndoor(competition.discipline)).length
   const competitionsBeach = competitions.filter((competition) => isBeach(competition.discipline)).length
   const competitionsActives = competitions.filter((competition) => isActive(competition.statut)).length
@@ -282,14 +287,14 @@ export default async function DashboardPage() {
               ]}
             />
             <KpiCard
-              title="Selection nationale"
+              title="Equipe nationale"
               value={equipeNationale.length}
               icon={Target}
               variant="accent"
               subIndicators={[
-                { label: "Masculin", value: selectionMasculins },
-                { label: "Feminin", value: selectionFeminins },
-                { label: "Suivis", value: equipeNationaleSuivi.length },
+                { label: "Selections", value: equipeNationaleSelections.length },
+                { label: "Compet.", value: equipeNationaleCompetitions.length },
+                { label: "Resultats", value: equipeNationaleResultats.length },
               ]}
             />
             <div className="h-full rounded-xl border border-border/50 bg-card p-5 shadow-sm">

@@ -11,7 +11,9 @@ import {
   getCompetitions,
   getCompetitionUnites,
   getEquipeNationale,
-  getEquipeNationaleSuivi,
+  getEquipeNationaleCompetitions,
+  getEquipeNationaleResultats,
+  getEquipeNationaleSelections,
   getEntentes,
   getLigues,
   getMedecins,
@@ -42,7 +44,9 @@ export default async function QualitePage() {
     competitionClassements,
     transferts,
     equipeNationale,
-    equipeNationaleSuivi,
+    equipeNationaleSelections,
+    equipeNationaleCompetitions,
+    equipeNationaleResultats,
   ] = await Promise.all([
     getProvinces(),
     getLigues(),
@@ -60,7 +64,9 @@ export default async function QualitePage() {
     getCompetitionClassements(),
     getTransferts(),
     getEquipeNationale(),
-    getEquipeNationaleSuivi(),
+    getEquipeNationaleSelections(),
+    getEquipeNationaleCompetitions(),
+    getEquipeNationaleResultats(),
   ])
 
   const qualityStats = createQualityStats({
@@ -80,7 +86,9 @@ export default async function QualitePage() {
     competitionClassements,
     transferts,
     equipeNationale,
-    equipeNationaleSuivi,
+    equipeNationaleSelections,
+    equipeNationaleCompetitions,
+    equipeNationaleResultats,
   })
 
   return (

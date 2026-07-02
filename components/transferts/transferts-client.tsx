@@ -20,7 +20,7 @@ export function TransfertsClient({ transferts }: { transferts: Transfert[] }) {
 
       if (s) {
         const haystack =
-          `${transfert.id} ${transfert.athleteId} ${transfert.athleteNom} ${transfert.clubOrigineId} ${transfert.clubOrigineNom} ${transfert.clubBeneficiaireId} ${transfert.clubBeneficiaireNom} ${transfert.typeTransfert} ${transfert.duree} ${transfert.statut}`.toLowerCase()
+          `${transfert.id} ${transfert.athleteId} ${transfert.athleteNom} ${transfert.clubOrigineId} ${transfert.clubOrigineNom} ${transfert.clubBeneficiaireId} ${transfert.clubBeneficiaireNom} ${transfert.typeTransfert} ${transfert.saison} ${transfert.observation} ${transfert.statut}`.toLowerCase()
         if (!haystack.includes(s)) return false
       }
 

@@ -1,6 +1,5 @@
 "use client"
 
-import type { ComponentType } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,9 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   ArrowLeft,
   Briefcase,
-  Building2,
   Edit,
-  Mail,
   MapPin,
   Phone,
   User,
@@ -86,20 +83,6 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                 {officiel.entite ? <Badge variant="outline">{officiel.entite}</Badge> : null}
               </div>
             </div>
-
-            <div className="mt-6 grid grid-cols-3 gap-2 text-center">
-              <MiniStat label="Age" value={age !== null ? age : "-"} />
-              <MiniStat label="Entite" value={officiel.entite || "-"} />
-              <MiniStat label="Mandat" value={mandatDuration} />
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <ContactLine icon={Phone} value={officiel.telephone || "-"} />
-              <ContactLine icon={Mail} value={officiel.email || "-"} />
-              <ContactLine icon={Briefcase} value={officiel.fonction || "-"} />
-              <ContactLine icon={Building2} value={officiel.equipeFederal || officiel.entite || "-"} />
-              <ContactLine icon={MapPin} value={officiel.adresse || "-"} />
-            </div>
           </CardContent>
         </Card>
 
@@ -156,7 +139,7 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {infoRow("Fonction", officiel.fonction)}
-                    {infoRow("Entite", officiel.entite)}
+                    {infoRow("Structure", officiel.entite)}
                     {infoRow("Equipe federale", officiel.equipeFederal)}
                     {infoRow("Date nomination", formatSheetDate(officiel.dateNomination))}
                     {infoRow("Fin de mandat", officiel.dateFinMandat ? formatSheetDate(officiel.dateFinMandat) : "En cours")}
@@ -172,8 +155,8 @@ export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {infoRow("Entite", officiel.entite)}
-                    {infoRow("Equipe federale", officiel.equipeFederal)}
+                    {infoRow("Structure", officiel.entite)}
+                    {infoRow("Rattachement", officiel.rattachement)}
                     {infoRow("Adresse", officiel.adresse)}
                   </CardContent>
                 </Card>
@@ -213,30 +196,6 @@ function formatGender(genre: string) {
   if (genre === "M") return "Masculin"
   if (genre === "F") return "Feminin"
   return genre || "-"
-}
-
-function MiniStat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-md border bg-muted/20 px-2 py-3">
-      <p className="text-lg font-semibold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </div>
-  )
-}
-
-function ContactLine({
-  icon: Icon,
-  value,
-}: {
-  icon: ComponentType<{ className?: string }>
-  value: string
-}) {
-  return (
-    <div className="flex min-w-0 items-start gap-3 text-sm">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="min-w-0 whitespace-normal break-words text-left [overflow-wrap:anywhere]">{value}</span>
-    </div>
-  )
 }
 
 function infoRow(label: string, value: string) {

@@ -10,7 +10,7 @@ import { ArbitreDetail } from "@/components/arbitres/arbitre-detail"
 export function ArbitresClient({ arbitres }: { arbitres: Arbitre[] }) {
   const [selectedArbitre, setSelectedArbitre] = useState<Arbitre | null>(null)
   const [search, setSearch] = useState("")
-  const [ligue, setLigue] = useState("all")
+  const [equipeNationale, setEquipeNationale] = useState("all")
   const [grade, setGrade] = useState("all")
   const [statut, setStatut] = useState("all")
 
@@ -18,7 +18,7 @@ export function ArbitresClient({ arbitres }: { arbitres: Arbitre[] }) {
     const term = search.trim().toLowerCase()
 
     return arbitres.filter((arbitre) => {
-      if (ligue !== "all" && arbitre.ligueNom !== ligue) return false
+      if (equipeNationale !== "all" && arbitre.equipeNational !== equipeNationale) return false
       if (grade !== "all" && arbitre.grade !== grade) return false
       if (statut !== "all" && arbitre.statut !== statut) return false
 
@@ -28,10 +28,10 @@ export function ArbitresClient({ arbitres }: { arbitres: Arbitre[] }) {
           arbitre.nomComplet,
           arbitre.genre,
           arbitre.grade,
-          arbitre.ligueNom,
           arbitre.telephone,
           arbitre.email,
           arbitre.equipeNational,
+          arbitre.dateHomologation,
           arbitre.statut,
         ]
           .join(" ")
@@ -42,7 +42,7 @@ export function ArbitresClient({ arbitres }: { arbitres: Arbitre[] }) {
 
       return true
     })
-  }, [arbitres, grade, ligue, search, statut])
+  }, [arbitres, equipeNationale, grade, search, statut])
 
   return (
     <div className="space-y-6">
@@ -54,11 +54,11 @@ export function ArbitresClient({ arbitres }: { arbitres: Arbitre[] }) {
           <ArbitresFilters
             arbitres={arbitres}
             search={search}
-            ligue={ligue}
+            equipeNationale={equipeNationale}
             grade={grade}
             statut={statut}
             onSearchChange={setSearch}
-            onLigueChange={setLigue}
+            onEquipeNationaleChange={setEquipeNationale}
             onGradeChange={setGrade}
             onStatutChange={setStatut}
           />

@@ -60,15 +60,16 @@ export function TransfertsTable({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <Table className="min-w-[1100px]">
+          <Table className="min-w-[1180px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Athlete</TableHead>
                 <TableHead>Origine</TableHead>
                 <TableHead className="w-[56px] text-center"></TableHead>
                 <TableHead>Beneficiaire</TableHead>
-                <TableHead>Type / duree</TableHead>
+                <TableHead>Type / saison</TableHead>
                 <TableHead>Periode</TableHead>
+                <TableHead>Observation</TableHead>
                 <TableHead>Validation</TableHead>
                 <TableHead>Statut</TableHead>
               </TableRow>
@@ -99,11 +100,14 @@ export function TransfertsTable({
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium">{transfert.typeTransfert || "-"}</span>
-                      <span className="text-xs text-muted-foreground">{transfert.duree || "-"}</span>
+                      <span className="text-xs text-muted-foreground">{transfert.saison || "-"}</span>
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
                     {formatDate(transfert.dateDebut)} - {formatDate(transfert.dateFin)}
+                  </TableCell>
+                  <TableCell className="max-w-[220px] whitespace-normal text-sm text-muted-foreground">
+                    <span className="line-clamp-2">{transfert.observation || "-"}</span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
                     {formatDate(transfert.dateValidation)}

@@ -10,7 +10,9 @@ import type {
   CompetitionUnite,
   Entente,
   EquipeNationale,
-  EquipeNationaleSuivi,
+  EquipeNationaleCompetition,
+  EquipeNationaleResultat,
+  EquipeNationaleSelection,
   Ligue,
   Medecin,
   Officiel,
@@ -74,7 +76,9 @@ export function createQualityStats(data: {
   competitionClassements?: CompetitionClassement[]
   transferts?: Transfert[]
   equipeNationale?: EquipeNationale[]
-  equipeNationaleSuivi?: EquipeNationaleSuivi[]
+  equipeNationaleSelections?: EquipeNationaleSelection[]
+  equipeNationaleCompetitions?: EquipeNationaleCompetition[]
+  equipeNationaleResultats?: EquipeNationaleResultat[]
 }): QualityStat[] {
   return [
     buildQualityStat("Provinces", data.provinces, ["id", "nom", "chefLieu", "responsable", "telephone", "email", "statut"]),
@@ -92,9 +96,32 @@ export function createQualityStats(data: {
     buildQualityStat("Clubs", data.clubs, ["id", "nom", "categorie", "provinceId", "ligueId", "ligueNom", "ententeId", "ententeNom", "statut"]),
     buildQualityStat("Athletes", data.athletes, ["id", "nomComplet", "dateNaissance", "genre", "provinceId", "ligueId", "clubId", "statut"]),
     buildQualityStat("Coachs", data.coachs, ["id", "nomComplet", "dateNaissance", "genre", "telephone", "email", "niveau", "specialisation", "statut"]),
-    buildQualityStat("Arbitres", data.arbitres, ["id", "nomComplet", "dateNaissance", "genre", "grade", "ligueId", "ligueNom", "statut"]),
-    buildQualityStat("Medecins", data.medecins, ["id", "nomComplet", "dateNaissance", "genre", "specialite", "niveau", "telephone", "email", "statut"]),
-    buildQualityStat("Officiels", data.officiels, ["id", "nomComplet", "dateNaissance", "genre", "telephone", "email", "fonction", "entite", "statut"]),
+    buildQualityStat("Arbitres", data.arbitres, [
+      "id",
+      "nomComplet",
+      "dateNaissance",
+      "genre",
+      "grade",
+      "telephone",
+      "email",
+      "dateHomologation",
+      "equipeNational",
+      "statut",
+    ]),
+    buildQualityStat("Medecins", data.medecins, [
+      "id",
+      "nomComplet",
+      "dateNaissance",
+      "genre",
+      "specialite",
+      "niveau",
+      "telephone",
+      "email",
+      "dateAffiliation",
+      "numeroOrdre",
+      "equipeNationale",
+    ]),
+    buildQualityStat("Officiels", data.officiels, ["id", "nomComplet", "dateNaissance", "genre", "telephone", "email", "fonction", "entite", "rattachement", "statut"]),
     buildQualityStat("Competitions", data.competitions ?? [], [
       "id",
       "nomCompetition",
@@ -150,27 +177,43 @@ export function createQualityStats(data: {
       "clubBeneficiaireId",
       "clubBeneficiaireNom",
       "typeTransfert",
+      "saison",
       "statut",
       "dateDebut",
       "dateFin",
     ]),
     buildQualityStat("Equipe nationale", data.equipeNationale ?? [], [
+      "idEquipeNationale",
+      "nomEquipeNationale",
+      "discipline",
+      "categorie",
+      "genre",
+      "saison",
+      "statutEquipe",
+    ]),
+    buildQualityStat("Selections equipe nationale", data.equipeNationaleSelections ?? [], [
       "idSelection",
+      "idEquipeNationale",
       "idAthlete",
       "nomAthlete",
-      "genre",
-      "discipline",
-      "entiteNationale",
-      "statutSelection",
       "saison",
+      "statutSelection",
     ]),
-    buildQualityStat("Performance equipe nationale", data.equipeNationaleSuivi ?? [], [
-      "idSuivi",
-      "idSelection",
-      "idResultat",
-      "idAthlete",
+    buildQualityStat("Competitions equipe nationale", data.equipeNationaleCompetitions ?? [], [
+      "idParticipationEn",
+      "idEquipeNationale",
       "idCompetition",
       "nomCompetition",
+      "statutParticipation",
+    ]),
+    buildQualityStat("Resultats equipe nationale", data.equipeNationaleResultats ?? [], [
+      "idResultatEn",
+      "idParticipationEn",
+      "idEquipeNationale",
+      "idCompetition",
+      "dateMatch",
+      "adversaire",
+      "scoreGlobal",
       "resultatMatch",
     ]),
   ]

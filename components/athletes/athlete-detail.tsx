@@ -16,8 +16,6 @@ import {
 import {
   ArrowLeft,
   Edit,
-  Mail,
-  Phone,
   MapPin,
   User,
   Ruler,
@@ -36,7 +34,16 @@ interface AthleteDetailProps {
 
 export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProps) {
   const age = calculateAgeFromSheetDate(athlete.dateNaissance)
-  const athleteTransferts = transferts.filter((transfert) => transfert.athleteId === athlete.id)
+  const athleteTransferts = transferts.filter((transfert) => {
+    const athleteId = athlete.id.trim().toLowerCase()
+    const athleteName = athlete.nomComplet.trim().toLowerCase()
+
+    return (
+      transfert.athleteId.trim().toLowerCase() === athleteId ||
+      transfert.id.trim().toLowerCase() === athleteId ||
+      (athleteName && transfert.athleteNom.trim().toLowerCase() === athleteName)
+    )
+  })
 
   const getInitials = (nomComplet: string) => {
     const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
@@ -115,21 +122,6 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 {getStatusBadge(athlete.statut)}
               </div>
-
-              <div className="mt-6 w-full space-y-3">
-                <div className="flex min-w-0 items-start gap-3 text-sm">
-                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 break-words text-left">{athlete.email || "-"}</span>
-                </div>
-                <div className="flex min-w-0 items-start gap-3 text-sm">
-                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 break-words text-left">{athlete.telephone || "-"}</span>
-                </div>
-                <div className="flex min-w-0 items-start gap-3 text-sm">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 break-words text-left">{athlete.adresse || "-"}</span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -185,7 +177,6 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {infoRow("Province", athlete.provinceNom)}
                     {infoRow("Ligue", athlete.ligueNom)}
                     {infoRow("Entente", athlete.ententeNom)}
                     {infoRow("Club", athlete.clubNom)}
@@ -241,28 +232,36 @@ export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProp
                       <TableHeader>
                         <TableRow>
                           <TableHead>Periode</TableHead>
-                          <TableHead>Club beneficiaire</TableHead>
-                          <TableHead>ID club beneficiaire</TableHead>
+                          <TableHead>Saison</TableHead>
+                          <TableHead>Club d'origine</TableHead>
+                          <TableHead>Matricule</TableHead>
+                          <TableHead>Observation</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {athleteTransferts.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={3} className="h-24 text-center text-sm text-muted-foreground">
+                            <TableCell colSpan={5} className="h-24 text-center text-sm text-muted-foreground">
                               Aucun transfert disponible.
                             </TableCell>
                           </TableRow>
                         ) : (
                           athleteTransferts.map((transfert, index) => (
-                            <TableRow key={`${transfert.id || "transfert"}-${transfert.clubBeneficiaireId || "sans-club"}-${index}`}>
+                            <TableRow key={`${transfert.id || "transfert"}-${transfert.clubOrigineId || "sans-club"}-${index}`}>
                               <TableCell className="whitespace-nowrap text-muted-foreground">
                                 {formatSheetDate(transfert.dateDebut)} - {formatSheetDate(transfert.dateFin)}
                               </TableCell>
+                              <TableCell className="whitespace-nowrap text-muted-foreground">
+                                {transfert.saison || "-"}
+                              </TableCell>
                               <TableCell className="font-medium">
-                                {transfert.clubBeneficiaireNom || "-"}
+                                {transfert.clubOrigineNom || "-"}
                               </TableCell>
                               <TableCell className="font-mono text-muted-foreground">
-                                {transfert.clubBeneficiaireId || "-"}
+                                {transfert.id || "-"}
+                              </TableCell>
+                              <TableCell className="max-w-[240px] whitespace-normal text-sm text-muted-foreground">
+                                {transfert.observation || "-"}
                               </TableCell>
                             </TableRow>
                           ))
