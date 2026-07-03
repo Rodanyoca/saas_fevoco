@@ -93,11 +93,11 @@ export default async function QualitePage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6 p-6">
+      <div className="space-y-4 p-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Qualite des donnees</h1>
-          <p className="mt-1 text-muted-foreground">
-            Surveillez la completude des feuilles connectees a la FEVOCO.
+          <h1 className="text-xl font-semibold text-foreground">Qualite des donnees</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Controle rapide de la completude des feuilles connectees a la FEVOCO.
           </p>
         </div>
 

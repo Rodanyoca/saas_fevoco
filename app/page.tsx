@@ -1,46 +1,31 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { GenreChart } from "@/components/dashboard/genre-chart"
 import { Header } from "@/components/dashboard/header"
-import { KpiCard } from "@/components/dashboard/kpi-card"
-import { ProvinceChart } from "@/components/dashboard/province-chart"
-import { StatsTable } from "@/components/dashboard/stats-table"
-import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   getArbitres,
   getAthletes,
   getClubs,
   getCoachs,
+  getCompetitionClassements,
+  getCompetitionParticipants,
   getCompetitionResults,
   getCompetitions,
   getCompetitionUnites,
+  getDerniereMiseAJour,
+  getEntentes,
   getEquipeNationale,
   getEquipeNationaleCompetitions,
+  getEquipeNationaleParticipantsCount,
   getEquipeNationaleResultats,
   getEquipeNationaleSelections,
-  getEntentes,
   getLigues,
   getMedecins,
   getOfficiels,
   getProvinces,
-  getTransferts,
 } from "@/lib/data"
+import { formatSheetDate, parseSheetDate } from "@/lib/date-utils"
 import { createQualityStats } from "@/lib/quality"
-import {
-  ArrowRightLeft,
-  Building2,
-  CalendarCheck,
-  CheckCircle,
-  Flag,
-  MapPin,
-  Network,
-  Shield,
-  Stethoscope,
-  Target,
-  Trophy,
-  UserCheck,
-  UserCog,
-  Users,
-} from "lucide-react"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -57,26 +42,91 @@ function isActive(value: string | null | undefined): boolean {
   return normalized === "actif" || normalized === "active" || normalized === "en cours"
 }
 
-function isInactive(value: string | null | undefined): boolean {
+function isPlanned(value: string | null | undefined): boolean {
   const normalized = normalizeValue(value)
-  return normalized === "inactif" || normalized === "inactive" || normalized === "annule"
+  return normalized.includes("prevu") || normalized.includes("programme") || normalized.includes("planifie")
 }
 
-function isValidated(value: string | null | undefined): boolean {
+function isDone(value: string | null | undefined): boolean {
   const normalized = normalizeValue(value)
-  return normalized === "valide" || normalized === "validee" || normalized === "approuve" || normalized === "approuvee"
+  return normalized.includes("termine") || normalized.includes("cloture") || normalized.includes("complete")
 }
 
-function isBeach(value: string | null | undefined): boolean {
-  return normalizeValue(value).includes("beach")
+function isWin(value: string | null | undefined): boolean {
+  const normalized = normalizeValue(value)
+  return normalized.startsWith("v") || normalized.includes("gagne")
 }
 
-function isIndoor(value: string | null | undefined): boolean {
-  return normalizeValue(value).includes("indoor")
+function getHealth(rate: number) {
+  if (rate >= 80) return { label: "Bonne", className: "bg-green-100 text-green-800" }
+  if (rate >= 60) return { label: "A surveiller", className: "bg-amber-100 text-amber-800" }
+  return { label: "Critique", className: "bg-red-100 text-red-800" }
+}
+
+function getAlertBadge(count: number) {
+  if (count === 0) return { label: "OK", className: "bg-green-100 text-green-800" }
+  if (count <= 5) return { label: "A verifier", className: "bg-amber-100 text-amber-800" }
+  return { label: "A completer", className: "bg-red-100 text-red-800" }
+}
+
+function CompactSection({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <Card className="border-border/50 shadow-sm">
+      <CardHeader className="px-4 py-3">
+        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="px-4 pb-4 pt-0">{children}</CardContent>
+    </Card>
+  )
+}
+
+function MetricGrid({
+  items,
+}: {
+  items: Array<{ label: string; value: string | number; note?: string }>
+}) {
+  return (
+    <div className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-2 md:grid-cols-3 xl:grid-cols-4">
+      {items.map((item) => (
+        <div key={item.label} className="min-w-0 border-b border-border/50 pb-1">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="min-w-0 break-words text-xs leading-tight text-muted-foreground">{item.label}</span>
+            <span className="shrink-0 text-base font-semibold">{item.value}</span>
+          </div>
+          {item.note && <p className="break-words text-[11px] leading-tight text-muted-foreground">{item.note}</p>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function CompactResults({
+  rows,
+}: {
+  rows: Array<{ id: string; left: string; middle: string; right: string }>
+}) {
+  return (
+    <div className="mt-3 space-y-1">
+      {rows.map((row) => (
+        <div key={row.id} className="grid min-w-0 gap-2 border-b border-border/50 pb-1 text-sm md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_auto]">
+          <span className="min-w-0 break-words font-medium leading-snug">{row.left || "-"}</span>
+          <span className="min-w-0 break-words leading-snug text-muted-foreground">{row.middle || "-"}</span>
+          <span className="font-mono font-medium md:text-right">{row.right || "-"}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export default async function DashboardPage() {
   const [
+    derniereMiseAJour,
     provinces,
     ligues,
     ententes,
@@ -87,14 +137,17 @@ export default async function DashboardPage() {
     medecins,
     officiels,
     competitions,
+    competitionParticipants,
     competitionUnites,
     competitionResults,
-    transferts,
+    competitionClassements,
     equipeNationale,
     equipeNationaleSelections,
     equipeNationaleCompetitions,
+    equipeNationaleParticipantsCount,
     equipeNationaleResultats,
   ] = await Promise.all([
+    getDerniereMiseAJour(),
     getProvinces(),
     getLigues(),
     getEntentes(),
@@ -105,12 +158,14 @@ export default async function DashboardPage() {
     getMedecins(),
     getOfficiels(),
     getCompetitions(),
+    getCompetitionParticipants(),
     getCompetitionUnites(),
     getCompetitionResults(),
-    getTransferts(),
+    getCompetitionClassements(),
     getEquipeNationale(),
     getEquipeNationaleSelections(),
     getEquipeNationaleCompetitions(),
+    getEquipeNationaleParticipantsCount(),
     getEquipeNationaleResultats(),
   ])
 
@@ -125,9 +180,10 @@ export default async function DashboardPage() {
     medecins,
     officiels,
     competitions,
+    competitionParticipants,
     competitionUnites,
     competitionResults,
-    transferts,
+    competitionClassements,
     equipeNationale,
     equipeNationaleSelections,
     equipeNationaleCompetitions,
@@ -136,200 +192,194 @@ export default async function DashboardPage() {
   const totalRecords = qualityStats.reduce((acc, stat) => acc + stat.total, 0)
   const totalCompleteRecords = qualityStats.reduce((acc, stat) => acc + stat.complets, 0)
   const tauxCompletude = totalRecords ? Math.round((totalCompleteRecords / totalRecords) * 100) : 0
+  const health = getHealth(tauxCompletude)
 
-  const liguesActives = ligues.filter((ligue) => isActive(ligue.statut)).length
-  const liguesInactives = ligues.filter((ligue) => isInactive(ligue.statut)).length
-  const ententesActives = ententes.filter((entente) => isActive(entente.statut)).length
-  const ententesInactives = ententes.filter((entente) => isInactive(entente.statut)).length
   const clubsActifs = clubs.filter((club) => isActive(club.statut)).length
-  const clubsInactifs = clubs.filter((club) => isInactive(club.statut)).length
+  const clubsSansStatut = clubs.filter((club) => !club.statut).length
+  const athletesSansClub = athletes.filter((athlete) => !athlete.clubId && !athlete.clubNom).length
+  const athletesIncomplets = athletes.filter((athlete) => !athlete.id || !athlete.nomComplet || !athlete.genre || !athlete.clubNom).length
+  const athleteIndoor = athletes.filter((athlete) => normalizeValue(athlete.disciplineActive) === "indoor").length
+  const athleteBeach = athletes.filter((athlete) => normalizeValue(athlete.disciplineActive) === "beach").length
+  const athleteMixte = athletes.filter((athlete) => {
+    const discipline = normalizeValue(athlete.disciplineActive)
+    return discipline.includes("indoor") && discipline.includes("beach")
+  }).length
+  const athletesMasculins = athletes.filter((athlete) => normalizeValue(athlete.genre) === "m").length
+  const athletesFeminins = athletes.filter((athlete) => normalizeValue(athlete.genre) === "f").length
 
-  const athletesMasculins = athletes.filter((athlete) => athlete.genre === "M").length
-  const athletesFeminins = athletes.filter((athlete) => athlete.genre === "F").length
-  const coachsMasculins = coachs.filter((coach) => coach.genre === "M").length
-  const coachsFeminins = coachs.filter((coach) => coach.genre === "F").length
-  const arbitresMasculins = arbitres.filter((arbitre) => arbitre.genre === "M").length
-  const arbitresFeminins = arbitres.filter((arbitre) => arbitre.genre === "F").length
-  const medecinsMasculins = medecins.filter((medecin) => medecin.genre === "M").length
-  const medecinsFeminins = medecins.filter((medecin) => medecin.genre === "F").length
-  const officielsMasculins = officiels.filter((officiel) => officiel.genre === "M").length
-  const officielsFeminins = officiels.filter((officiel) => officiel.genre === "F").length
-  const competitionsIndoor = competitions.filter((competition) => isIndoor(competition.discipline)).length
-  const competitionsBeach = competitions.filter((competition) => isBeach(competition.discipline)).length
-  const competitionsActives = competitions.filter((competition) => isActive(competition.statut)).length
-  const matchsJoues = competitionResults.filter((result) => result.scoreGlobal || isValidated(result.statutMatch)).length
-  const transfertsValides = transferts.filter((transfert) => isValidated(transfert.statut)).length
-  const transfertsEnCours = transferts.filter((transfert) => isActive(transfert.statut) && !isValidated(transfert.statut)).length
+  const competitionsPrevues = competitions.filter((competition) => isPlanned(competition.statut)).length
+  const competitionsEnCours = competitions.filter((competition) => isActive(competition.statut)).length
+  const competitionsTerminees = competitions.filter((competition) => isDone(competition.statut)).length
+  const competitionIdsWithUnits = new Set(competitionUnites.map((unite) => unite.idCompetition).filter(Boolean))
+  const competitionsSansUnites = competitions.filter((competition) => !competitionIdsWithUnits.has(competition.id)).length
+  const classementResultIds = new Set(competitionClassements.map((row) => row.idResultat).filter(Boolean))
+  const resultatsSansClassement = competitionResults.filter((result) => result.idResultat && !classementResultIds.has(result.idResultat)).length
+  const derniersResultats = [...competitionResults]
+    .sort((a, b) => (parseSheetDate(b.dateMatch)?.getTime() ?? 0) - (parseSheetDate(a.dateMatch)?.getTime() ?? 0))
+    .slice(0, 4)
 
-  const genreData = [
-    {
-      genre: "Masculin",
-      count: athletesMasculins + coachsMasculins + arbitresMasculins + medecinsMasculins + officielsMasculins,
-    },
-    {
-      genre: "Feminin",
-      count: athletesFeminins + coachsFeminins + arbitresFeminins + medecinsFeminins + officielsFeminins,
-    },
+  const equipesNationalesActives = equipeNationale.filter((equipe) => isActive(equipe.statutEquipe)).length
+  const selectionTeamIds = new Set(equipeNationaleSelections.map((selection) => selection.idEquipeNationale).filter(Boolean))
+  const equipesSansSelection = equipeNationale.filter((equipe) => !selectionTeamIds.has(equipe.idEquipeNationale)).length
+  const resultatsEquipeNationaleIncomplets = equipeNationaleResultats.filter(
+    (resultat) => !resultat.scoreGlobal || !resultat.resultatMatch,
+  ).length
+  const derniersResultatsEN = [...equipeNationaleResultats]
+    .sort((a, b) => (parseSheetDate(b.dateMatch)?.getTime() ?? 0) - (parseSheetDate(a.dateMatch)?.getTime() ?? 0))
+    .slice(0, 4)
+
+  const topLigues = ligues
+    .map((ligue) => ({
+      id: ligue.id,
+      nom: ligue.nom,
+      clubs: clubs.filter((club) => club.ligueId === ligue.id || club.ligueNom === ligue.nom).length,
+    }))
+    .sort((a, b) => b.clubs - a.clubs)
+    .slice(0, 5)
+
+  const alerts = [
+    { label: "Athletes sans club", count: athletesSansClub },
+    { label: "Fiches athletes incompletes", count: athletesIncomplets },
+    { label: "Clubs sans statut", count: clubsSansStatut },
+    { label: "Competitions sans unites", count: competitionsSansUnites },
+    { label: "Resultats sans classement", count: resultatsSansClassement },
+    { label: "Equipes nationales sans selection", count: equipesSansSelection },
+    { label: "Resultats EN incomplets", count: resultatsEquipeNationaleIncomplets },
   ]
 
   return (
     <DashboardLayout>
-      <Header title="Tableau de bord" subtitle="Vue globale du systeme national de volleyball" />
+      <Header
+        title="Tableau de bord FEVOCO"
+        subtitle={`Pilotage federal${derniereMiseAJour ? ` - Derniere mise a jour : ${derniereMiseAJour}` : ""}`}
+      />
 
-      <div className="space-y-6 p-6">
-        <section className="grid grid-cols-1 gap-4 2xl:grid-cols-12">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:col-span-8">
-            <KpiCard title="Provinces" value={provinces.length} icon={MapPin} />
-            <KpiCard
-              title="Ligues"
-              value={ligues.length}
-              icon={Building2}
-              subIndicators={[
-                { label: "Actives", value: liguesActives },
-                { label: "Inactives", value: liguesInactives },
+      <div className="space-y-4 p-4">
+        <CompactSection title="Vue generale">
+          <MetricGrid
+            items={[
+              { label: "Clubs", value: clubs.length },
+              { label: "Athletes", value: athletes.length },
+              { label: "Competitions", value: competitions.length },
+              { label: "Equipes nationales", value: equipeNationale.length },
+              { label: "Derniere mise a jour", value: derniereMiseAJour || "-" },
+              { label: "Sante donnees", value: health.label, note: `${tauxCompletude}% completude` },
+            ]}
+          />
+        </CompactSection>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          <CompactSection title="Structure territoriale">
+            <MetricGrid
+              items={[
+                { label: "Provinces", value: provinces.length },
+                { label: "Ligues", value: ligues.length },
+                { label: "Ententes", value: ententes.length },
+                { label: "Clubs", value: clubs.length },
+                { label: "Clubs actifs", value: clubsActifs },
               ]}
             />
-            <KpiCard
-              title="Ententes"
-              value={ententes.length}
-              icon={Network}
-              subIndicators={[
-                { label: "Actives", value: ententesActives },
-                { label: "Inactives", value: ententesInactives },
+            <div className="mt-3 grid gap-2">
+              {topLigues.map((ligue) => (
+                <div key={ligue.id || ligue.nom} className="flex items-center justify-between text-sm">
+                  <span className="truncate text-muted-foreground">{ligue.nom || "-"}</span>
+                  <span className="font-medium">{ligue.clubs}</span>
+                </div>
+              ))}
+            </div>
+          </CompactSection>
+
+          <CompactSection title="Acteurs">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Effectifs</p>
+            <MetricGrid
+              items={[
+                { label: "Athletes", value: athletes.length },
+                { label: "Coachs", value: coachs.length },
+                { label: "Officiels", value: officiels.length },
+                { label: "Arbitres", value: arbitres.length },
+                { label: "Medecins", value: medecins.length },
               ]}
             />
-            <KpiCard
-              title="Clubs"
-              value={clubs.length}
-              icon={Shield}
-              variant="primary"
-              subIndicators={[
-                { label: "Actifs", value: clubsActifs },
-                { label: "Inactifs", value: clubsInactifs },
-              ]}
-            />
-            <KpiCard
-              title="Athletes"
-              value={athletes.length}
-              icon={Users}
-              variant="secondary"
-              subIndicators={[
+            <p className="mb-2 mt-3 text-xs font-medium text-muted-foreground">Repartition athletes</p>
+            <MetricGrid
+              items={[
+                { label: "Indoor", value: athleteIndoor },
+                { label: "Beach", value: athleteBeach },
+                { label: "Indoor/Beach", value: athleteMixte },
                 { label: "Masculin", value: athletesMasculins },
                 { label: "Feminin", value: athletesFeminins },
+                { label: "Sans club", value: athletesSansClub },
               ]}
             />
-            <KpiCard
-              title="Coachs"
-              value={coachs.length}
-              icon={UserCheck}
-              subIndicators={[
-                { label: "Masculin", value: coachsMasculins },
-                { label: "Feminin", value: coachsFeminins },
-              ]}
-            />
-            <KpiCard
-              title="Arbitres"
-              value={arbitres.length}
-              icon={Flag}
-              subIndicators={[
-                { label: "Masculin", value: arbitresMasculins },
-                { label: "Feminin", value: arbitresFeminins },
-              ]}
-            />
-            <KpiCard
-              title="Medecins"
-              value={medecins.length}
-              icon={Stethoscope}
-              subIndicators={[
-                { label: "Masculin", value: medecinsMasculins },
-                { label: "Feminin", value: medecinsFeminins },
-              ]}
-            />
-          </div>
+          </CompactSection>
+        </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:col-span-4 2xl:grid-cols-1">
-            <KpiCard
-              title="Officiels"
-              value={officiels.length}
-              icon={UserCog}
-              subIndicators={[
-                { label: "Masculin", value: officielsMasculins },
-                { label: "Feminin", value: officielsFeminins },
-              ]}
-            />
-            <KpiCard
-              title="Competitions"
-              value={competitions.length}
-              icon={Trophy}
-              variant="accent"
-              subIndicators={[
-                { label: "Actives", value: competitionsActives },
-                { label: "Indoor", value: competitionsIndoor },
-                { label: "Beach", value: competitionsBeach },
-              ]}
-            />
-            <KpiCard
-              title="Matchs"
-              value={competitionResults.length}
-              icon={CalendarCheck}
-              subIndicators={[
-                { label: "Joues", value: matchsJoues },
+        <div className="grid gap-4 xl:grid-cols-2">
+          <CompactSection title="Competitions">
+            <MetricGrid
+              items={[
+                { label: "Total", value: competitions.length },
+                { label: "Prevues", value: competitionsPrevues },
+                { label: "En cours", value: competitionsEnCours },
+                { label: "Terminees", value: competitionsTerminees },
+                { label: "Participants", value: competitionParticipants.length },
                 { label: "Unites", value: competitionUnites.length },
+                { label: "Matchs", value: competitionResults.length },
+                { label: "Resultats hors classement", value: resultatsSansClassement },
+                { label: "Sans unites", value: competitionsSansUnites },
               ]}
             />
-            <KpiCard
-              title="Transferts"
-              value={transferts.length}
-              icon={ArrowRightLeft}
-              subIndicators={[
-                { label: "Valides", value: transfertsValides },
-                { label: "En cours", value: transfertsEnCours },
-              ]}
+            <p className="mt-3 text-xs font-medium text-muted-foreground">Derniers resultats</p>
+            <CompactResults
+              rows={derniersResultats.map((resultat) => ({
+                id: resultat.idResultat,
+                left: resultat.nomCompetition || "-",
+                middle: `${resultat.nomUniteA || "-"} / ${resultat.nomUniteB || "-"}`,
+                right: resultat.scoreGlobal || "-",
+              }))}
             />
-            <KpiCard
-              title="Equipe nationale"
-              value={equipeNationale.length}
-              icon={Target}
-              variant="accent"
-              subIndicators={[
+          </CompactSection>
+
+          <CompactSection title="Equipes nationales">
+            <MetricGrid
+              items={[
+                { label: "Equipes", value: equipeNationale.length },
+                { label: "Actives", value: equipesNationalesActives },
                 { label: "Selections", value: equipeNationaleSelections.length },
-                { label: "Compet.", value: equipeNationaleCompetitions.length },
+                { label: "Participations", value: equipeNationaleParticipantsCount },
                 { label: "Resultats", value: equipeNationaleResultats.length },
+                { label: "Sans selection", value: equipesSansSelection },
+                { label: "Resultats incomplets", value: resultatsEquipeNationaleIncomplets },
               ]}
             />
-            <div className="h-full rounded-xl border border-border/50 bg-card p-5 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Taux completude
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-2xl font-bold">{tauxCompletude}%</p>
-                    <p className="text-xs text-muted-foreground">dossiers complets</p>
+            <p className="mt-3 text-xs font-medium text-muted-foreground">Derniers resultats Leopards</p>
+            <CompactResults
+              rows={derniersResultatsEN.map((resultat) => ({
+                id: resultat.idResultatEn,
+                left: `${formatSheetDate(resultat.dateMatch)} - ${resultat.nomEquipeNationale || "-"}`,
+                middle: resultat.adversaire || "-",
+                right: `${resultat.scoreGlobal || "-"}${isWin(resultat.resultatMatch) ? " V" : ""}`,
+              }))}
+            />
+          </CompactSection>
+        </div>
+
+        <CompactSection title="Alertes">
+          <div className="grid min-w-0 gap-x-4 gap-y-2 md:grid-cols-2 xl:grid-cols-4">
+            {alerts.map((alert) => {
+              const badge = getAlertBadge(alert.count)
+              return (
+                <div key={alert.label} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border/50 pb-1 text-sm">
+                  <span className="min-w-0 break-words leading-snug text-muted-foreground">{alert.label}</span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="font-medium">{alert.count}</span>
+                    <Badge className={`${badge.className} max-w-[6.5rem] whitespace-normal text-center leading-tight`}>{badge.label}</Badge>
                   </div>
                 </div>
-                <div className="rounded-lg bg-accent/10 p-2.5 text-accent">
-                  <CheckCircle className="h-5 w-5" />
-                </div>
-              </div>
-              <div className="mt-4">
-                <Progress value={tauxCompletude} className="h-2" />
-              </div>
-            </div>
+              )
+            })}
           </div>
-        </section>
-
-        <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-          <div className="xl:col-span-4">
-            <GenreChart data={genreData} />
-          </div>
-          <div className="xl:col-span-8">
-            <ProvinceChart provinces={provinces} />
-          </div>
-          <div className="xl:col-span-12">
-            <StatsTable provinces={provinces} />
-          </div>
-        </section>
+        </CompactSection>
       </div>
     </DashboardLayout>
   )

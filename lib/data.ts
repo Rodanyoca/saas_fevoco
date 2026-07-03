@@ -1,4 +1,4 @@
-import { getSheetData } from "@/lib/google-sheets"
+import { getSheetCell, getSheetData } from "@/lib/google-sheets"
 import type { Arbitre, Athlete, Club, Coach, CoachAffiliation, Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite, Entente, EquipeNationale, EquipeNationaleCompetition, EquipeNationaleResultat, EquipeNationaleSelection, Ligue, Medecin, Officiel, Province, Transfert } from "@/lib/types"
 import { mapProvinceRow } from "@/lib/mappers/provinces"
 import { mapLigueRow } from "@/lib/mappers/ligues"
@@ -193,4 +193,13 @@ export async function getEquipeNationaleResultats(): Promise<EquipeNationaleResu
   return rows
     .map(mapEquipeNationaleResultatRow)
     .filter((resultat) => resultat.idResultatEn && resultat.idEquipeNationale)
+}
+
+export async function getEquipeNationaleParticipantsCount(): Promise<number> {
+  const rows = await getSheetData("EQUIPE_NATIONALE_PARTICIPANTS")
+  return rows.length
+}
+
+export async function getDerniereMiseAJour(): Promise<string> {
+  return getSheetCell("VALIDATIONS!A1")
 }

@@ -85,3 +85,32 @@ export async function getSheetData(sheetName: string): Promise<SheetRow[]> {
     return []
   }
 }
+
+export async function getSheetCell(range: string): Promise<string> {
+  if (!isGoogleSheetsConfigured()) return ""
+
+  try {
+    const { google } = await import("googleapis")
+
+    const auth = new google.auth.JWT({
+      email: env.googleSheets.clientEmail,
+      key: env.googleSheets.privateKey,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    })
+
+    const sheets = google.sheets({ version: "v4", auth })
+
+    const res = await withTimeout(
+      sheets.spreadsheets.values.get({
+        spreadsheetId: env.googleSheets.spreadsheetId,
+        range,
+      }),
+      10_000,
+    )
+
+    const value = res.data.values?.[0]?.[0]
+    return value === null || value === undefined ? "" : String(value).trim()
+  } catch {
+    return ""
+  }
+}
