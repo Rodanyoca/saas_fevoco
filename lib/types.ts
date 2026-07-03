@@ -314,10 +314,12 @@ export interface CompetitionResult {
 
 export interface CompetitionClassement {
   idClassement: string
+  coteUnite: string
   idResultat: string
   idCompetition: string
   nomCompetition: string
   discipline: CompetitionDiscipline
+  saison: string
   phase: string
   poule: string
   idUnite: string
@@ -331,6 +333,9 @@ export interface CompetitionClassement {
   pointsGagnes: number | null
   pointsPerdus: number | null
   pointsClassement: number | null
+  matchJoue: number | null
+  matchGagne: number | null
+  matchPerdu: number | null
   rang: number | null
   observation: string
   typeUnite?: string

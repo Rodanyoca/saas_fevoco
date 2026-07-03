@@ -162,12 +162,13 @@ export function createQualityStats(data: {
     buildQualityStat("Classement competitions", data.competitionClassements ?? [], [
       "idClassement",
       "idResultat",
-      "idCompetition",
+      "nomCompetition",
       "idUnite",
       "nomUnite",
-      "scoreGlobal",
-      "resultatMatch",
       "pointsClassement",
+      "matchJoue",
+      "matchGagne",
+      "matchPerdu",
     ]),
     buildQualityStat("Transferts", data.transferts ?? [], [
       "id",

@@ -31,10 +31,12 @@ function normalizeDiscipline(raw: string): string {
 export function mapCompetitionClassementRow(row: SheetRow): CompetitionClassement {
   return {
     idClassement: str(row, "id_classement"),
+    coteUnite: str(row, "cote_unite"),
     idResultat: str(row, "id_resultat"),
     idCompetition: str(row, "id_competition"),
     nomCompetition: str(row, "nom_competition"),
     discipline: normalizeDiscipline(str(row, "discipline")),
+    saison: str(row, "saison"),
     phase: str(row, "phase"),
     poule: str(row, "poule"),
     idUnite: str(row, "id_unite"),
@@ -48,6 +50,9 @@ export function mapCompetitionClassementRow(row: SheetRow): CompetitionClassemen
     pointsGagnes: num(row, "points_gagnes"),
     pointsPerdus: num(row, "points_perdus"),
     pointsClassement: num(row, "points_classement"),
+    matchJoue: num(row, "match_joue"),
+    matchGagne: num(row, "match_gagne"),
+    matchPerdu: num(row, "match_perdu"),
     rang: num(row, "rang"),
     observation: str(row, "observation"),
     typeUnite: str(row, "type_unite"),

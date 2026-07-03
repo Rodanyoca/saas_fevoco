@@ -105,6 +105,40 @@ type RankingRow = {
   pointsClassement: number
 }
 
+type ClubRow = {
+  id: string
+  nom: string
+  statut: string
+}
+
+type SheetRankingRow = {
+  id: string
+  participant: string
+  played: number
+  won: number
+  lost: number
+  pointsClassement: number
+}
+
+function withAutoRanks<T extends { pointsClassement: number; participant: string }>(rows: T[]) {
+  const sortedRows = [...rows].sort((a, b) => {
+    if (b.pointsClassement !== a.pointsClassement) return b.pointsClassement - a.pointsClassement
+    return a.participant.localeCompare(b.participant)
+  })
+
+  return sortedRows.map((row, index) => {
+    const previous = sortedRows[index - 1]
+    const rank =
+      previous && previous.pointsClassement === row.pointsClassement
+        ? sortedRows
+            .slice(0, index)
+            .findIndex((item) => item.pointsClassement === row.pointsClassement) + 1
+        : index + 1
+
+    return { ...row, rank }
+  })
+}
+
 const setKeys = [
   ["set1A", "set1B"],
   ["set2A", "set2B"],
@@ -332,16 +366,24 @@ export function CompetitionDetail({
       }
       return dateA - dateB
     })
+  const isSameCompetitionClassement = (row: CompetitionClassement) =>
+    row.idCompetition === competition.id ||
+    (!!row.nomCompetition && row.nomCompetition === competition.nomCompetition)
+
   const rankingPoules = useMemo(
     () =>
       Array.from(
         new Set(
-          [...competitionUnites.map((unite) => unite.poule), ...competitionResults.map((result) => result.poule)]
+          [
+            ...competitionUnites.map((unite) => unite.poule),
+            ...competitionResults.map((result) => result.poule),
+            ...classements.filter(isSameCompetitionClassement).map((row) => row.poule),
+          ]
             .map((value) => value.trim())
             .filter(Boolean),
         ),
       ).sort((a, b) => a.localeCompare(b)),
-    [competitionResults, competitionUnites],
+    [classements, competition.id, competition.nomCompetition, competitionResults, competitionUnites],
   )
   const rankingPhases = useMemo(
     () =>
@@ -350,12 +392,12 @@ export function CompetitionDetail({
           [
             ...competitionResults.map((result) => (result.classementPoule || result.phase).trim()),
             ...classements
-              .filter((row) => row.idCompetition === competition.id)
+              .filter(isSameCompetitionClassement)
               .map((row) => row.phase.trim()),
           ].filter(Boolean),
         ),
       ).sort((a, b) => a.localeCompare(b)),
-    [classements, competition.id, competitionResults],
+    [classements, competition.id, competition.nomCompetition, competitionResults],
   )
   const rankingResults = competitionResults.filter((result) => {
     if (rankingPoule !== "all" && result.poule !== rankingPoule) return false
@@ -371,23 +413,92 @@ export function CompetitionDetail({
     return true
   })
   const ranking = buildRanking(rankingUnites, rankingResults)
-  const sheetRanking = classements
+  const competitionClubs = useMemo(() => {
+    const rows = new Map<string, ClubRow>()
+
+    competitionParticipants.forEach((participant) => {
+      const clubId = (participant.idClub || "").trim()
+      if (!clubId) return
+      const clubNom = (participant.nomClub || "").trim()
+      const statut = participant.statutParticipation || ""
+      const key = `${participant.idCompetition}-${clubId}`
+
+      const existing = rows.get(key)
+      if (existing) {
+        if (!existing.nom && clubNom) existing.nom = clubNom
+        if (!existing.statut && statut) existing.statut = statut
+        return
+      }
+
+      rows.set(key, { id: clubId, nom: clubNom, statut })
+    })
+
+    return Array.from(rows.values()).sort((a, b) => a.nom.localeCompare(b.nom))
+  }, [competitionParticipants])
+
+  const competitionClubsFallback = useMemo(() => {
+    const rows = new Map<string, ClubRow>()
+
+    const addClub = (id: string, nom: string, statut = "") => {
+      const clubId = id.trim()
+      const clubNom = (nom || "").trim()
+      const key = clubId || clubNom
+      if (!key) return
+      const existing = rows.get(key)
+      if (existing) {
+        if (!existing.id && clubId) existing.id = clubId
+        if (!existing.nom && clubNom) existing.nom = clubNom
+        if (!existing.statut && statut) existing.statut = statut
+        return
+      }
+      rows.set(key, { id: clubId, nom: clubNom, statut })
+    }
+
+    competitionUnites.forEach((unite) => {
+      addClub(unite.idClub, unite.nomClub, unite.statutUnite)
+    })
+
+    return Array.from(rows.values()).sort((a, b) => a.nom.localeCompare(b.nom))
+  }, [competitionUnites])
+  const displayedClubs = competitionClubs.length > 0 ? competitionClubs : competitionClubsFallback
+  const sheetRankingRows = classements
     .filter((row) => {
-      if (row.idCompetition !== competition.id) return false
+      if (!isSameCompetitionClassement(row)) return false
       if (rankingPoule !== "all" && row.poule !== rankingPoule) return false
       if (rankingPhase !== "all" && row.phase !== rankingPhase) return false
       return true
     })
-    .sort((a, b) => {
-      const rankA = a.rang ?? Number.MAX_SAFE_INTEGER
-      const rankB = b.rang ?? Number.MAX_SAFE_INTEGER
-      if (rankA !== rankB) return rankA - rankB
-      if ((b.pointsClassement ?? 0) !== (a.pointsClassement ?? 0)) {
-        return (b.pointsClassement ?? 0) - (a.pointsClassement ?? 0)
-      }
-      if ((b.pointsGagnes ?? 0) !== (a.pointsGagnes ?? 0)) return (b.pointsGagnes ?? 0) - (a.pointsGagnes ?? 0)
-      return a.nomUnite.localeCompare(b.nomUnite)
-    })
+  const sheetRanking = Array.from(
+    sheetRankingRows
+      .reduce((rows, row) => {
+        const key = row.idUnite || row.nomUnite
+        if (!key) return rows
+
+        const existing = rows.get(key)
+        if (existing) {
+          existing.played = Math.max(existing.played, row.matchJoue ?? 0)
+          existing.won = Math.max(existing.won, row.matchGagne ?? 0)
+          existing.lost = Math.max(existing.lost, row.matchPerdu ?? 0)
+          existing.pointsClassement = Math.max(existing.pointsClassement, row.pointsClassement ?? 0)
+          if (!existing.participant && row.nomUnite) existing.participant = row.nomUnite
+          return rows
+        }
+
+        rows.set(key, {
+          id: key,
+          participant: row.nomUnite || key,
+          played: row.matchJoue ?? 0,
+          won: row.matchGagne ?? 0,
+          lost: row.matchPerdu ?? 0,
+          pointsClassement: row.pointsClassement ?? 0,
+        })
+
+        return rows
+      }, new Map<string, SheetRankingRow>())
+      .values(),
+  )
+  const rankedSheetRanking = withAutoRanks(sheetRanking)
+  const rankedFallbackRanking = withAutoRanks(ranking)
   const unitLabel = indoor ? "Clubs engages" : "Paires engagees"
   const unitCount = competitionUnites.length
 
@@ -460,10 +571,15 @@ export function CompetitionDetail({
       </div>
 
       <Tabs defaultValue="participation" className="gap-4">
-        <TabsList className="grid h-auto w-full grid-cols-3">
+        <TabsList className={`grid h-auto w-full ${indoor ? "grid-cols-4" : "grid-cols-3"}`}>
           <TabsTrigger value="participation" className="justify-center text-center">
             Participants
           </TabsTrigger>
+          {indoor && (
+            <TabsTrigger value="clubs" className="justify-center text-center">
+              Clubs
+            </TabsTrigger>
+          )}
           <TabsTrigger value="resultats" className="justify-center text-center">
             Resultats
           </TabsTrigger>
@@ -492,12 +608,11 @@ export function CompetitionDetail({
                       <TableHead>Participant</TableHead>
                       <TableHead>Club</TableHead>
                       <TableHead>Statut</TableHead>
-                      <TableHead>Observation</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {competitionParticipants.length === 0 ? (
-                      <EmptyTableRow colSpan={4} label="Aucun participant disponible." />
+                      <EmptyTableRow colSpan={3} label="Aucun participant disponible." />
                     ) : (
                       competitionParticipants.map((participant, index) => (
                         <TableRow key={`${participant.idParticipation || "participant"}-${participant.idAthlete || participant.nomClub || "sans-id"}-${index}`}>
@@ -514,9 +629,6 @@ export function CompetitionDetail({
                               "-"
                             )}
                           </TableCell>
-                          <TableCell className="max-w-[280px] text-muted-foreground">
-                            {participant.observation || "-"}
-                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -526,6 +638,51 @@ export function CompetitionDetail({
             </CardContent>
           </Card>
         </TabsContent>
+
+        {indoor && (
+          <TabsContent value="clubs">
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Clubs participants
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID club</TableHead>
+                        <TableHead>Club</TableHead>
+                        <TableHead>Statut</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {displayedClubs.length === 0 ? (
+                        <EmptyTableRow colSpan={3} label="Aucun club disponible." />
+                      ) : (
+                        displayedClubs.map((club, index) => (
+                          <TableRow key={`${club.id || club.nom || "club"}-${index}`}>
+                            <TableCell className="font-mono text-muted-foreground">{club.id || "-"}</TableCell>
+                            <TableCell className="font-medium">{club.nom || "-"}</TableCell>
+                            <TableCell>
+                              {club.statut ? (
+                                <Badge className={getStatusClass(club.statut)}>{club.statut}</Badge>
+                              ) : (
+                                "-"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="resultats">
           <Card className="border-border/50">
@@ -676,44 +833,38 @@ export function CompetitionDetail({
                     <TableRow>
                       <TableHead className="w-[72px] text-center">Rang</TableHead>
                       <TableHead>Participant</TableHead>
-                      <TableHead>Adversaire</TableHead>
-                      <TableHead>Resultat</TableHead>
-                      <TableHead>Poule</TableHead>
-                      <TableHead className="text-center">Sets</TableHead>
-                      <TableHead className="text-center">Pts match</TableHead>
-                      <TableHead className="text-center">Pts classement</TableHead>
+                      <TableHead className="text-center">Match joue</TableHead>
+                      <TableHead className="text-center">Match gagne</TableHead>
+                      <TableHead className="text-center">Match perdu</TableHead>
+                      <TableHead className="text-center">Total point</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sheetRanking.length > 0 ? (
-                      sheetRanking.map((row, index) => (
-                        <TableRow key={`${row.idClassement || "classement"}-${row.idResultat || "sans-resultat"}-${row.idUnite || "sans-unite"}-${index}`}>
+                    {rankedSheetRanking.length > 0 ? (
+                      rankedSheetRanking.map((row, index) => (
+                        <TableRow key={`${row.id || "classement"}-${index}`}>
                           <TableCell className="text-center font-mono text-muted-foreground">
-                            {row.rang ?? index + 1}
-                          </TableCell>
-                          <TableCell className="font-medium">{row.nomUnite || row.idUnite}</TableCell>
-                          <TableCell>{row.nomAdversaire || row.idAdversaire || "-"}</TableCell>
-                          <TableCell>{row.resultatMatch || "-"}</TableCell>
-                          <TableCell>{row.poule || "-"}</TableCell>
-                          <TableCell className="text-center">{row.setsGagnes ?? 0}-{row.setsPerdus ?? 0}</TableCell>
-                          <TableCell className="text-center">{row.pointsGagnes ?? 0}-{row.pointsPerdus ?? 0}</TableCell>
-                          <TableCell className="text-center">{row.pointsClassement ?? 0}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : ranking.length === 0 ? (
-                      <EmptyTableRow colSpan={8} label="Aucun classement disponible." />
-                    ) : (
-                      ranking.map((row, index) => (
-                        <TableRow key={`${row.id || "ranking"}-${row.participant || "sans-participant"}-${index}`}>
-                          <TableCell className="text-center font-mono text-muted-foreground">
-                            {index + 1}
+                            {row.rank}
                           </TableCell>
                           <TableCell className="font-medium">{row.participant}</TableCell>
-                          <TableCell>-</TableCell>
-                          <TableCell>-</TableCell>
-                          <TableCell>{row.poule || "-"}</TableCell>
-                          <TableCell className="text-center">{row.setsFor}-{row.setsAgainst}</TableCell>
-                          <TableCell className="text-center">{row.pointsFor}-{row.pointsAgainst}</TableCell>
+                          <TableCell className="text-center">{row.played}</TableCell>
+                          <TableCell className="text-center">{row.won}</TableCell>
+                          <TableCell className="text-center">{row.lost}</TableCell>
+                          <TableCell className="text-center">{row.pointsClassement}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : rankedFallbackRanking.length === 0 ? (
+                      <EmptyTableRow colSpan={6} label="Aucun classement disponible." />
+                    ) : (
+                      rankedFallbackRanking.map((row, index) => (
+                        <TableRow key={`${row.id || "ranking"}-${row.participant || "sans-participant"}-${index}`}>
+                          <TableCell className="text-center font-mono text-muted-foreground">
+                            {row.rank}
+                          </TableCell>
+                          <TableCell className="font-medium">{row.participant}</TableCell>
+                          <TableCell className="text-center">{row.played}</TableCell>
+                          <TableCell className="text-center">{row.won}</TableCell>
+                          <TableCell className="text-center">{row.lost}</TableCell>
                           <TableCell className="text-center">{row.pointsClassement}</TableCell>
                         </TableRow>
                       ))
