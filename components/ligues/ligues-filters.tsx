@@ -12,13 +12,19 @@ import { Search } from "lucide-react"
 
 export function LiguesFilters({
   search,
+  province,
   statut,
+  provinces,
   onSearchChange,
+  onProvinceChange,
   onStatutChange,
 }: {
   search: string
+  province: string
   statut: string
+  provinces: string[]
   onSearchChange: (value: string) => void
+  onProvinceChange: (value: string) => void
   onStatutChange: (value: string) => void
 }) {
   return (
@@ -34,6 +40,18 @@ export function LiguesFilters({
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
+
+        <Select value={province} onValueChange={onProvinceChange}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue placeholder="Province" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les provinces</SelectItem>
+            {provinces.map((item) => (
+              <SelectItem key={item} value={item}>{item}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Filtre par statut */}
         <Select value={statut} onValueChange={onStatutChange}>

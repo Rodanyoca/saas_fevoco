@@ -26,14 +26,21 @@ export function mapAthleteRow(row: SheetRow): Athlete {
   const statutRaw = str(row, "statut") || str(row, "staut")
 
   return {
+    idAthlete: str(row, "id_athlete"),
+    idNational: str(row, "id_national"),
+    idFivb: str(row, "id_fivb"),
+    dateDeNaissance: str(row, "date_de_naissance"),
+    sexe: str(row, "sexe"),
+    avatarDriveId: str(row, "avatar_drive_id"),
+    avatarDriveUrl: str(row, "avatar_drive_url"),
     id: str(row, "id_athlete"),
     numeroOrdre: str(row, "numer_ordre_athlete") || str(row, "numero_ordre_athlete"),
     nomComplet: str(row, "nom_complet"),
     dateNaissance: str(row, "date_de_naissance"),
     lieuNaissance: str(row, "lieu_de_naissance"),
-    genre: str(row, "genre"),
+    genre: str(row, "sexe") || str(row, "genre"),
     nationalite: str(row, "nationalite"),
-    adresse: str(row, "adresse_athlete"),
+    adresse: str(row, "adresse") || str(row, "adresse_athlete"),
     provinceId: str(row, "id_province"),
     provinceNom: str(row, "nom_province"),
     ligueId: str(row, "id_ligue"),

@@ -1,6 +1,14 @@
-export function parseSheetDate(value: string): Date | null {
-  const raw = value.trim()
+export function parseSheetDate(value: unknown): Date | null {
+  const raw = String(value ?? "").trim()
   if (!raw) return null
+
+  if (/^\d+(?:\.\d+)?$/.test(raw)) {
+    const serial = Number(raw)
+    if (serial > 0 && serial < 100000) {
+      const date = new Date(Date.UTC(1899, 11, 30) + serial * 86_400_000)
+      return Number.isNaN(date.getTime()) ? null : date
+    }
+  }
 
   const frenchDateMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
   if (frenchDateMatch) {
@@ -13,7 +21,7 @@ export function parseSheetDate(value: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-export function calculateAgeFromSheetDate(value: string): number | null {
+export function calculateAgeFromSheetDate(value: unknown): number | null {
   const birthDate = parseSheetDate(value)
   if (!birthDate) return null
 
@@ -25,12 +33,14 @@ export function calculateAgeFromSheetDate(value: string): number | null {
     age--
   }
 
-  return age
+  return age >= 0 ? age : null
 }
 
-export function formatSheetDate(value: string): string {
+export const calculateAge = calculateAgeFromSheetDate
+
+export function formatSheetDate(value: unknown): string {
   const date = parseSheetDate(value)
-  if (!date) return value || "-"
+  if (!date) return String(value ?? "").trim() || "-"
 
   return date.toLocaleDateString("fr-FR", {
     day: "2-digit",

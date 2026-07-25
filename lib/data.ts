@@ -1,12 +1,12 @@
-import { getSheetCell, getSheetData } from "@/lib/google-sheets"
-import type { Arbitre, Athlete, Club, Coach, CoachAffiliation, Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite, Entente, EquipeNationale, EquipeNationaleCompetition, EquipeNationaleResultat, EquipeNationaleSelection, Ligue, Medecin, Officiel, Province, Transfert } from "@/lib/types"
+import { getSheetCell, getSheetData, getSheetDataFrom } from "@/lib/google-sheets"
+import { env } from "@/lib/env"
+import type { Arbitre, Athlete, Club, Coach, Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite, Entente, EquipeNationale, EquipeNationaleCompetition, EquipeNationaleResultat, EquipeNationaleSelection, EquipeNationaleStaff, Ligue, Medecin, Officiel, Province, Transfert } from "@/lib/types"
 import { mapProvinceRow } from "@/lib/mappers/provinces"
 import { mapLigueRow } from "@/lib/mappers/ligues"
 import { mapEntenteRow } from "@/lib/mappers/ententes"
 import { mapClubRow } from "@/lib/mappers/clubs"
 import { mapAthleteRow } from "@/lib/mappers/athletes"
 import { mapCoachRow } from "@/lib/mappers/coachs"
-import { mapCoachAffiliationRow } from "@/lib/mappers/coach-affiliations"
 import { mapOfficielRow } from "@/lib/mappers/officiels"
 import { mapMedecinRow } from "@/lib/mappers/medecins"
 import { mapArbitreRow } from "@/lib/mappers/arbitres"
@@ -15,11 +15,12 @@ import { mapCompetitionParticipantRow } from "@/lib/mappers/competition-particip
 import { mapCompetitionUniteRow } from "@/lib/mappers/competition-unites"
 import { mapCompetitionResultRow } from "@/lib/mappers/competition-results"
 import { mapCompetitionClassementRow } from "@/lib/mappers/competition-classements"
-import { mapTransfertRow } from "@/lib/mappers/transferts"
+import { getAthleteAffiliations } from "@/lib/actor-records"
 import { mapEquipeNationaleRow } from "@/lib/mappers/equipe-nationale"
 import { mapEquipeNationaleSelectionRow } from "@/lib/mappers/equipe-nationale-selections"
 import { mapEquipeNationaleCompetitionRow } from "@/lib/mappers/equipe-nationale-competitions"
 import { mapEquipeNationaleResultatRow } from "@/lib/mappers/equipe-nationale-resultats"
+import { mapEquipeNationaleStaffRow } from "@/lib/mappers/equipe-nationale-staff"
 
 function computeProvinceCompletude(p: Province): number {
   const fields: Array<string> = [p.id, p.nom, p.chefLieu, p.responsable, p.telephone, p.email, String(p.statut)]
@@ -28,8 +29,7 @@ function computeProvinceCompletude(p: Province): number {
 }
 
 export async function getProvinces(): Promise<Province[]> {
-  const rows = await getSheetData("PROVINCES")
-  const base = rows.map(mapProvinceRow).filter((p) => p.id && p.nom)
+  const base = await getProvinceOptions()
 
   const [ligues, ententes, clubs, athletes, arbitres, medecins] = await Promise.all([
     getLigues(),
@@ -66,133 +66,201 @@ export async function getProvinces(): Promise<Province[]> {
     .sort((a, b) => a.nom.localeCompare(b.nom))
 }
 
+export async function getProvinceOptions(): Promise<Province[]> {
+  const rows = await getSheetDataFrom(
+    env.googleSheets.territorialSpreadsheetId,
+    "PROVINCES!A:B",
+  )
+  return rows
+    .map(mapProvinceRow)
+    .filter((province) => province.id && province.nom)
+    .sort((a, b) => a.nom.localeCompare(b.nom))
+}
+
 export async function getLigues(): Promise<Ligue[]> {
-  const rows = await getSheetData("LIGUES")
+  const rows = await getSheetDataFrom(
+    env.googleSheets.territorialSpreadsheetId,
+    "LIGUES!A:G",
+  )
   return rows.map(mapLigueRow).filter((l) => l.id && l.nom)
 }
 
 export async function getEntentes(): Promise<Entente[]> {
-  const rows = await getSheetData("ENTENTES")
+  const rows = await getSheetDataFrom(
+    env.googleSheets.territorialSpreadsheetId,
+    "ENTENTES!A:K",
+  )
   return rows.map(mapEntenteRow).filter((e) => e.id && e.nom)
 }
 
 export async function getClubs(): Promise<Club[]> {
-  const rows = await getSheetData("CLUBS")
+  const rows = await getSheetDataFrom(
+    env.googleSheets.territorialSpreadsheetId,
+    "CLUBS!A:M",
+  )
   return rows.map(mapClubRow).filter((c) => c.id && c.nom)
 }
 
 export async function getAthletes(): Promise<Athlete[]> {
-  const rows = await getSheetData("ATHLETES")
+  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "ATHLETES!A:N")
   return rows.map(mapAthleteRow).filter((a) => a.id && a.nomComplet)
 }
 
 export async function getCoachs(): Promise<Coach[]> {
-  const rows = await getSheetData("COACHS")
+  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "COACHS!A:N")
   return rows.map(mapCoachRow).filter((c) => c.id && c.nomComplet)
 }
 
-export async function getCoachAffiliations(): Promise<CoachAffiliation[]> {
-  let rows = await getSheetData("COAG_AFFILIATION")
-  if (rows.length === 0) {
-    rows = await getSheetData("COACH_AFFILIATION")
-  }
-
-  return rows.map(mapCoachAffiliationRow).filter((affiliation) => affiliation.coachId)
-}
-
 export async function getOfficiels(): Promise<Officiel[]> {
-  const rows = await getSheetData("OFFICIELS")
+  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "OFFICIELS!A:M")
   return rows.map(mapOfficielRow).filter((o) => o.id && o.nomComplet)
 }
 
 export async function getMedecins(): Promise<Medecin[]> {
-  const rows = await getSheetData("MEDECINS")
+  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "MEDECINS!A:N")
   return rows.map(mapMedecinRow).filter((m) => m.id && m.nomComplet)
 }
 
 export async function getArbitres(): Promise<Arbitre[]> {
-  const rows = await getSheetData("ARBITRES")
+  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "ARBITRES!A:O")
   return rows.map(mapArbitreRow).filter((a) => a.id && a.nomComplet)
 }
 
 export async function getCompetitions(): Promise<Competition[]> {
-  const rows = await getSheetData("COMPETITIONS")
-  return rows.map(mapCompetitionRow).filter((competition) => competition.id && competition.nomCompetition)
+  if (!env.googleSheets.competitionsSpreadsheetId) {
+    console.warn("FEVOCO_COMPETITIONS_SPREADSHEET_ID non configuré")
+    return []
+  }
+  const rows = await getSheetDataFrom(env.googleSheets.competitionsSpreadsheetId, "COMPETITIONS!A:Z")
+  return rows.map(mapCompetitionRow).filter((competition) => competition.idCompetition && competition.nomCompetition)
 }
 
 export async function getCompetitionParticipants(): Promise<CompetitionParticipant[]> {
-  const rows = await getSheetData("COMPETITIONS_PARTICIPANTS")
+  if (!env.googleSheets.competitionsSpreadsheetId) return []
+  const rows = await getSheetDataFrom(env.googleSheets.competitionsSpreadsheetId, "COMPETITIONS_PARTICIPANTS!A:Z")
   return rows
     .map(mapCompetitionParticipantRow)
     .filter((participant) => participant.idParticipation && participant.idCompetition)
 }
 
 export async function getCompetitionUnites(): Promise<CompetitionUnite[]> {
-  const rows = await getSheetData("COMPETITIONS_UNITES")
+  if (!env.googleSheets.competitionsSpreadsheetId) return []
+  const rows = await getSheetDataFrom(env.googleSheets.competitionsSpreadsheetId, "COMPETITIONS_UNITES!A:Z")
   return rows
     .map(mapCompetitionUniteRow)
     .filter((unite) => unite.idUnite && unite.idCompetition)
 }
 
 export async function getCompetitionResults(): Promise<CompetitionResult[]> {
-  const rows = await getSheetData("COMPETITIONS_RESULTATS")
+  if (!env.googleSheets.competitionsSpreadsheetId) return []
+  const rows = await getSheetDataFrom(env.googleSheets.competitionsSpreadsheetId, "COMPETITIONS_RESULTATS!A:Z")
   return rows
     .map(mapCompetitionResultRow)
     .filter((result) => result.idResultat && result.idCompetition)
 }
 
 export async function getCompetitionClassements(): Promise<CompetitionClassement[]> {
-  const rows = await getSheetData("COMPETITIONS_CLASSEMENT")
+  if (!env.googleSheets.competitionsSpreadsheetId) return []
+  const rows = await getSheetDataFrom(env.googleSheets.competitionsSpreadsheetId, "COMPETITIONS_CLASSEMENT!A:Z")
   return rows
     .map(mapCompetitionClassementRow)
     .filter((classement) => classement.idClassement && classement.idUnite && (classement.idCompetition || classement.nomCompetition))
 }
 
-export async function getTransferts(): Promise<Transfert[]> {
-  let rows = await getSheetData("TRANSGERT")
-  if (rows.length === 0) rows = await getSheetData("TRANSGERTS")
-  if (rows.length === 0) rows = await getSheetData("TRANSFERTS")
-  if (rows.length === 0) rows = await getSheetData("TRANSFERT")
+export async function getCompetitionById(idCompetition: string): Promise<Competition | undefined> {
+  return (await getCompetitions()).find((item) => item.idCompetition === idCompetition)
+}
+export async function getCompetitionUnitsByCompetition(idCompetition: string) {
+  return (await getCompetitionUnites()).filter((item) => item.idCompetition === idCompetition)
+}
+export async function getCompetitionParticipantsByCompetition(idCompetition: string) {
+  return (await getCompetitionParticipants()).filter((item) => item.idCompetition === idCompetition)
+}
+export async function getCompetitionParticipantsByUnit(idUnite: string) {
+  return (await getCompetitionParticipants()).filter((item) => item.idUnite === idUnite)
+}
+export async function getCompetitionResultsByCompetition(idCompetition: string) {
+  return (await getCompetitionResults()).filter((item) => item.idCompetition === idCompetition)
+}
+export async function getCompetitionStandingsByCompetition(idCompetition: string) {
+  return (await getCompetitionClassements()).filter((item) => item.idCompetition === idCompetition)
+}
 
-  return rows
-    .map(mapTransfertRow)
-    .filter((transfert) =>
-      Boolean(
-        transfert.id ||
-          transfert.athleteId ||
-          transfert.athleteNom ||
-          transfert.clubOrigineNom ||
-          transfert.clubBeneficiaireNom,
-      ),
-    )
+export async function getTransferts(): Promise<Transfert[]> {
+  return (await getAthleteAffiliations())
+    .map((item) => ({
+      id: item.idAffiliation,
+      athleteId: item.actorId,
+      athleteNom: item.actorName,
+      clubOrigineId: item.idClubOrigine,
+      clubOrigineNom: item.nomClubOrigine,
+      clubBeneficiaireId: item.idClubBeneficiaire,
+      clubBeneficiaireNom: item.nomClubBeneficiaire,
+      typeTransfert: item.typeAffiliation,
+      saison: item.saison,
+      statut: item.statutAffiliation,
+      dateValidation: item.dateDebut,
+      dateDebut: item.dateDebut,
+      dateFin: item.dateFin,
+      observation: item.observation,
+    }))
 }
 
 export async function getEquipeNationale(): Promise<EquipeNationale[]> {
-  const rows = await getSheetData("EQUIPE_NATIONALE")
+  if (!env.googleSheets.equipeNationaleSpreadsheetId) {
+    console.warn("FEVOCO_EQUIPE_NATIONALE_SPREADSHEET_ID non configuré")
+    return []
+  }
+  const rows = await getSheetDataFrom(env.googleSheets.equipeNationaleSpreadsheetId, "EQUIPE_NATIONALE!A:Z")
   return rows
     .map(mapEquipeNationaleRow)
     .filter((equipe) => equipe.idEquipeNationale && equipe.nomEquipeNationale)
 }
 
 export async function getEquipeNationaleSelections(): Promise<EquipeNationaleSelection[]> {
-  const rows = await getSheetData("EQUIPE_NATIONALE_SELECTIONS")
+  if (!env.googleSheets.equipeNationaleSpreadsheetId) return []
+  const rows = await getSheetDataFrom(env.googleSheets.equipeNationaleSpreadsheetId, "EQUIPE_NATIONALE_SELECTIONS!A:Z")
   return rows
     .map(mapEquipeNationaleSelectionRow)
     .filter((selection) => selection.idSelection && selection.idEquipeNationale && selection.nomAthlete)
 }
 
 export async function getEquipeNationaleCompetitions(): Promise<EquipeNationaleCompetition[]> {
-  const rows = await getSheetData("EQUIPE_NATIONALE_COMPETITIONS")
+  if (!env.googleSheets.equipeNationaleSpreadsheetId) return []
+  const rows = await getSheetDataFrom(env.googleSheets.equipeNationaleSpreadsheetId, "EQUIPE_NATIONALE_COMPETITIONS!A:Z")
   return rows
     .map(mapEquipeNationaleCompetitionRow)
-    .filter((participation) => participation.idParticipationEn && participation.idEquipeNationale)
+    .filter((participation) => participation.idParticipationEquipeNationale && participation.idEquipeNationale)
 }
 
 export async function getEquipeNationaleResultats(): Promise<EquipeNationaleResultat[]> {
-  const rows = await getSheetData("EQUIPE_NATIONALE_RESULTATS")
+  if (!env.googleSheets.equipeNationaleSpreadsheetId) return []
+  const rows = await getSheetDataFrom(env.googleSheets.equipeNationaleSpreadsheetId, "EQUIPE_NATIONALE_RESULTATS!A:Z")
   return rows
     .map(mapEquipeNationaleResultatRow)
-    .filter((resultat) => resultat.idResultatEn && resultat.idEquipeNationale)
+    .filter((resultat) => resultat.idResultatEquipeNationale && resultat.idEquipeNationale)
+}
+
+export async function getEquipeNationaleStaff(): Promise<EquipeNationaleStaff[]> {
+  if (!env.googleSheets.equipeNationaleSpreadsheetId) return []
+  const rows = await getSheetDataFrom(env.googleSheets.equipeNationaleSpreadsheetId, "EQUIPE_NATIONALE_STAFF!A:Z")
+  return rows.map(mapEquipeNationaleStaffRow).filter((item) => item.idStaffSelection && item.idEquipeNationale)
+}
+
+export async function getEquipeNationaleById(idEquipeNationale: string) {
+  return (await getEquipeNationale()).find((item) => item.idEquipeNationale === idEquipeNationale)
+}
+export async function getSelectionsByEquipeNationale(idEquipeNationale: string) {
+  return (await getEquipeNationaleSelections()).filter((item) => item.idEquipeNationale === idEquipeNationale)
+}
+export async function getStaffByEquipeNationale(idEquipeNationale: string) {
+  return (await getEquipeNationaleStaff()).filter((item) => item.idEquipeNationale === idEquipeNationale)
+}
+export async function getCompetitionsByEquipeNationale(idEquipeNationale: string) {
+  return (await getEquipeNationaleCompetitions()).filter((item) => item.idEquipeNationale === idEquipeNationale)
+}
+export async function getResultatsByEquipeNationale(idEquipeNationale: string) {
+  return (await getEquipeNationaleResultats()).filter((item) => item.idEquipeNationale === idEquipeNationale)
 }
 
 export async function getEquipeNationaleParticipantsCount(): Promise<number> {

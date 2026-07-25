@@ -11,26 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { Competition, CompetitionResult, CompetitionUnite } from "@/lib/types"
-import { CalendarDays, ClipboardList, Eye, Shield, Trophy, UserRound } from "lucide-react"
+import type { Competition } from "@/lib/types"
+import { CalendarDays, Eye, Trophy } from "lucide-react"
+import { formatSheetDate } from "@/lib/date-utils"
 
 function formatDate(value: string) {
-  if (!value) return "-"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date)
-}
-
-function isIndoor(discipline: string) {
-  return discipline.trim().toUpperCase() === "INDOOR"
-}
-
-function getUnitCount(competition: Competition, unites: CompetitionUnite[]) {
-  return unites.filter((unite) => unite.idCompetition === competition.id).length
+  return formatSheetDate(value)
 }
 
 function getStatusClass(statut: string) {
@@ -46,14 +32,10 @@ function getStatusClass(statut: string) {
 
 export function CompetitionsTable({
   competitions,
-  unites,
-  results,
   totalCount,
   onViewCompetition,
 }: {
   competitions: Competition[]
-  unites: CompetitionUnite[]
-  results: CompetitionResult[]
   totalCount: number
   onViewCompetition: (competition: Competition) => void
 }) {
@@ -72,39 +54,29 @@ export function CompetitionsTable({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <Table className="min-w-[980px]">
+          <Table className="w-full min-w-[860px] table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Competition</TableHead>
-                <TableHead>Saison</TableHead>
-                <TableHead>Discipline</TableHead>
-                <TableHead>Periode</TableHead>
-                <TableHead className="text-center">Unites</TableHead>
-                <TableHead className="text-center">Matchs</TableHead>
-                <TableHead className="text-center">Statut</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead className="w-[20%]">Compétition</TableHead>
+                <TableHead className="w-[9%]">Saison</TableHead>
+                <TableHead className="w-[12%]">Discipline</TableHead>
+                <TableHead className="w-[20%]">Période</TableHead>
+                <TableHead className="w-[15%]">Niveau / lieu</TableHead>
+                <TableHead className="w-[14%]">Organisation</TableHead>
+                <TableHead className="w-[7%] text-center">Statut</TableHead>
+                <TableHead className="w-[3%] text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {competitions.map((competition, index) => {
-                const indoor = isIndoor(competition.discipline)
-                const UnitIcon = indoor ? Shield : UserRound
-                const matchCount = results.filter(
-                  (result) => result.idCompetition === competition.id,
-                ).length
-
                 return (
-                  <TableRow key={`${competition.id || "competition"}-${competition.nomCompetition || "sans-nom"}-${index}`}>
-                    <TableCell className="font-mono text-muted-foreground">
-                      {competition.id}
-                    </TableCell>
+                  <TableRow key={`${competition.idCompetition || "competition"}-${competition.nomCompetition || "sans-nom"}-${index}`}>
                     <TableCell className="whitespace-normal break-words font-medium leading-snug">
                       {competition.nomCompetition}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{competition.saison || "-"}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{competition.discipline}</Badge>
+                      <Badge variant="outline">{competition.nomDiscipline || "-"}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       <div className="flex items-center gap-1.5 whitespace-nowrap text-xs leading-none xl:text-sm">
@@ -114,21 +86,11 @@ export function CompetitionsTable({
                         </span>
                       </div>
                     </TableCell>
+                    <TableCell><p>{competition.niveau || "-"}</p><p className="text-xs text-muted-foreground">{competition.lieu || "-"}</p></TableCell>
+                    <TableCell>{competition.nomStructureOrganisatrice || "-"}</TableCell>
                     <TableCell className="text-center">
-                      <div className="inline-flex items-center gap-2">
-                        <UnitIcon className="h-4 w-4 text-muted-foreground" />
-                        <span>{getUnitCount(competition, unites)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="inline-flex items-center gap-2">
-                        <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                        <span>{matchCount}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge className={getStatusClass(competition.statut)}>
-                        {competition.statut}
+                      <Badge className={getStatusClass(competition.statutCompetition)}>
+                        {competition.statutCompetition}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

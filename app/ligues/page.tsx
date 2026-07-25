@@ -1,8 +1,8 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { LiguesClient } from "@/components/ligues/ligues-client"
-import { getAthletes, getClubs, getEntentes, getLigues } from "@/lib/data"
-import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
+import { getAthletes, getClubs, getEntentes, getLigues, getProvinceOptions } from "@/lib/data"
+import type { Athlete, Club, Entente, Ligue, Province } from "@/lib/types"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -18,12 +18,16 @@ function belongsToLigue(
 }
 
 export default async function LiguesPage() {
-  const [ligues, ententes, clubs, athletes] = await Promise.all([
+  const results = await Promise.allSettled([
     getLigues(),
     getEntentes(),
     getClubs(),
     getAthletes(),
+    getProvinceOptions(),
   ])
+  const [ligues, ententes, clubs, athletes, provinces] = results.map((result) =>
+    result.status === "fulfilled" ? result.value : [],
+  ) as [Ligue[], Entente[], Club[], Athlete[], Province[]]
 
   const liguesWithCounts = ligues.map((ligue) => ({
     ...ligue,
@@ -45,6 +49,7 @@ export default async function LiguesPage() {
           ententes={ententes}
           clubs={clubs}
           athletes={athletes}
+          provinceOptions={provinces}
         />
       </div>
     </DashboardLayout>

@@ -13,16 +13,10 @@ import {
 } from "@/components/ui/table"
 import type { Transfert } from "@/lib/types"
 import { ArrowRight, ArrowRightLeft, Eye } from "lucide-react"
+import { formatSheetDate } from "@/lib/date-utils"
 
 function formatDate(value: string) {
-  if (!value) return "-"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date)
+  return formatSheetDate(value)
 }
 
 function getStatusClass(statut: string) {
@@ -66,12 +60,13 @@ export function TransfertsTable({
           <Table className="min-w-[980px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Athlete</TableHead>
+                <TableHead>Athlète</TableHead>
                 <TableHead>Origine</TableHead>
                 <TableHead className="w-[56px] text-center"></TableHead>
                 <TableHead>Beneficiaire</TableHead>
                 <TableHead>Type / saison</TableHead>
-                <TableHead>Validation</TableHead>
+                <TableHead>Début</TableHead>
+                <TableHead>Fin</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
@@ -87,7 +82,7 @@ export function TransfertsTable({
                   <TableCell>
                     <div className="min-w-0">
                       <p className="font-medium leading-tight">{transfert.clubOrigineNom || "-"}</p>
-                      <p className="font-mono text-xs text-muted-foreground">{transfert.athleteId || "-"}</p>
+                      <p className="font-mono text-xs text-muted-foreground">{transfert.clubOrigineId || "-"}</p>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
@@ -96,7 +91,7 @@ export function TransfertsTable({
                   <TableCell>
                     <div className="min-w-0">
                       <p className="font-medium leading-tight">{transfert.clubBeneficiaireNom || "-"}</p>
-                      <p className="font-mono text-xs text-muted-foreground">{transfert.id || "-"}</p>
+                      <p className="font-mono text-xs text-muted-foreground">{transfert.clubBeneficiaireId || "-"}</p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -106,7 +101,10 @@ export function TransfertsTable({
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
-                    {formatDate(transfert.dateValidation)}
+                    {formatDate(transfert.dateDebut)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
+                    {formatDate(transfert.dateFin)}
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusClass(transfert.statut)}>{transfert.statut || "-"}</Badge>

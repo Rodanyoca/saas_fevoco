@@ -18,6 +18,8 @@ export function mapProvinceRow(row: SheetRow): Province {
   const statutRaw = str(row, "statut") || str(row, "staut")
 
   return {
+    idProvince: str(row, "id_province"),
+    nomProvince: str(row, "nom_province"),
     id: str(row, "id_province") || str(row, "id"),
     nom: str(row, "nom_province") || str(row, "nom"),
     chefLieu: str(row, "chef_lieu") || str(row, "chefLieu"),

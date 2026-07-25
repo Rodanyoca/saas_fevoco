@@ -1,182 +1,134 @@
 "use client"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  ArrowLeft,
-  Edit,
-  Phone,
-  Shield,
-  Trophy,
-  User,
-} from "lucide-react"
-import type { Arbitre } from "@/lib/types"
-import { calculateAgeFromSheetDate, formatSheetDate, parseSheetDate } from "@/lib/date-utils"
+import { Card, CardContent } from "@/components/ui/card"
+import { getActorAvatarUrl } from "@/lib/actor-avatar"
+import { calculateAge, formatSheetDate } from "@/lib/date-utils"
+import { normalize } from "@/lib/sheet-values"
+import type { Arbitre, BaseActorLicence } from "@/lib/types"
+import { LicenceSection } from "@/components/actors/record-sections"
+import { ArrowLeft } from "lucide-react"
+import { ArbitreFormDialog } from "@/components/arbitres/arbitre-form-dialog"
+import type { SavedArbitre } from "@/components/arbitres/arbitre-form-dialog"
+import type { ActorSexOption } from "@/lib/actor-references"
 
-interface ArbitreDetailProps {
+function shown(value: unknown, fallback = "Non renseigné") {
+  const text = value === null || value === undefined ? "" : String(value).trim()
+  return text || fallback
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return "?"
+  return `${parts[0]?.[0] ?? ""}${parts.at(-1)?.[0] ?? ""}`.toUpperCase()
+}
+
+function sexeLabel(value: string) {
+  const sexe = normalize(value)
+  if (sexe === "M" || sexe === "MASCULIN") return "Masculin"
+  if (sexe === "F" || sexe === "FEMININ") return "Féminin"
+  return shown(value)
+}
+
+export function ArbitreDetail({ arbitre, licences, sexes, onUpdated, onBack }: {
   arbitre: Arbitre
+  licences: BaseActorLicence[]
+  sexes: ActorSexOption[]
+  onUpdated: (arbitre: SavedArbitre) => void
   onBack: () => void
-}
-
-export function ArbitreDetail({ arbitre, onBack }: ArbitreDetailProps) {
-  const age = calculateAgeFromSheetDate(arbitre.dateNaissance)
-  const experience = calculateExperience(arbitre.dateHomologation)
-
-  const getInitials = (nomComplet: string) => {
-    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
-    if (parts.length === 0) return "A"
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-    return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
-  }
-
-  const getStatutBadge = (statut: Arbitre["statut"]) => {
-    switch (statut) {
-      case "actif":
-        return <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/20">Actif</Badge>
-      case "inactif":
-        return <Badge variant="secondary">Inactif</Badge>
-      case "suspendu":
-        return <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">Suspendu</Badge>
-      default:
-        return <Badge variant="outline">{statut || "Non defini"}</Badge>
-    }
-  }
+}) {
+  const avatarUrl = getActorAvatarUrl(arbitre.avatarDriveUrl, arbitre.avatarDriveId)
+  const age = calculateAge(arbitre.dateDeNaissance)
+  const birthDate = formatSheetDate(arbitre.dateDeNaissance)
+  const affiliationDate = formatSheetDate(arbitre.dateAffiliation)
+  const active = ["ACTIF", "ACTIVE"].includes(normalize(arbitre.statut))
+  const generalSections = [
+    {
+      title: "Identifiants",
+      fields: [
+        ["ID arbitre", arbitre.idArbitre],
+        ["ID national", arbitre.idNational],
+        ["ID FIVB", arbitre.idFivb],
+      ],
+    },
+    {
+      title: "État civil et profil",
+      fields: [
+        ["Date de naissance", birthDate === "-" ? "Non renseignée" : birthDate],
+        ["Âge", age === null ? "Non renseigné" : `${age} ans`],
+        ["Sexe", sexeLabel(arbitre.sexe)],
+        ["Nationalité", arbitre.nationalite],
+        ["Niveau", arbitre.niveau],
+        ["Date d’affiliation", affiliationDate === "-" ? "Non renseignée" : affiliationDate],
+      ],
+    },
+    {
+      title: "Contact",
+      fields: [
+        ["Téléphone", arbitre.telephone],
+        ["Adresse e-mail", arbitre.email],
+        ["Adresse", arbitre.adresse],
+      ],
+    },
+  ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold text-foreground">{arbitre.nomComplet}</h1>
-            <p className="text-sm text-muted-foreground">Fiche arbitre</p>
-          </div>
-        </div>
+    <div className="w-full">
+      <Button variant="ghost" className="mb-4" onClick={onBack}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Retour aux arbitres
+      </Button>
 
-        <Button className="shrink-0">
-          <Edit className="mr-2 h-4 w-4" />
-          Modifier
-        </Button>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
-        <Card className="h-fit">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <Avatar className="h-24 w-24">
-                <AvatarFallback className="bg-primary/10 text-2xl font-semibold text-primary">
-                  {getInitials(arbitre.nomComplet)}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="mt-4 min-w-0">
-                <h2 className="text-xl font-semibold text-foreground">{arbitre.nomComplet}</h2>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">{arbitre.id || "-"}</p>
-                <p className="mt-2 text-sm text-muted-foreground">{arbitre.grade || "Grade non defini"}</p>
-              </div>
-
-              <div className="mt-3 flex flex-wrap justify-center gap-2">
-                {getStatutBadge(arbitre.statut)}
-                {arbitre.grade ? <Badge variant="outline">{arbitre.grade}</Badge> : null}
-              </div>
+      <Card className="overflow-hidden border-border/60 shadow-sm">
+        <div className="h-2 bg-primary" />
+        <CardContent className="p-0">
+          <header className="grid gap-6 border-b bg-muted/20 p-6 md:grid-cols-[auto_1fr_auto] md:items-center md:p-8">
+            <Avatar className="h-24 w-24 border-4 border-background shadow-sm">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={arbitre.nomComplet} />}
+              <AvatarFallback className="text-2xl font-semibold">{initials(arbitre.nomComplet)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Profil arbitre</p>
+              <h1 className="break-words text-2xl font-bold md:text-3xl">{shown(arbitre.nomComplet)}</h1>
+              <p className="mt-2 font-mono text-sm text-muted-foreground">{shown(arbitre.idArbitre)}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center gap-3">
+              <ArbitreFormDialog arbitre={arbitre} sexes={sexes} onSaved={onUpdated} />
+              <Badge variant={active ? "default" : "secondary"} className="w-fit">{shown(arbitre.statut)}</Badge>
+            </div>
+          </header>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <User className="h-4 w-4" />
-                Informations
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {infoRow("ID arbitre", arbitre.id)}
-              {infoRow("Nom complet", arbitre.nomComplet)}
-              {infoRow("Date de naissance", formatSheetDate(arbitre.dateNaissance))}
-              {infoRow("Age", age !== null ? `${age} ans` : "-")}
-              {infoRow("Genre", formatGender(arbitre.genre))}
-              {infoRow("Statut", arbitre.statut)}
-            </CardContent>
-          </Card>
+          <div className="space-y-10 p-6 md:p-8">
+            <section>
+              <div className="mb-5">
+                <h2 className="text-lg font-semibold">Général</h2>
+                <p className="text-sm text-muted-foreground">Identité et informations administratives</p>
+              </div>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Phone className="h-4 w-4" />
-                Contact
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {infoRow("Telephone", arbitre.telephone)}
-              {infoRow("Email", arbitre.email)}
-            </CardContent>
-          </Card>
+              <div className="grid auto-rows-fr gap-4 lg:grid-cols-3">
+                {generalSections.map((section) => (
+                  <div key={section.title} className="flex h-full min-h-72 flex-col overflow-hidden rounded-xl border bg-muted/10">
+                    <div className="border-b bg-muted/30 px-5 py-3">
+                      <h3 className="text-sm font-semibold">{section.title}</h3>
+                    </div>
+                    <div className="flex flex-1 flex-col divide-y px-5">
+                      {section.fields.map(([label, value]) => (
+                        <div key={label} className="flex flex-1 flex-col justify-center py-3">
+                          <span className="text-xs text-muted-foreground">{label}</span>
+                          <span className="mt-1 break-words font-medium">{shown(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Shield className="h-4 w-4" />
-                Homologation
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {infoRow("Grade", arbitre.grade)}
-              {infoRow("Date homologation", formatSheetDate(arbitre.dateHomologation))}
-              {infoRow("Experience", experience)}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Trophy className="h-4 w-4" />
-                Equipe nationale
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {infoRow("Equipe nationale", arbitre.equipeNational)}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function calculateExperience(dateHomologation: string) {
-  const start = parseSheetDate(dateHomologation)
-  if (!start) return "-"
-
-  const today = new Date()
-  let years = today.getFullYear() - start.getFullYear()
-  const monthDelta = today.getMonth() - start.getMonth()
-  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < start.getDate())) {
-    years--
-  }
-
-  if (years <= 0) return "Moins d'un an"
-  return `${years} an${years > 1 ? "s" : ""}`
-}
-
-function formatGender(genre: string) {
-  if (genre === "M") return "Masculin"
-  if (genre === "F") return "Feminin"
-  return genre || "-"
-}
-
-function infoRow(label: string, value: string) {
-  return (
-    <div className="grid min-w-0 gap-1 text-sm sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="min-w-0 whitespace-normal break-words font-medium text-foreground [overflow-wrap:anywhere] sm:text-right">
-        {value || "-"}
-      </span>
+            <LicenceSection licences={licences} actorId={arbitre.idArbitre} />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

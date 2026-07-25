@@ -3,144 +3,143 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AthletesTable } from "@/components/athletes/athletes-table"
+import { formatSheetDate } from "@/lib/date-utils"
+import { normalize } from "@/lib/sheet-values"
 import type { Athlete, Club } from "@/lib/types"
-import {
-  ArrowLeft,
-  Building2,
-  Calendar,
-  MapPin,
-  Network,
-  Phone,
-  Shield,
-  User,
-  Users,
-} from "lucide-react"
+import type { Entente } from "@/lib/types"
+import { ClubFormDialog } from "@/components/clubs/club-form-dialog"
+import type { SavedClub } from "@/components/clubs/club-form-dialog"
+import type { ClubReferenceOption } from "@/lib/club-references"
+import { ArrowLeft, Calendar, Shield } from "lucide-react"
 
 interface ClubDetailProps {
   club: Club
   athletes: Athlete[]
+  ententes: Entente[]
+  categories: ClubReferenceOption[]
+  versions: ClubReferenceOption[]
   onBack: () => void
+  onUpdated: (club: SavedClub) => void
 }
 
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Shield
-  label: string
-  value: string | number
-}) {
-  return (
-    <div className="grid grid-cols-[1rem_minmax(8rem,auto)_minmax(0,1fr)] items-start gap-3 text-sm">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="text-muted-foreground">{label}</span>
-      <span className="min-w-0 break-words text-right font-medium leading-relaxed text-foreground">
-        {value || "-"}
-      </span>
-    </div>
-  )
+function shown(value: unknown, fallback = "Non renseigné") {
+  const text = value === null || value === undefined ? "" : String(value).trim()
+  return text || fallback
 }
 
-function formatDate(value: string) {
-  if (!value) return "-"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleDateString("fr-FR")
-}
+export function ClubDetail({ club, athletes, ententes, categories, versions, onBack, onUpdated }: ClubDetailProps) {
+  const formattedDate = formatSheetDate(club.dateAffiliationClub)
+  const active = ["ACTIF", "ACTIVE"].includes(normalize(club.statut))
+  const sections = [
+    {
+      title: "Identité du club",
+      fields: [
+        ["Identifiant", club.idClub],
+        ["Nom du club", club.nomClub],
+        ["Catégorie", club.categorie],
+        ["Version", club.version],
+      ],
+    },
+    {
+      title: "Rattachement territorial",
+      fields: [
+        ["Identifiant de l’entente", club.idEntente],
+        ["Nom de l’entente", club.nomEntente],
+        ["Pseudo de l’entente", club.pseudoEntente],
+        ["Identifiant de la ligue", club.idLigue],
+        ["Nom de la ligue", club.nomLigue],
+      ],
+    },
+    {
+      title: "Affiliation et suivi",
+      fields: [
+        ["Date d’affiliation", formattedDate === "-" ? "Non renseignée" : formattedDate],
+        ["Statut", club.statut],
+        ["Observations", club.observations],
+      ],
+    },
+  ]
 
-export function ClubDetail({ club, athletes, onBack }: ClubDetailProps) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <Button variant="outline" size="icon" onClick={onBack}>
             <ArrowLeft className="h-4 w-4" />
+            <span className="sr-only">Retour à la liste</span>
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{club.nom}</h1>
-            <p className="text-muted-foreground">Détails du club</p>
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold">{shown(club.nomClub, "Club")}</h1>
+            <p className="font-mono text-sm text-muted-foreground">{shown(club.idClub)}</p>
           </div>
         </div>
-        <Badge
-          variant={club.statut === "actif" ? "default" : "secondary"}
-          className={
-            club.statut === "actif"
-              ? "bg-green-100 text-green-800 hover:bg-green-100"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-100"
-          }
-        >
-          {club.statut === "actif" ? "Actif" : "Inactif"}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <ClubFormDialog
+            club={club}
+            ententes={ententes}
+            categories={categories}
+            versions={versions}
+            onSaved={onUpdated}
+          />
+          <Badge variant={active ? "default" : "secondary"}>{shown(club.statut)}</Badge>
+        </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="border-border/50">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
-                <Shield className="h-12 w-12 text-primary" />
-              </div>
-              <h2 className="text-xl font-bold text-foreground">{club.nom}</h2>
-              <p className="text-muted-foreground">{club.version || "-"}</p>
+      <Tabs defaultValue="informations" className="w-full">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl p-1.5">
+          <TabsTrigger className="min-h-11 w-full text-center" value="informations">
+            Informations générales
+          </TabsTrigger>
+          <TabsTrigger className="min-h-11 w-full text-center" value="athletes">
+            Athlètes ({athletes.length})
+          </TabsTrigger>
+        </TabsList>
 
-              <div className="mt-6 w-full space-y-3 text-left">
-                <InfoRow icon={Shield} label="ID club:" value={club.id} />
-                <InfoRow icon={Building2} label="Ligue:" value={club.ligueNom} />
-                <InfoRow icon={Shield} label="Categorie:" value={club.categorie} />
-                <InfoRow icon={Network} label="Entente:" value={club.ententeNom} />
-                <InfoRow icon={Network} label="Pseudo entente:" value={club.pseudoEntente} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="informations">
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Informations générales
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid auto-rows-fr gap-4 lg:grid-cols-3">
+              {sections.map((section) => (
+                <div key={section.title} className="flex h-full min-h-[330px] flex-col overflow-hidden rounded-xl border border-border/60 bg-muted/20">
+                  <div className="border-b border-border/60 bg-muted/40 px-4 py-3">
+                    <h3 className="text-sm font-semibold">{section.title}</h3>
+                  </div>
+                  <div className="flex flex-1 flex-col divide-y divide-border/60 px-4">
+                    {section.fields.map(([label, value]) => (
+                      <div key={label} className="flex flex-1 flex-col justify-center py-3">
+                        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {label === "Date d’affiliation" && <Calendar className="h-3.5 w-3.5" />}
+                          {label}
+                        </p>
+                        <p className="mt-1 break-words font-medium">{shown(value)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <User className="h-5 w-5 text-primary" />
-              Personne contact
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <InfoRow icon={User} label="Nom:" value={club.personneContactNom} />
-            <InfoRow icon={Phone} label="Téléphone:" value={club.personneContactTelephone} />
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Calendar className="h-5 w-5 text-primary" />
-              Affiliation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <InfoRow icon={Calendar} label="Date affiliation:" value={formatDate(club.dateAffiliation)} />
-            <InfoRow icon={Users} label="Athlètes:" value={club.athletes ?? 0} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <MapPin className="h-5 w-5 text-primary" />
-            Adresse du club
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="break-words text-sm font-medium leading-relaxed text-foreground">
-            {club.adresse || "-"}
-          </p>
-        </CardContent>
-      </Card>
-
-      <AthletesTable
-        athletes={athletes}
-        title={`Athlètes du club (${athletes.length})`}
-      />
+        <TabsContent value="athletes">
+          {athletes.length > 0 ? (
+            <AthletesTable athletes={athletes} title={`Athlètes du club (${athletes.length})`} />
+          ) : (
+            <Card>
+              <CardContent className="flex min-h-32 items-center justify-center p-6 text-center text-muted-foreground">
+                Aucun athlète enregistré pour ce club.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -57,7 +57,7 @@ export function ArbitresFilters({
             />
           </div>
 
-          <Select value={equipeNationale} onValueChange={onEquipeNationaleChange}>
+          {equipeOptions.length > 0 && <Select value={equipeNationale} onValueChange={onEquipeNationaleChange}>
             <SelectTrigger>
               <SelectValue placeholder="Equipe" />
             </SelectTrigger>
@@ -69,7 +69,7 @@ export function ArbitresFilters({
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select>}
 
           <Select value={grade} onValueChange={onGradeChange}>
             <SelectTrigger>

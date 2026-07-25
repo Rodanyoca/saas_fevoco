@@ -7,8 +7,10 @@ function str(row: SheetRow, key: string): string {
 }
 
 export function mapEquipeNationaleCompetitionRow(row: SheetRow): EquipeNationaleCompetition {
+  const idParticipation = str(row, "id_participation_equipe_nationale")
   return {
-    idParticipationEn: str(row, "id_participation_en"),
+    idParticipationEquipeNationale: idParticipation,
+    idParticipationEn: idParticipation,
     idEquipeNationale: str(row, "id_equipe_nationale"),
     nomEquipeNationale: str(row, "nom_equipe_nationale"),
     discipline: str(row, "discipline"),
@@ -17,6 +19,7 @@ export function mapEquipeNationaleCompetitionRow(row: SheetRow): EquipeNationale
     idCompetition: str(row, "id_competition"),
     nomCompetition: str(row, "nom_competition"),
     niveauCompetition: str(row, "niveau_competition"),
+    saison: str(row, "saison"),
     dateDebut: str(row, "date_debut"),
     dateFin: str(row, "date_fin"),
     lieu: str(row, "lieu"),

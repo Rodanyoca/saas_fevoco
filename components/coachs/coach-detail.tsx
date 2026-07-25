@@ -1,250 +1,141 @@
 "use client"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { calculateAgeFromSheetDate, formatSheetDate, parseSheetDate } from "@/lib/date-utils"
-import type { Coach, CoachAffiliation } from "@/lib/types"
-import {
-  Activity,
-  ArrowLeft,
-  Briefcase,
-  Edit,
-  GraduationCap,
-  Phone,
-  User,
-} from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { getActorAvatarUrl } from "@/lib/actor-avatar"
+import { calculateAge, formatSheetDate } from "@/lib/date-utils"
+import { normalize } from "@/lib/sheet-values"
+import type { BaseActorLicence, Coach, CoachAffiliation } from "@/lib/types"
+import { AffiliationSection, LicenceSection } from "@/components/actors/record-sections"
+import { ArrowLeft } from "lucide-react"
+import { CoachFormDialog } from "@/components/coachs/coach-form-dialog"
+import type { SavedCoach } from "@/components/coachs/coach-form-dialog"
+import type { ActorSexOption } from "@/lib/actor-references"
+import { CoachAffiliationFormDialog } from "@/components/coachs/coach-affiliation-form-dialog"
+import type { CoachStructureOption } from "@/components/coachs/coach-affiliation-form-dialog"
 
-interface CoachDetailProps {
+function shown(value: unknown, fallback = "Non renseigné") {
+  const text = value === null || value === undefined ? "" : String(value).trim()
+  return text || fallback
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return "?"
+  return `${parts[0]?.[0] ?? ""}${parts.at(-1)?.[0] ?? ""}`.toUpperCase()
+}
+
+function sexeLabel(value: string) {
+  const sexe = normalize(value)
+  if (sexe === "M" || sexe === "MASCULIN") return "Masculin"
+  if (sexe === "F" || sexe === "FEMININ") return "Féminin"
+  return shown(value)
+}
+
+export function CoachDetail({ coach, affiliations, licences, sexes, structures, onAffiliationCreated, onUpdated, onBack }: {
   coach: Coach
   affiliations: CoachAffiliation[]
+  licences: BaseActorLicence[]
+  sexes: ActorSexOption[]
+  structures: CoachStructureOption[]
+  onAffiliationCreated: (affiliation: CoachAffiliation) => void
+  onUpdated: (coach: SavedCoach) => void
   onBack: () => void
-}
-
-export function CoachDetail({ coach, affiliations, onBack }: CoachDetailProps) {
-  const age = calculateAgeFromSheetDate(coach.dateNaissance)
-  const activeAffiliations = affiliations.filter((affiliation) => affiliation.statut === "actif")
-  const teamsCount = new Set(
-    affiliations.map((affiliation) => affiliation.equipeId || affiliation.equipeNom).filter(Boolean)
-  ).size
-
-  const getInitials = (nomComplet: string) => {
-    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
-    if (parts.length === 0) return "C"
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-    return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
-  }
-
-  const formatGender = (genre: string) => {
-    if (genre === "M") return "Masculin"
-    if (genre === "F") return "Féminin"
-    return genre || "-"
-  }
-
-  const getStatutBadge = (statut: string) => {
-    switch (statut) {
-      case "actif":
-        return <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/20">Actif</Badge>
-      case "inactif":
-        return <Badge variant="secondary">Inactif</Badge>
-      default:
-        return <Badge variant="outline">{statut || "Non défini"}</Badge>
-    }
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold text-foreground">{coach.nomComplet}</h1>
-            <p className="text-sm text-muted-foreground">Fiche coach</p>
-          </div>
-        </div>
-
-        <Button className="shrink-0">
-          <Edit className="mr-2 h-4 w-4" />
-          Modifier
-        </Button>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
-        <Card className="h-fit">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <Avatar className="h-24 w-24">
-                <AvatarFallback className="bg-primary/10 text-2xl font-semibold text-primary">
-                  {getInitials(coach.nomComplet)}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="mt-4 min-w-0">
-                <h2 className="text-xl font-semibold text-foreground">{coach.nomComplet}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{coach.specialisation || "Spécialisation non définie"}</p>
-              </div>
-
-              <div className="mt-3 flex flex-wrap justify-center gap-2">
-                {getStatutBadge(coach.statut)}
-                {coach.niveau ? <Badge variant="outline">{coach.niveau}</Badge> : null}
-              </div>
-            </div>
-
-          </CardContent>
-        </Card>
-
-        <div className="min-w-0">
-          <Tabs defaultValue="infos" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="infos">Informations</TabsTrigger>
-              <TabsTrigger value="profil">Profil</TabsTrigger>
-              <TabsTrigger value="parcours">Parcours</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="infos" className="mt-4">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <User className="h-4 w-4" />
-                      Identité
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("ID coach", coach.id)}
-                    {infoRow("Nom complet", coach.nomComplet)}
-                    {infoRow("Genre", formatGender(coach.genre))}
-                    {infoRow("Nationalité", coach.nationalite)}
-                    {infoRow("Date de naissance", formatSheetDate(coach.dateNaissance))}
-                    {infoRow("Lieu de naissance", coach.lieuNaissance)}
-                    {infoRow("Âge", age !== null ? `${age} ans` : "-")}
-                    {infoRow("Statut", coach.statut)}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Phone className="h-4 w-4" />
-                      Contact
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Téléphone", coach.telephone)}
-                    {infoRow("Email", coach.email)}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="profil" className="mt-4">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <GraduationCap className="h-4 w-4" />
-                      Profil professionnel
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Niveau", coach.niveau)}
-                    {infoRow("Spécialisation", coach.specialisation)}
-                    {infoRow("Date affiliation", formatSheetDate(coach.dateAffiliation))}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Activity className="h-4 w-4" />
-                      Couverture
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Affiliations actives", String(activeAffiliations.length))}
-                    {infoRow("Équipes suivies", String(teamsCount))}
-                    {infoRow("Total parcours", String(affiliations.length))}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="parcours" className="mt-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Briefcase className="h-4 w-4" />
-                    Parcours
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {affiliations.length > 0 ? (
-                    affiliations.map((affiliation, index) => (
-                      <div key={`${affiliation.id || "affiliation"}-${affiliation.coachId || "sans-coach"}-${index}`} className="rounded-md border p-4">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="truncate font-medium text-foreground">
-                              {affiliation.equipeNom || affiliation.equipeId || "Équipe non définie"}
-                            </p>
-                            <p className="truncate text-sm text-muted-foreground">{affiliation.role || "Rôle non défini"}</p>
-                          </div>
-                          {getStatutBadge(affiliation.statut)}
-                        </div>
-                        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                          {infoRow("Début", formatSheetDate(affiliation.dateDebut))}
-                          {infoRow("Fin", affiliation.dateFin ? formatSheetDate(affiliation.dateFin) : "En cours")}
-                          {infoRow("Durée", formatDuration(affiliation.dateDebut, affiliation.dateFin))}
-                          {infoRow("Rôle", affiliation.role)}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-10 text-center text-sm text-muted-foreground">
-                      Aucun parcours enregistré pour ce coach.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function formatDuration(dateDebut: string, dateFin: string) {
-  const start = parseSheetDate(dateDebut)
-  if (!start) return "-"
-
-  const end = parseSheetDate(dateFin) ?? new Date()
-  const months =
-    (end.getFullYear() - start.getFullYear()) * 12 +
-    (end.getMonth() - start.getMonth()) -
-    (end.getDate() < start.getDate() ? 1 : 0)
-
-  if (months < 0) return "-"
-  if (months < 1) return "Moins d'un mois"
-
-  const years = Math.floor(months / 12)
-  const remainingMonths = months % 12
-  return [
-    years > 0 ? `${years} an${years > 1 ? "s" : ""}` : "",
-    remainingMonths > 0 ? `${remainingMonths} mois` : "",
+}) {
+  const avatarUrl = getActorAvatarUrl(coach.avatarDriveUrl, coach.avatarDriveId)
+  const age = calculateAge(coach.dateNaissance)
+  const formattedDate = formatSheetDate(coach.dateNaissance)
+  const active = ["ACTIF", "ACTIVE"].includes(normalize(coach.statut))
+  const generalSections = [
+    {
+      title: "Identifiants",
+      fields: [
+        ["ID coach", coach.idCoach],
+        ["ID national", coach.idNational],
+        ["ID FIVB", coach.idFivb],
+      ],
+    },
+    {
+      title: "État civil et profil",
+      fields: [
+        ["Date de naissance", formattedDate === "-" ? "Non renseignée" : formattedDate],
+        ["Âge", age === null ? "Non renseigné" : `${age} ans`],
+        ["Sexe", sexeLabel(coach.sexe)],
+        ["Nationalité", coach.nationalite],
+        ["Niveau", coach.niveau],
+      ],
+    },
+    {
+      title: "Contact",
+      fields: [
+        ["Téléphone", coach.telephone],
+        ["Adresse e-mail", coach.email],
+        ["Adresse", coach.adresse],
+      ],
+    },
   ]
-    .filter(Boolean)
-    .join(" ")
-}
 
-function infoRow(label: string, value: string) {
   return (
-    <div className="flex min-w-0 items-start justify-between gap-4 text-sm">
-      <span className="shrink-0 text-muted-foreground">{label}</span>
-      <span className="min-w-0 break-words text-right font-medium text-foreground">{value || "-"}</span>
+    <div className="w-full">
+      <Button variant="ghost" className="mb-4" onClick={onBack}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Retour aux coachs
+      </Button>
+
+      <Card className="overflow-hidden border-border/60 shadow-sm">
+        <div className="h-2 bg-primary" />
+        <CardContent className="p-0">
+          <header className="grid gap-6 border-b bg-muted/20 p-6 md:grid-cols-[auto_1fr_auto] md:items-center md:p-8">
+            <Avatar className="h-24 w-24 border-4 border-background shadow-sm">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={coach.nomComplet} />}
+              <AvatarFallback className="text-2xl font-semibold">{initials(coach.nomComplet)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Profil coach</p>
+              <h1 className="break-words text-2xl font-bold md:text-3xl">{shown(coach.nomComplet)}</h1>
+              <p className="mt-2 font-mono text-sm text-muted-foreground">{shown(coach.idCoach)}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <CoachFormDialog coach={coach} sexes={sexes} onSaved={onUpdated} />
+              <Badge variant={active ? "default" : "secondary"} className="w-fit">{shown(coach.statut)}</Badge>
+            </div>
+          </header>
+
+          <div className="space-y-10 p-6 md:p-8">
+            <section>
+              <div className="mb-5">
+                <h2 className="text-lg font-semibold">Général</h2>
+                <p className="text-sm text-muted-foreground">Identité et informations administratives</p>
+              </div>
+
+              <div className="grid auto-rows-fr gap-4 lg:grid-cols-3">
+                {generalSections.map((section) => (
+                  <div key={section.title} className="flex h-full min-h-72 flex-col overflow-hidden rounded-xl border bg-muted/10">
+                    <div className="border-b bg-muted/30 px-5 py-3">
+                      <h3 className="text-sm font-semibold">{section.title}</h3>
+                    </div>
+                    <div className="flex flex-1 flex-col divide-y px-5">
+                      {section.fields.map(([label, value]) => (
+                        <div key={label} className="flex flex-1 flex-col justify-center py-3">
+                          <span className="text-xs text-muted-foreground">{label}</span>
+                          <span className="mt-1 break-words font-medium">{shown(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <div>
+              <div className="flex justify-end"><CoachAffiliationFormDialog coach={coach} structures={structures} onSaved={onAffiliationCreated} /></div>
+              <AffiliationSection affiliations={affiliations} actorId={coach.idCoach} />
+            </div>
+            <LicenceSection licences={licences} actorId={coach.idCoach} />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

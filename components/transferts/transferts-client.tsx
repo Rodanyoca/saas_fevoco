@@ -1,22 +1,31 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { TransfertDetail } from "@/components/transferts/transfert-detail"
 import { TransfertsFilters } from "@/components/transferts/transferts-filters"
 import { TransfertsStats } from "@/components/transferts/transferts-stats"
 import { TransfertsTable } from "@/components/transferts/transferts-table"
-import type { Transfert } from "@/lib/types"
+import type { Athlete, Club, Transfert } from "@/lib/types"
+import type { TransferTypeOption } from "@/lib/actor-references"
+import { TransfertFormDialog } from "@/components/transferts/transfert-form-dialog"
 
-export function TransfertsClient({ transferts }: { transferts: Transfert[] }) {
+export function TransfertsClient({ transferts, athletes, clubs, transferTypes }: {
+  transferts: Transfert[]
+  athletes: Athlete[]
+  clubs: Club[]
+  transferTypes: TransferTypeOption[]
+}) {
+  const [rows, setRows] = useState(transferts)
   const [selectedTransfert, setSelectedTransfert] = useState<Transfert | null>(null)
   const [search, setSearch] = useState("")
   const [statut, setStatut] = useState("all")
   const [saison, setSaison] = useState("all")
+  useEffect(() => setRows(transferts), [transferts])
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
 
-    return transferts.filter((transfert) => {
+    return rows.filter((transfert) => {
       if (statut !== "all" && transfert.statut !== statut) return false
       if (saison !== "all" && transfert.saison !== saison) return false
 
@@ -28,7 +37,7 @@ export function TransfertsClient({ transferts }: { transferts: Transfert[] }) {
 
       return true
     })
-  }, [saison, search, statut, transferts])
+  }, [rows, saison, search, statut])
 
   if (selectedTransfert) {
     return <TransfertDetail transfert={selectedTransfert} onBack={() => setSelectedTransfert(null)} />
@@ -36,9 +45,10 @@ export function TransfertsClient({ transferts }: { transferts: Transfert[] }) {
 
   return (
     <div className="space-y-6">
-      <TransfertsStats transferts={transferts} />
+      <div className="flex justify-end"><TransfertFormDialog athletes={athletes} clubs={clubs} types={transferTypes} onSaved={(transfert) => setRows((current) => [transfert, ...current])} /></div>
+      <TransfertsStats transferts={rows} />
       <TransfertsFilters
-        transferts={transferts}
+        transferts={rows}
         search={search}
         statut={statut}
         saison={saison}

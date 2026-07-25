@@ -13,8 +13,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { formatSheetDate } from "@/lib/date-utils"
-import type { EquipeNationale, EquipeNationaleSelection } from "@/lib/types"
-import { ArrowLeft, Eye, Medal, Target, Trophy, Users } from "lucide-react"
+import type { EquipeNationale, EquipeNationaleCompetition, EquipeNationaleResultat, EquipeNationaleSelection, EquipeNationaleStaff } from "@/lib/types"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowLeft, Eye, Medal, Search, Target, Trophy, Users } from "lucide-react"
 
 function normalize(value: string) {
   return value
@@ -41,19 +44,37 @@ function EmptyRow({ colSpan, label }: { colSpan: number; label: string }) {
 export function EquipeNationaleClient({
   equipes,
   selections,
+  staff,
+  competitions,
+  resultats,
 }: {
   equipes: EquipeNationale[]
   selections: EquipeNationaleSelection[]
+  staff: EquipeNationaleStaff[]
+  competitions: EquipeNationaleCompetition[]
+  resultats: EquipeNationaleResultat[]
 }) {
   const [selectedEquipe, setSelectedEquipe] = useState<EquipeNationale | null>(null)
+  const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState({ discipline: "all", categorie: "all", genre: "all", saison: "all", statutEquipe: "all" })
 
   const equipesActives = equipes.filter((equipe) => isActive(equipe.statutEquipe)).length
   const selectionsActives = selections.filter((selection) => isActive(selection.statutSelection)).length
+  const filterValues = (field: keyof EquipeNationale) =>
+    Array.from(new Set(equipes.map((item) => String(item[field] || "")).filter(Boolean))).sort()
+  const filteredEquipes = equipes.filter((equipe) => {
+    const text = `${equipe.nomEquipeNationale} ${equipe.discipline} ${equipe.categorie} ${equipe.genre} ${equipe.saison}`.toLowerCase()
+    if (search && !text.includes(search.trim().toLowerCase())) return false
+    return Object.entries(filters).every(([key, selected]) => selected === "all" || String(equipe[key as keyof EquipeNationale]) === selected)
+  })
 
   const selectedSelections = useMemo(() => {
     if (!selectedEquipe) return []
     return selections.filter((selection) => selection.idEquipeNationale === selectedEquipe.idEquipeNationale)
   }, [selectedEquipe, selections])
+  const selectedStaff = selectedEquipe ? staff.filter((item) => item.idEquipeNationale === selectedEquipe.idEquipeNationale) : []
+  const selectedCompetitions = selectedEquipe ? competitions.filter((item) => item.idEquipeNationale === selectedEquipe.idEquipeNationale) : []
+  const selectedResultats = selectedEquipe ? resultats.filter((item) => item.idEquipeNationale === selectedEquipe.idEquipeNationale) : []
 
   if (selectedEquipe) {
     return (
@@ -100,6 +121,14 @@ export function EquipeNationaleClient({
           </Card>
         </div>
 
+        <Tabs defaultValue="selections" className="gap-4">
+          <TabsList className="grid h-auto w-full grid-cols-4">
+            <TabsTrigger value="selections">Athlètes</TabsTrigger>
+            <TabsTrigger value="staff">Staff</TabsTrigger>
+            <TabsTrigger value="competitions">Compétitions</TabsTrigger>
+            <TabsTrigger value="resultats">Résultats</TabsTrigger>
+          </TabsList>
+          <TabsContent value="selections">
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -115,19 +144,23 @@ export function EquipeNationaleClient({
                     <TableHead>Athlete</TableHead>
                     <TableHead>Poste</TableHead>
                     <TableHead>Club</TableHead>
+                    <TableHead>Maillot</TableHead>
+                    <TableHead>Capitaine</TableHead>
                     <TableHead>Periode</TableHead>
                     <TableHead>Statut</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {selectedSelections.length === 0 ? (
-                    <EmptyRow colSpan={5} label="Aucun membre selectionne pour cette equipe." />
+                    <EmptyRow colSpan={7} label="Aucun membre selectionne pour cette equipe." />
                   ) : (
                     selectedSelections.map((selection, index) => (
                       <TableRow key={`${selection.idSelection || "selection"}-${index}`}>
                         <TableCell className="font-medium">{selection.nomAthlete || "-"}</TableCell>
-                        <TableCell>{selection.poste || "-"}</TableCell>
+                        <TableCell>{selection.nomPoste || "-"}</TableCell>
                         <TableCell>{selection.nomClub || "-"}</TableCell>
+                        <TableCell>{selection.numeroMaillot || "-"}</TableCell>
+                        <TableCell>{selection.capitaine || "-"}</TableCell>
                         <TableCell className="whitespace-nowrap text-muted-foreground">
                           {formatSheetDate(selection.dateDebutSelection)} - {formatSheetDate(selection.dateFinSelection)}
                         </TableCell>
@@ -142,6 +175,41 @@ export function EquipeNationaleClient({
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
+          <TabsContent value="staff">
+            <Card><CardHeader><CardTitle>Staff</CardTitle></CardHeader><CardContent>
+              <div className="overflow-x-auto"><Table><TableHeader><TableRow>
+                <TableHead>Nom</TableHead><TableHead>Type</TableHead><TableHead>Fonction</TableHead><TableHead>Période</TableHead><TableHead>Statut</TableHead>
+              </TableRow></TableHeader><TableBody>
+                {selectedStaff.length === 0 ? <EmptyRow colSpan={5} label="Aucun membre du staff." /> : selectedStaff.map((item) => (
+                  <TableRow key={item.idStaffSelection}><TableCell className="font-medium">{item.nomActeur || "-"}</TableCell><TableCell>{item.typeActeur || "-"}</TableCell><TableCell>{item.fonction || "-"}</TableCell><TableCell>{formatSheetDate(item.dateDebut)} - {formatSheetDate(item.dateFin)}</TableCell><TableCell><Badge variant="outline">{item.statutStaff || "-"}</Badge></TableCell></TableRow>
+                ))}
+              </TableBody></Table></div>
+            </CardContent></Card>
+          </TabsContent>
+          <TabsContent value="competitions">
+            <Card><CardHeader><CardTitle>Compétitions</CardTitle></CardHeader><CardContent>
+              <div className="overflow-x-auto"><Table><TableHeader><TableRow>
+                <TableHead>Compétition</TableHead><TableHead>Niveau</TableHead><TableHead>Saison</TableHead><TableHead>Période</TableHead><TableHead>Lieu</TableHead><TableHead>Statut</TableHead>
+              </TableRow></TableHeader><TableBody>
+                {selectedCompetitions.length === 0 ? <EmptyRow colSpan={6} label="Aucune compétition." /> : selectedCompetitions.map((item) => (
+                  <TableRow key={item.idParticipationEquipeNationale}><TableCell className="font-medium">{item.nomCompetition || "-"}</TableCell><TableCell>{item.niveauCompetition || "-"}</TableCell><TableCell>{item.saison || "-"}</TableCell><TableCell>{formatSheetDate(item.dateDebut)} - {formatSheetDate(item.dateFin)}</TableCell><TableCell>{item.lieu || "-"}</TableCell><TableCell><Badge variant="outline">{item.statutParticipation || "-"}</Badge></TableCell></TableRow>
+                ))}
+              </TableBody></Table></div>
+            </CardContent></Card>
+          </TabsContent>
+          <TabsContent value="resultats">
+            <Card><CardHeader><CardTitle>Résultats</CardTitle></CardHeader><CardContent className="space-y-3">
+              {selectedResultats.length === 0 ? <p className="rounded-md border p-8 text-center text-sm text-muted-foreground">Aucun résultat.</p> : selectedResultats.map((item) => (
+                <div key={item.idResultatEquipeNationale} className="grid gap-3 rounded-lg border p-4 md:grid-cols-[1fr_auto_auto] md:items-center">
+                  <div><p className="font-medium">{item.nomCompetition || "-"}</p><p className="text-sm text-muted-foreground">{formatSheetDate(item.dateMatch)} · {item.phase || "-"}</p></div>
+                  <p className="font-mono text-lg font-semibold">RDC {item.scoreGlobal || "—"} {item.adversaire || "-"}</p>
+                  <Badge variant="outline">{item.resultatMatch || item.statutMatch || "-"}</Badge>
+                </div>
+              ))}
+            </CardContent></Card>
+          </TabsContent>
+        </Tabs>
       </div>
     )
   }
@@ -176,6 +244,24 @@ export function EquipeNationaleClient({
           <CardTitle>Equipes nationales</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une équipe..." className="pl-9" />
+            </div>
+            {([
+              ["discipline", "Discipline"], ["categorie", "Catégorie"], ["genre", "Genre"],
+              ["saison", "Saison"], ["statutEquipe", "Statut"],
+            ] as const).map(([field, label]) => (
+              <Select key={field} value={filters[field]} onValueChange={(value) => setFilters((current) => ({ ...current, [field]: value }))}>
+                <SelectTrigger><SelectValue placeholder={label} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  {filterValues(field).map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ))}
+          </div>
           <div className="overflow-x-auto">
             <Table className="min-w-[960px]">
               <TableHeader>
@@ -191,10 +277,10 @@ export function EquipeNationaleClient({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {equipes.length === 0 ? (
+                {filteredEquipes.length === 0 ? (
                   <EmptyRow colSpan={8} label="Aucune equipe nationale disponible." />
                 ) : (
-                  equipes.map((equipe, index) => (
+                  filteredEquipes.map((equipe, index) => (
                     <TableRow key={`${equipe.idEquipeNationale || "equipe"}-${index}`}>
                       <TableCell className="font-mono text-muted-foreground">
                         {equipe.idEquipeNationale || "-"}

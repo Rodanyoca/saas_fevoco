@@ -2,23 +2,17 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import type { Entente } from "@/lib/types"
-import { Network, Phone, User } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { EditEntenteDialog } from "@/components/ententes/entente-form-dialog"
+import type { SavedEntente } from "@/components/ententes/entente-form-dialog"
+import type { Entente, Ligue } from "@/lib/types"
+import { Network } from "lucide-react"
 
-export function EntentesTable({
-  ententes,
-  totalCount,
-}: {
+export function EntentesTable({ ententes, ligues, totalCount, onSaved }: {
   ententes: Entente[]
+  ligues: Ligue[]
   totalCount: number
+  onSaved: (entente: SavedEntente) => void
 }) {
   return (
     <Card>
@@ -28,9 +22,7 @@ export function EntentesTable({
             <Network className="h-5 w-5 text-primary" />
             Liste des Ententes
           </CardTitle>
-          <Badge variant="outline" className="text-xs">
-            {totalCount} ententes
-          </Badge>
+          <Badge variant="outline">{totalCount} ententes</Badge>
         </div>
       </CardHeader>
       <CardContent>
@@ -38,60 +30,33 @@ export function EntentesTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[90px]">ID</TableHead>
+                <TableHead>ID</TableHead>
                 <TableHead>Entente</TableHead>
                 <TableHead>Ligue</TableHead>
-                <TableHead>Personne contact</TableHead>
-                <TableHead className="text-center">Clubs</TableHead>
-                <TableHead className="text-center">Athlètes</TableHead>
-                <TableHead className="text-center">Statut</TableHead>
+                <TableHead>Adresse e-mail</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead className="w-12 text-right"><span className="sr-only">Action</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ententes.map((entente, index) => (
-                <TableRow key={`${entente.id || "entente"}-${entente.nom || "sans-nom"}-${index}`}>
-                  <TableCell className="font-mono text-muted-foreground">
-                    {entente.id || "-"}
-                  </TableCell>
+              {ententes.map((entente) => (
+                <TableRow key={entente.idEntente}>
+                  <TableCell className="font-mono text-muted-foreground">{entente.idEntente || "Non renseigné"}</TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-1 leading-none">
-                      <span className="font-medium leading-tight">{entente.nom}</span>
-                      <span className="text-xs leading-tight text-muted-foreground">
-                        {entente.pseudo || "-"}
-                      </span>
-                    </div>
+                    <p className="font-medium">{entente.nomEntente || "Non renseignée"}</p>
+                    <p className="text-xs text-muted-foreground">{entente.pseudoEntente || "Non renseigné"}</p>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {entente.ligueNom || "-"}
-                  </TableCell>
+                  <TableCell>{entente.nomLigue || "Non renseignée"}</TableCell>
+                  <TableCell>{entente.emailEntente || "Non renseignée"}</TableCell>
                   <TableCell>
-                    <div className="flex flex-col">
-                      <span className="flex items-center gap-1 text-sm">
-                        <User className="h-3 w-3 text-muted-foreground" />
-                        {entente.personneContactNom || "-"}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        {entente.personneContactTelephone || "-"}
-                      </span>
-                    </div>
+                    <Badge variant={entente.statut === "active" ? "default" : "secondary"}>{entente.statut || "Non renseigné"}</Badge>
                   </TableCell>
-                  <TableCell className="text-center">{entente.clubs ?? 0}</TableCell>
-                  <TableCell className="text-center">{entente.athletes ?? 0}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge
-                      variant={entente.statut === "active" ? "default" : "secondary"}
-                      className={
-                        entente.statut === "active"
-                          ? "bg-green-100 text-green-800 hover:bg-green-100"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-100"
-                      }
-                    >
-                      {entente.statut === "active" ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
+                  <TableCell className="text-right"><EditEntenteDialog entente={entente} ligues={ligues} onSaved={onSaved} /></TableCell>
                 </TableRow>
               ))}
+              {ententes.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Aucune donnée disponible.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

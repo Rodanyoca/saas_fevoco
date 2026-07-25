@@ -15,5 +15,6 @@ export function mapEquipeNationaleRow(row: SheetRow): EquipeNationale {
     genre: str(row, "genre"),
     saison: str(row, "saison"),
     statutEquipe: str(row, "statut_equipe"),
+    observation: str(row, "observation"),
   }
 }

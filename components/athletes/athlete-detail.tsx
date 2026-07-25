@@ -1,254 +1,135 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  ArrowLeft,
-  Edit,
-  MapPin,
-  User,
-  Ruler,
-  Building2,
-  FileText,
-} from "lucide-react"
-import type { Athlete, Transfert } from "@/lib/types"
-import { calculateAgeFromSheetDate, formatSheetDate } from "@/lib/date-utils"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { getActorAvatarUrl } from "@/lib/actor-avatar"
+import { calculateAge, formatSheetDate } from "@/lib/date-utils"
+import { normalize } from "@/lib/sheet-values"
+import type { Athlete, AthleteAffiliation, AthleteLicence } from "@/lib/types"
+import { AffiliationSection, LicenceSection } from "@/components/actors/record-sections"
+import { ArrowLeft } from "lucide-react"
+import { AthleteFormDialog } from "@/components/athletes/athlete-form-dialog"
+import type { SavedAthlete } from "@/components/athletes/athlete-form-dialog"
+import type { ActorSexOption } from "@/lib/actor-references"
 
-interface AthleteDetailProps {
-  athlete: Athlete
-  transferts: Transfert[]
-  onBack: () => void
+function shown(value: unknown, fallback = "Non renseigné") {
+  const text = value === null || value === undefined ? "" : String(value).trim()
+  return text || fallback
 }
 
-export function AthleteDetail({ athlete, transferts, onBack }: AthleteDetailProps) {
-  const age = calculateAgeFromSheetDate(athlete.dateNaissance)
-  const athleteTransferts = transferts.filter((transfert) => {
-    const athleteId = athlete.id.trim().toLowerCase()
-    const athleteName = athlete.nomComplet.trim().toLowerCase()
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return "?"
+  return `${parts[0]?.[0] ?? ""}${parts.at(-1)?.[0] ?? ""}`.toUpperCase()
+}
 
-    return (
-      transfert.athleteId.trim().toLowerCase() === athleteId ||
-      transfert.id.trim().toLowerCase() === athleteId ||
-      (athleteName && transfert.athleteNom.trim().toLowerCase() === athleteName)
-    )
-  })
+function sexeLabel(value: string) {
+  const sexe = normalize(value)
+  if (sexe === "M" || sexe === "MASCULIN") return "Masculin"
+  if (sexe === "F" || sexe === "FEMININ") return "Féminin"
+  return shown(value)
+}
 
-  const getInitials = (nomComplet: string) => {
-    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
-    if (parts.length === 0) return "A"
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-    return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
-  }
+export function AthleteDetail({ athlete, affiliations, licences, sexes, onUpdated, onBack }: {
+  athlete: Athlete
+  affiliations: AthleteAffiliation[]
+  licences: AthleteLicence[]
+  sexes: ActorSexOption[]
+  onUpdated: (athlete: SavedAthlete) => void
+  onBack: () => void
+}) {
+  const avatarUrl = getActorAvatarUrl(athlete.avatarDriveUrl, athlete.avatarDriveId)
+  const age = calculateAge(athlete.dateDeNaissance)
+  const dateNaissance = formatSheetDate(athlete.dateDeNaissance)
+  const active = ["ACTIF", "ACTIVE"].includes(normalize(athlete.statut))
 
-  const formatGender = (genre: string) => {
-    if (genre === "M") return "Masculin"
-    if (genre === "F") return "Féminin"
-    return genre || "-"
-  }
-
-  const formatNumber = (value: number | null, suffix: string) => (
-    value !== null ? `${value} ${suffix}` : "-"
-  )
-
-  const infoRow = (label: string, value: string | number | null | undefined) => (
-    <div className="grid gap-1 text-sm md:grid-cols-[10.5rem_minmax(0,1fr)] md:items-start">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="min-w-0 break-words font-medium text-foreground md:text-right">
-        {value !== null && value !== undefined && value !== "" ? value : "-"}
-      </span>
-    </div>
-  )
-
-  const getStatusBadge = (statut: string) => {
-    switch (statut) {
-      case "actif":
-      case "active":
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Actif</Badge>
-      case "inactif":
-      case "inactive":
-        return <Badge variant="secondary">Inactif</Badge>
-      case "blesse":
-      case "blessé":
-        return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">Blessé</Badge>
-      default:
-        return <Badge variant="outline">{statut || "-"}</Badge>
-    }
-  }
+  const generalSections = [
+    {
+      title: "Identifiants",
+      fields: [
+        ["ID athlète", athlete.idAthlete],
+        ["ID national", athlete.idNational],
+        ["ID FIVB", athlete.idFivb],
+      ],
+    },
+    {
+      title: "État civil",
+      fields: [
+        ["Date de naissance", dateNaissance === "-" ? "Non renseignée" : dateNaissance],
+        ["Âge", age === null ? "Non renseigné" : `${age} ans`],
+        ["Lieu de naissance", athlete.lieuNaissance],
+        ["Sexe", sexeLabel(athlete.sexe)],
+        ["Nationalité", athlete.nationalite],
+      ],
+    },
+    {
+      title: "Contact",
+      fields: [
+        ["Téléphone", athlete.telephone],
+        ["Adresse e-mail", athlete.email],
+        ["Adresse", athlete.adresse],
+      ],
+    },
+  ]
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold text-foreground">
-              {athlete.nomComplet}
-            </h1>
-            <p className="truncate text-muted-foreground">{athlete.disciplineActive || "-"} - {athlete.clubNom || "-"}</p>
-          </div>
-        </div>
-        <Button className="self-start sm:self-auto">
-          <Edit className="mr-2 h-4 w-4" />
-          Modifier
-        </Button>
-      </div>
+    <div className="w-full">
+      <Button variant="ghost" className="mb-4" onClick={onBack}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Retour aux athlètes
+      </Button>
 
-      <div className="grid gap-6 xl:grid-cols-[19rem_minmax(0,1fr)]">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex min-w-0 flex-col items-center text-center">
-              <Avatar className="mb-4 h-24 w-24">
-                <AvatarFallback className="bg-primary/10 text-2xl text-primary">
-                  {getInitials(athlete.nomComplet)}
-                </AvatarFallback>
-              </Avatar>
-              <h2 className="w-full break-words text-xl font-semibold">{athlete.nomComplet}</h2>
-              <p className="text-muted-foreground">{athlete.disciplineActive || "-"}</p>
-              <p className="mt-1 font-mono text-xs text-muted-foreground">{athlete.id || "-"}</p>
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                {getStatusBadge(athlete.statut)}
-              </div>
+      <Card className="overflow-hidden border-border/60 shadow-sm">
+        <div className="h-2 bg-primary" />
+        <CardContent className="p-0">
+          <header className="grid gap-6 border-b bg-muted/20 p-6 md:grid-cols-[auto_1fr_auto] md:items-center md:p-8">
+            <Avatar className="h-24 w-24 border-4 border-background shadow-sm">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={athlete.nomComplet} />}
+              <AvatarFallback className="text-2xl font-semibold">{initials(athlete.nomComplet)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Profil athlète</p>
+              <h1 className="break-words text-2xl font-bold md:text-3xl">{shown(athlete.nomComplet)}</h1>
+              <p className="mt-2 font-mono text-sm text-muted-foreground">{shown(athlete.idAthlete)}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center gap-3">
+              <AthleteFormDialog athlete={athlete} sexes={sexes} onSaved={onUpdated} />
+              <Badge variant={active ? "default" : "secondary"} className="w-fit">{shown(athlete.statut)}</Badge>
+            </div>
+          </header>
 
-        <div className="min-w-0">
-          <Tabs defaultValue="infos" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="infos">Informations</TabsTrigger>
-              <TabsTrigger value="historique">Historique</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="infos" className="mt-4">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <User className="h-4 w-4" />
-                      Identité
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("ID athlète", athlete.id)}
-                    {infoRow("Nom complet", athlete.nomComplet)}
-                    {infoRow("Date de naissance", formatSheetDate(athlete.dateNaissance))}
-                    {infoRow("Lieu de naissance", athlete.lieuNaissance)}
-                    {infoRow("Âge", age !== null ? `${age} ans` : "-")}
-                    {infoRow("Genre", formatGender(athlete.genre))}
-                    {infoRow("Nationalité", athlete.nationalite)}
-                    {infoRow("Statut", athlete.statut)}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <MapPin className="h-4 w-4" />
-                      Contact et adresse
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Téléphone", athlete.telephone)}
-                    {infoRow("Email", athlete.email)}
-                    {infoRow("Adresse", athlete.adresse)}
-                  </CardContent>
-                </Card>
-
-                <Card className="lg:col-span-2">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Building2 className="h-4 w-4" />
-                      Affiliation
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Ligue", athlete.ligueNom)}
-                    {infoRow("Entente", athlete.ententeNom)}
-                    {infoRow("Club", athlete.clubNom)}
-                  </CardContent>
-                </Card>
-
-                <Card className="lg:col-span-2">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Ruler className="h-4 w-4" />
-                      Profil sportif
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid gap-3 lg:grid-cols-2">
-                    {infoRow("Discipline active", athlete.disciplineActive)}
-                    {infoRow("Poste indoor", athlete.posteIndoor)}
-                    {infoRow("Poste beach", athlete.posteBeach)}
-                    {infoRow("Numéro", athlete.numero)}
-                    {infoRow("Taille", formatNumber(athlete.taille, "cm"))}
-                    {infoRow("Poids", formatNumber(athlete.poids, "kg"))}
-                  </CardContent>
-                </Card>
+          <div className="space-y-10 p-6 md:p-8">
+            <section>
+              <div className="mb-5">
+                <h2 className="text-lg font-semibold">Général</h2>
+                <p className="text-sm text-muted-foreground">Identité et informations administratives</p>
               </div>
-            </TabsContent>
 
-            <TabsContent value="historique" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <FileText className="h-4 w-4" />
-                    Historique des activités
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Periode</TableHead>
-                          <TableHead>Club d'origine</TableHead>
-                          <TableHead>Matricule</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {athleteTransferts.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={3} className="h-24 text-center text-sm text-muted-foreground">
-                              Aucun transfert disponible.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          athleteTransferts.map((transfert, index) => (
-                            <TableRow key={`${transfert.id || "transfert"}-${transfert.clubOrigineId || "sans-club"}-${index}`}>
-                              <TableCell className="whitespace-nowrap text-muted-foreground">
-                                {formatSheetDate(transfert.dateDebut)} - {formatSheetDate(transfert.dateFin)}
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {transfert.clubOrigineNom || "-"}
-                              </TableCell>
-                              <TableCell className="font-mono text-muted-foreground">
-                                {transfert.id || "-"}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+              <div className="grid auto-rows-fr gap-4 lg:grid-cols-3">
+                {generalSections.map((section) => (
+                  <div key={section.title} className="flex h-full min-h-72 flex-col overflow-hidden rounded-xl border bg-muted/10">
+                    <div className="border-b bg-muted/30 px-5 py-3">
+                      <h3 className="text-sm font-semibold">{section.title}</h3>
+                    </div>
+                    <div className="flex flex-1 flex-col divide-y px-5">
+                      {section.fields.map(([label, value]) => (
+                        <div key={label} className="flex flex-1 flex-col justify-center py-3">
+                          <span className="text-xs text-muted-foreground">{label}</span>
+                          <span className="mt-1 break-words font-medium">{shown(value)}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+                ))}
+              </div>
+            </section>
+
+            <AffiliationSection affiliations={affiliations} actorId={athlete.idAthlete} />
+            <LicenceSection licences={licences} actorId={athlete.idAthlete} />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

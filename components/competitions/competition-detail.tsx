@@ -1,5 +1,5 @@
 "use client"
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,26 +22,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite } from "@/lib/types"
 import {
   ArrowLeft,
-  CalendarDays,
   ClipboardList,
   ListOrdered,
-  MapPin,
-  Medal,
   Shield,
-  Trophy,
   UserRound,
-  Users,
 } from "lucide-react"
+import { formatSheetDate } from "@/lib/date-utils"
 
 function formatDate(value: string) {
-  if (!value) return "-"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(date)
+  return formatSheetDate(value)
 }
 
 function isIndoor(discipline: string) {
@@ -59,22 +48,13 @@ function getStatusClass(statut: string) {
   return "bg-slate-100 text-slate-700 hover:bg-slate-100"
 }
 
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Trophy
-  label: string
-  value: string
-}) {
+function InfoField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid grid-cols-[1rem_minmax(7rem,auto)_minmax(0,1fr)] items-start gap-3 text-sm">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="text-muted-foreground">{label}</span>
-      <span className="min-w-0 break-words text-right font-medium leading-relaxed text-foreground">
-        {value || "-"}
-      </span>
+    <div className="py-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 min-w-0 break-words font-medium leading-relaxed text-foreground">
+        {value || "Non renseigné"}
+      </p>
     </div>
   )
 }
@@ -103,12 +83,6 @@ type RankingRow = {
   pointsFor: number
   pointsAgainst: number
   pointsClassement: number
-}
-
-type ClubRow = {
-  id: string
-  nom: string
-  statut: string
 }
 
 type SheetRankingRow = {
@@ -158,21 +132,6 @@ function getParticipantLabel(participant: CompetitionParticipant) {
     participant.idParticipation ||
     "-"
   )
-}
-
-function getBeachUnitStatus(unit: CompetitionUnite, participants: CompetitionParticipant[]) {
-  const athleteIds = [unit.idAthleteA, unit.idAthleteB].filter(Boolean)
-  const athleteNames = [unit.nomAthleteA, unit.nomAthleteB].filter(Boolean)
-  const statuses = participants
-    .filter((participant) => {
-      if (participant.idCompetition !== unit.idCompetition) return false
-      if (athleteIds.includes(participant.idAthlete)) return true
-      return athleteNames.includes(participant.nomAthlete)
-    })
-    .map((participant) => participant.statutParticipation)
-    .filter(Boolean)
-
-  return Array.from(new Set(statuses)).join(" / ")
 }
 
 function getScorePart(scoreGlobal: string, index: number) {
@@ -351,13 +310,13 @@ export function CompetitionDetail({
 }) {
   const [rankingPoule, setRankingPoule] = useState("all")
   const [rankingPhase, setRankingPhase] = useState("all")
-  const indoor = isIndoor(competition.discipline)
+  const indoor = isIndoor(competition.nomDiscipline)
   const competitionParticipants = participants.filter(
-    (participant) => participant.idCompetition === competition.id,
+    (participant) => participant.idCompetition === competition.idCompetition,
   )
-  const competitionUnites = unites.filter((unite) => unite.idCompetition === competition.id)
+  const competitionUnites = unites.filter((unite) => unite.idCompetition === competition.idCompetition)
   const competitionResults = results
-    .filter((result) => result.idCompetition === competition.id)
+    .filter((result) => result.idCompetition === competition.idCompetition)
     .sort((a, b) => {
       const dateA = new Date(a.dateMatch).getTime()
       const dateB = new Date(b.dateMatch).getTime()
@@ -366,9 +325,12 @@ export function CompetitionDetail({
       }
       return dateA - dateB
     })
-  const isSameCompetitionClassement = (row: CompetitionClassement) =>
-    row.idCompetition === competition.id ||
-    (!!row.nomCompetition && row.nomCompetition === competition.nomCompetition)
+  const isSameCompetitionClassement = useCallback(
+    (row: CompetitionClassement) =>
+      row.idCompetition === competition.idCompetition ||
+      (!!row.nomCompetition && row.nomCompetition === competition.nomCompetition),
+    [competition.idCompetition, competition.nomCompetition],
+  )
 
   const rankingPoules = useMemo(
     () =>
@@ -383,7 +345,7 @@ export function CompetitionDetail({
             .filter(Boolean),
         ),
       ).sort((a, b) => a.localeCompare(b)),
-    [classements, competition.id, competition.nomCompetition, competitionResults, competitionUnites],
+    [classements, competitionResults, competitionUnites, isSameCompetitionClassement],
   )
   const rankingPhases = useMemo(
     () =>
@@ -397,7 +359,7 @@ export function CompetitionDetail({
           ].filter(Boolean),
         ),
       ).sort((a, b) => a.localeCompare(b)),
-    [classements, competition.id, competition.nomCompetition, competitionResults],
+    [classements, competitionResults, isSameCompetitionClassement],
   )
   const rankingResults = competitionResults.filter((result) => {
     if (rankingPoule !== "all" && result.poule !== rankingPoule) return false
@@ -413,54 +375,6 @@ export function CompetitionDetail({
     return true
   })
   const ranking = buildRanking(rankingUnites, rankingResults)
-  const competitionClubs = useMemo(() => {
-    const rows = new Map<string, ClubRow>()
-
-    competitionParticipants.forEach((participant) => {
-      const clubId = (participant.idClub || "").trim()
-      if (!clubId) return
-      const clubNom = (participant.nomClub || "").trim()
-      const statut = participant.statutParticipation || ""
-      const key = `${participant.idCompetition}-${clubId}`
-
-      const existing = rows.get(key)
-      if (existing) {
-        if (!existing.nom && clubNom) existing.nom = clubNom
-        if (!existing.statut && statut) existing.statut = statut
-        return
-      }
-
-      rows.set(key, { id: clubId, nom: clubNom, statut })
-    })
-
-    return Array.from(rows.values()).sort((a, b) => a.nom.localeCompare(b.nom))
-  }, [competitionParticipants])
-
-  const competitionClubsFallback = useMemo(() => {
-    const rows = new Map<string, ClubRow>()
-
-    const addClub = (id: string, nom: string, statut = "") => {
-      const clubId = id.trim()
-      const clubNom = (nom || "").trim()
-      const key = clubId || clubNom
-      if (!key) return
-      const existing = rows.get(key)
-      if (existing) {
-        if (!existing.id && clubId) existing.id = clubId
-        if (!existing.nom && clubNom) existing.nom = clubNom
-        if (!existing.statut && statut) existing.statut = statut
-        return
-      }
-      rows.set(key, { id: clubId, nom: clubNom, statut })
-    }
-
-    competitionUnites.forEach((unite) => {
-      addClub(unite.idClub, unite.nomClub, unite.statutUnite)
-    })
-
-    return Array.from(rows.values()).sort((a, b) => a.nom.localeCompare(b.nom))
-  }, [competitionUnites])
-  const displayedClubs = competitionClubs.length > 0 ? competitionClubs : competitionClubsFallback
   const sheetRankingRows = classements
     .filter((row) => {
       if (!isSameCompetitionClassement(row)) return false
@@ -514,72 +428,75 @@ export function CompetitionDetail({
             <p className="text-muted-foreground">Details de la competition</p>
           </div>
         </div>
-        <Badge variant="outline">{competition.discipline}</Badge>
+        <Badge variant="outline">{competition.nomDiscipline}</Badge>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="border-border/50">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
-                <Trophy className="h-12 w-12 text-primary" />
-              </div>
-              <h2 className="text-xl font-bold text-foreground">{competition.nomCompetition}</h2>
-              <p className="text-muted-foreground">{competition.niveau}</p>
-              <div className="mt-6 w-full space-y-3 text-left">
-                <InfoRow icon={Trophy} label="Saison:" value={competition.saison} />
-                <InfoRow icon={MapPin} label="Lieu:" value={competition.lieu} />
-                <InfoRow icon={Medal} label="Statut:" value={competition.statut} />
-              </div>
+      <Card className="overflow-hidden border-border/60 shadow-sm">
+        <div className="h-1.5 bg-primary" />
+        <CardContent className="p-6">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">Informations générales</h2>
+              <p className="text-sm text-muted-foreground">Identité, organisation et calendrier</p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CalendarDays className="h-5 w-5 text-primary" />
-              Calendrier
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <InfoRow icon={CalendarDays} label="Debut:" value={formatDate(competition.dateDebut)} />
-            <InfoRow icon={CalendarDays} label="Fin:" value={formatDate(competition.dateFin)} />
-            <InfoRow icon={ClipboardList} label="Observation:" value={competition.observation} />
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              {indoor ? (
-                <Shield className="h-5 w-5 text-primary" />
-              ) : (
-                <UserRound className="h-5 w-5 text-primary" />
-              )}
-              Unite engagee
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-lg border border-border/50 p-4 text-center">
-              <Users className="mx-auto mb-2 h-6 w-6 text-primary" />
-              <p className="text-3xl font-bold text-foreground">{unitCount}</p>
-              <p className="text-sm text-muted-foreground">{unitLabel}</p>
+            <div className="text-right">
+              <p className="text-2xl font-bold">{unitCount}</p>
+              <p className="text-xs text-muted-foreground">{unitLabel}</p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+
+          <div className="grid items-start gap-4 lg:grid-cols-3">
+            {[
+              {
+                title: "Compétition",
+                fields: [
+                  ["Type", competition.typeCompetition],
+                  ["Format", competition.formatCompetition],
+                  ["Discipline", competition.nomDiscipline],
+                  ["Saison", competition.saison],
+                ],
+              },
+              {
+                title: "Organisation",
+                fields: [
+                  ["Niveau", competition.niveau],
+                  ["Lieu", competition.lieu],
+                  ["Structure organisatrice", competition.nomStructureOrganisatrice],
+                  ["Statut", competition.statutCompetition],
+                ],
+              },
+              {
+                title: "Calendrier",
+                fields: [
+                  ["Date de début", formatDate(competition.dateDebut)],
+                  ["Date de fin", formatDate(competition.dateFin)],
+                  ["Observation", competition.observation],
+                ],
+              },
+            ].map((section) => (
+              <section key={section.title} className="overflow-hidden rounded-xl border bg-muted/10">
+                <div className="border-b bg-muted/30 px-5 py-3">
+                  <h3 className="text-sm font-semibold">{section.title}</h3>
+                </div>
+                <div className="divide-y px-5">
+                  {section.fields.map(([label, value]) => (
+                    <InfoField key={label} label={label} value={value} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="participation" className="gap-4">
-        <TabsList className={`grid h-auto w-full ${indoor ? "grid-cols-4" : "grid-cols-3"}`}>
+        <TabsList className="grid h-auto w-full grid-cols-4">
           <TabsTrigger value="participation" className="justify-center text-center">
             Participants
           </TabsTrigger>
-          {indoor && (
-            <TabsTrigger value="clubs" className="justify-center text-center">
-              Clubs
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="unites" className="justify-center text-center">
+            Unités
+          </TabsTrigger>
           <TabsTrigger value="resultats" className="justify-center text-center">
             Resultats
           </TabsTrigger>
@@ -606,20 +523,28 @@ export function CompetitionDetail({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Participant</TableHead>
+                      <TableHead>Sexe</TableHead>
+                      <TableHead>Poste</TableHead>
                       <TableHead>Club</TableHead>
+                      <TableHead>Unité</TableHead>
+                      <TableHead>Maillot</TableHead>
                       <TableHead>Statut</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {competitionParticipants.length === 0 ? (
-                      <EmptyTableRow colSpan={3} label="Aucun participant disponible." />
+                      <EmptyTableRow colSpan={7} label="Aucun participant disponible." />
                     ) : (
                       competitionParticipants.map((participant, index) => (
                         <TableRow key={`${participant.idParticipation || "participant"}-${participant.idAthlete || participant.nomClub || "sans-id"}-${index}`}>
                           <TableCell className="font-medium">
                             {participant.nomAthlete || getParticipantLabel(participant)}
                           </TableCell>
+                          <TableCell>{participant.sexe || "-"}</TableCell>
+                          <TableCell>{participant.nomPoste || "-"}</TableCell>
                           <TableCell>{participant.nomClub || "-"}</TableCell>
+                          <TableCell>{participant.nomUnite || "-"}</TableCell>
+                          <TableCell>{participant.numeroMaillot || "-"}</TableCell>
                           <TableCell>
                             {participant.statutParticipation ? (
                               <Badge className={getStatusClass(participant.statutParticipation)}>
@@ -639,13 +564,12 @@ export function CompetitionDetail({
           </Card>
         </TabsContent>
 
-        {indoor && (
-          <TabsContent value="clubs">
+          <TabsContent value="unites">
             <Card className="border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary" />
-                  Clubs participants
+                  Unités engagées
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -653,22 +577,28 @@ export function CompetitionDetail({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>ID club</TableHead>
+                        <TableHead>Unité</TableHead>
+                        <TableHead>Type</TableHead>
                         <TableHead>Club</TableHead>
+                        <TableHead>Version</TableHead>
+                        <TableHead>Poule</TableHead>
                         <TableHead>Statut</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {displayedClubs.length === 0 ? (
-                        <EmptyTableRow colSpan={3} label="Aucun club disponible." />
+                      {competitionUnites.length === 0 ? (
+                        <EmptyTableRow colSpan={6} label="Aucune unité disponible." />
                       ) : (
-                        displayedClubs.map((club, index) => (
-                          <TableRow key={`${club.id || club.nom || "club"}-${index}`}>
-                            <TableCell className="font-mono text-muted-foreground">{club.id || "-"}</TableCell>
-                            <TableCell className="font-medium">{club.nom || "-"}</TableCell>
+                        competitionUnites.map((unite, index) => (
+                          <TableRow key={`${unite.idUnite || "unite"}-${index}`}>
+                            <TableCell className="font-medium">{unite.nomUnite || "-"}</TableCell>
+                            <TableCell>{unite.typeUnite || "-"}</TableCell>
+                            <TableCell>{unite.nomClub || "-"}</TableCell>
+                            <TableCell>{unite.version || "-"}</TableCell>
+                            <TableCell>{unite.poule || "-"}</TableCell>
                             <TableCell>
-                              {club.statut ? (
-                                <Badge className={getStatusClass(club.statut)}>{club.statut}</Badge>
+                              {unite.statutUnite ? (
+                                <Badge className={getStatusClass(unite.statutUnite)}>{unite.statutUnite}</Badge>
                               ) : (
                                 "-"
                               )}
@@ -682,7 +612,6 @@ export function CompetitionDetail({
               </CardContent>
             </Card>
           </TabsContent>
-        )}
 
         <TabsContent value="resultats">
           <Card className="border-border/50">

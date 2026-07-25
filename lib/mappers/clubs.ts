@@ -17,10 +17,19 @@ export function mapClubRow(row: SheetRow): Club {
   const statutRaw = str(row, "statut") || str(row, "staut")
 
   return {
+    idClub: str(row, "id_club"),
+    codeClub: str(row, "code_club"),
+    nomClub: str(row, "nom_club"),
+    dateAffiliationClub: str(row, "date_affiliation_club"),
+    idEntente: str(row, "id_entente"),
+    nomEntente: str(row, "nom_entente"),
+    idLigue: str(row, "id_ligue"),
+    nomLigue: str(row, "nom_ligue"),
+    observations: str(row, "observations"),
     id: str(row, "id_club"),
-    numeroOrdre: str(row, "numero_ordre_club"),
+    numeroOrdre: str(row, "code_club") || str(row, "numero_ordre_club"),
     nom: str(row, "nom_club"),
-    categorie: str(row, "categorie_club"),
+    categorie: str(row, "categorie") || str(row, "categorie_club"),
     provinceId: str(row, "id_province"),
     provinceNom: str(row, "nom_province"),
     ligueId: str(row, "id_ligue"),

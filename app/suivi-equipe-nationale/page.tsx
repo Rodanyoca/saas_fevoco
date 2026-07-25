@@ -46,18 +46,6 @@ function getSetScores(resultat: EquipeNationaleResultat, side: "rdc" | "adv") {
   return sets.map(([rdc, adv]) => String((side === "rdc" ? rdc : adv) ?? "-"))
 }
 
-function getSetPairs(resultat: EquipeNationaleResultat) {
-  const sets = [
-    [resultat.set1Rdc, resultat.set1Adv],
-    [resultat.set2Rdc, resultat.set2Adv],
-    [resultat.set3Rdc, resultat.set3Adv],
-    [resultat.set4Rdc, resultat.set4Adv],
-    [resultat.set5Rdc, resultat.set5Adv],
-  ].filter(([rdc, adv]) => rdc !== null || adv !== null)
-
-  return sets.map(([rdc, adv]) => `${rdc ?? "-"}-${adv ?? "-"}`).join("  ")
-}
-
 function getWinnerSide(resultat: EquipeNationaleResultat) {
   const value = normalize(resultat.resultatMatch || resultat.statutMatch)
   if (value.startsWith("v") || value.includes("gagne")) return "rdc"

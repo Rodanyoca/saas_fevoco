@@ -21,17 +21,24 @@ function normalizeDiscipline(raw: string): string {
 }
 
 export function mapCompetitionRow(row: SheetRow): Competition {
+  const id = str(row, "id_competition")
+  const discipline = normalizeDiscipline(str(row, "nom_discipline"))
+  const statut = normalizeStatut(str(row, "statut_competition"))
   return {
-    id: str(row, "id_competition") || str(row, "id"),
+    idCompetition: id,
     nomCompetition: str(row, "nom_competition"),
+    typeCompetition: str(row, "type_competition"),
+    formatCompetition: str(row, "format_competition"),
+    idDiscipline: str(row, "id_discipline"),
+    nomDiscipline: discipline,
     saison: str(row, "saison"),
     dateDebut: str(row, "date_debut"),
     dateFin: str(row, "date_fin"),
-    discipline: normalizeDiscipline(str(row, "discipline")),
     lieu: str(row, "lieu"),
     niveau: str(row, "niveau"),
-    statut: normalizeStatut(str(row, "statut")),
+    statutCompetition: statut,
+    idStructureOrganisatrice: str(row, "id_structure_organisatrice"),
+    nomStructureOrganisatrice: str(row, "nom_structure_organisatrice"),
     observation: str(row, "observation"),
-    suiviCno: str(row, "suivi_cno"),
   }
 }

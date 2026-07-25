@@ -18,14 +18,21 @@ export function mapCoachRow(row: SheetRow): Coach {
   const statutRaw = str(row, "statut") || str(row, "staut")
 
   return {
+    idCoach: str(row, "id_coach"),
+    idNational: str(row, "id_national"),
+    idFivb: str(row, "id_fivb"),
+    sexe: str(row, "sexe"),
+    avatarDriveId: str(row, "avatar_drive_id"),
+    avatarDriveUrl: str(row, "avatar_drive_url"),
     id: str(row, "id_coach"),
     nomComplet: str(row, "nom_complet"),
-    dateNaissance: str(row, "date_de_naissance"),
+    dateNaissance: str(row, "date_naissance"),
     lieuNaissance: str(row, "lieu_de_naissance"),
-    genre: str(row, "genre"),
+    genre: str(row, "sexe"),
     nationalite: str(row, "nationalite"),
     telephone: str(row, "telephone"),
     email: str(row, "email"),
+    adresse: str(row, "adresse"),
     niveau: str(row, "niveau"),
     specialisation: str(row, "specialisation"),
     dateAffiliation: str(row, "date_affiliation"),

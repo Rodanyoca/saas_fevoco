@@ -25,13 +25,17 @@ export function CompetitionsClient({
   const [search, setSearch] = useState("")
   const [discipline, setDiscipline] = useState("all")
   const [statut, setStatut] = useState("all")
+  const [saison, setSaison] = useState("all")
+  const [type, setType] = useState("all")
+  const [format, setFormat] = useState("all")
+  const [niveau, setNiveau] = useState("all")
 
   const statuts = useMemo(
     () =>
       Array.from(
         new Set(
           competitions
-            .map((competition) => competition.statut)
+            .map((competition) => competition.statutCompetition)
             .filter((value) => value.trim().length > 0),
         ),
       ).sort((a, b) => a.localeCompare(b)),
@@ -43,12 +47,16 @@ export function CompetitionsClient({
 
     return competitions
       .filter((competition) => {
-        if (discipline !== "all" && competition.discipline !== discipline) return false
-        if (statut !== "all" && competition.statut !== statut) return false
+        if (discipline !== "all" && competition.nomDiscipline !== discipline) return false
+        if (statut !== "all" && competition.statutCompetition !== statut) return false
+        if (saison !== "all" && competition.saison !== saison) return false
+        if (type !== "all" && competition.typeCompetition !== type) return false
+        if (format !== "all" && competition.formatCompetition !== format) return false
+        if (niveau !== "all" && competition.niveau !== niveau) return false
 
         if (s) {
           const haystack =
-            `${competition.id} ${competition.nomCompetition} ${competition.saison} ${competition.discipline} ${competition.lieu} ${competition.niveau} ${competition.statut} ${competition.observation}`.toLowerCase()
+            `${competition.idCompetition} ${competition.nomCompetition} ${competition.nomDiscipline} ${competition.lieu} ${competition.nomStructureOrganisatrice}`.toLowerCase()
           if (!haystack.includes(s)) return false
         }
 
@@ -59,7 +67,7 @@ export function CompetitionsClient({
         const dateB = parseSheetDate(b.dateDebut)?.getTime() ?? 0
         return dateB - dateA
       })
-  }, [competitions, discipline, search, statut])
+  }, [competitions, discipline, format, niveau, saison, search, statut, type])
 
   if (selectedCompetition) {
     return (
@@ -82,14 +90,21 @@ export function CompetitionsClient({
         discipline={discipline}
         statut={statut}
         statuts={statuts}
+        competitions={competitions}
+        saison={saison}
+        type={type}
+        format={format}
+        niveau={niveau}
         onSearchChange={setSearch}
         onDisciplineChange={setDiscipline}
         onStatutChange={setStatut}
+        onSaisonChange={setSaison}
+        onTypeChange={setType}
+        onFormatChange={setFormat}
+        onNiveauChange={setNiveau}
       />
       <CompetitionsTable
         competitions={filtered}
-        unites={unites}
-        results={results}
         totalCount={filtered.length}
         onViewCompetition={setSelectedCompetition}
       />

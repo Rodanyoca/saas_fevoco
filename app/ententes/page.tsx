@@ -1,9 +1,8 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
-import { EntentesStats } from "@/components/ententes/ententes-stats"
 import { EntentesClient } from "@/components/ententes/ententes-client"
 
-import { getAthletes, getClubs, getEntentes } from "@/lib/data"
+import { getAthletes, getClubs, getEntentes, getLigues } from "@/lib/data"
 import type { Athlete, Club, Entente } from "@/lib/types"
 
 export const runtime = "nodejs"
@@ -17,10 +16,11 @@ function belongsToEntente(item: Pick<Club | Athlete, "ententeId" | "ententeNom">
 }
 
 export default async function EntentesPage() {
-  const [ententes, clubs, athletes] = await Promise.all([
+  const [ententes, clubs, athletes, ligues] = await Promise.all([
     getEntentes(),
     getClubs(),
     getAthletes(),
+    getLigues(),
   ])
 
   const ententesWithCounts = ententes.map((entente) => ({
@@ -37,10 +37,7 @@ export default async function EntentesPage() {
       />
 
       <div className="p-6 space-y-6">
-        {/* Statistiques */}
-        <EntentesStats ententes={ententesWithCounts} />
-
-        <EntentesClient ententes={ententesWithCounts} />
+        <EntentesClient ententes={ententesWithCounts} ligues={ligues} />
       </div>
     </DashboardLayout>
   )

@@ -1,6 +1,8 @@
 export type Statut = string
 
 export interface Province {
+  idProvince: string
+  nomProvince: string
   id: string
   nom: string
   chefLieu: string
@@ -20,6 +22,11 @@ export interface Province {
 }
 
 export interface Ligue {
+  idLigue: string
+  nomLigue: string
+  idProvince: string
+  nomProvince: string
+  observations: string
   id: string
   nom: string
   provinceId: string
@@ -42,6 +49,14 @@ export interface Ligue {
 }
 
 export interface Entente {
+  idEntente: string
+  codeEntente: string
+  nomEntente: string
+  pseudoEntente: string
+  idLigue: string
+  nomLigue: string
+  emailEntente: string
+  observations: string
   id: string
   numeroOrdre: string
   nom: string
@@ -50,17 +65,6 @@ export interface Entente {
   ligueNom: string
   provinceId: string
   provinceNom: string
-  personneContactId: string
-  personneContactNom: string
-  personneContactTelephone: string
-  presidentId: string
-  presidentNom: string
-  presidentTelephone: string
-  presidentEmail: string
-  secretaireId: string
-  secretaireNom: string
-  secretaireTelephone: string
-  secretaireEmail: string
   statut: Statut
 
   // Optional computed/legacy fields (not present in the ENTENTES sheet today)
@@ -69,6 +73,15 @@ export interface Entente {
 }
 
 export interface Club {
+  idClub: string
+  codeClub: string
+  nomClub: string
+  dateAffiliationClub: string
+  idEntente: string
+  nomEntente: string
+  idLigue: string
+  nomLigue: string
+  observations: string
   id: string
   numeroOrdre: string
   nom: string
@@ -96,6 +109,13 @@ export interface Club {
 }
 
 export interface Athlete {
+  idAthlete: string
+  idNational: string
+  idFivb: string
+  dateDeNaissance: string
+  sexe: string
+  avatarDriveId: string
+  avatarDriveUrl: string
   id: string
   numeroOrdre: string
   nomComplet: string
@@ -124,6 +144,12 @@ export interface Athlete {
 }
 
 export interface Coach {
+  idCoach: string
+  idNational: string
+  idFivb: string
+  sexe: string
+  avatarDriveId: string
+  avatarDriveUrl: string
   id: string
   nomComplet: string
   dateNaissance: string
@@ -132,24 +158,78 @@ export interface Coach {
   nationalite: string
   telephone: string
   email: string
+  adresse: string
   niveau: string
   specialisation: string
   dateAffiliation: string
   statut: Statut
 }
 
-export interface CoachAffiliation {
-  id: string
-  coachId: string
-  role: string
-  equipeId: string
-  equipeNom: string
+export interface BaseActorAffiliation {
+  idAffiliation: string
+  actorId: string
+  actorName: string
+  idStructure: string
+  nomStructure: string
   dateDebut: string
   dateFin: string
-  statut: Statut
+  statutAffiliation: Statut
+  observation: string
+}
+
+export interface AthleteAffiliation extends BaseActorAffiliation {
+  saison: string
+  typeAffiliation: string
+  idClubOrigine: string
+  nomClubOrigine: string
+  idClubBeneficiaire: string
+  nomClubBeneficiaire: string
+}
+
+export interface CoachAffiliation extends BaseActorAffiliation {
+  saison: string
+  typeAffiliation: string
+  fonction: string
+}
+
+export interface MedecinAffiliation extends BaseActorAffiliation {
+  saison: string
+  typeAffiliation: string
+  fonction: string
+}
+
+export interface OfficielAffiliation extends BaseActorAffiliation {
+  fonction: string
+}
+
+export interface BaseActorLicence {
+  idLicence: string
+  numeroLicence: string
+  actorId: string
+  actorName: string
+  dateDelivrance: string
+  dateFinValidite: string
+  statutLicence: Statut
+  idLicencePrecedente: string
+  numeroLicencePrecedente: string
+}
+
+export interface AthleteLicence extends BaseActorLicence {
+  saison: string
+  idAffiliation: string
+  idClub: string
+  nomClub: string
 }
 
 export interface Officiel {
+  idOfficiel: string
+  idNational: string
+  idFivb: string
+  sexe: string
+  dateDeNaissance: string
+  nationalite: string
+  avatarDriveId: string
+  avatarDriveUrl: string
   id: string
   nomComplet: string
   dateNaissance: string
@@ -167,6 +247,14 @@ export interface Officiel {
 }
 
 export interface Medecin {
+  idMedecin: string
+  idNational: string
+  idFivb: string
+  sexe: string
+  dateDeNaissance: string
+  nationalite: string
+  avatarDriveId: string
+  avatarDriveUrl: string
   id: string
   nomComplet: string
   dateNaissance: string
@@ -175,6 +263,7 @@ export interface Medecin {
   niveau: string
   telephone: string
   email: string
+  adresse: string
   numeroOrdre: string
   equipeNationale: string
   provinceId: string
@@ -193,22 +282,16 @@ export interface Medecin {
   affiliations: MedecinAffiliation[]
 }
 
-export interface MedecinAffiliation {
-  medecinId: string
-  medecinNom: string
-  ligueId: string
-  ligueNom: string
-  ententeId: string
-  ententeNom: string
-  pseudoEntente: string
-  clubId: string
-  clubNom: string
-  dateDebut: string
-  dateFin: string
-  statut: Statut
-}
-
 export interface Arbitre {
+  idArbitre: string
+  idNational: string
+  idFivb: string
+  sexe: string
+  dateDeNaissance: string
+  nationalite: string
+  niveau: string
+  avatarDriveId: string
+  avatarDriveUrl: string
   id: string
   nomComplet: string
   dateNaissance: string
@@ -222,6 +305,8 @@ export interface Arbitre {
   ententeNom: string
   telephone: string
   email: string
+  adresse: string
+  dateAffiliation: string
   dateHomologation: string
   equipeNational: string
   experience: string
@@ -231,17 +316,21 @@ export interface Arbitre {
 export type CompetitionDiscipline = "INDOOR" | "BEACH" | string
 
 export interface Competition {
-  id: string
+  idCompetition: string
   nomCompetition: string
+  typeCompetition: string
+  formatCompetition: string
+  idDiscipline: string
+  nomDiscipline: string
   saison: string
   dateDebut: string
   dateFin: string
-  discipline: CompetitionDiscipline
   lieu: string
   niveau: string
-  statut: Statut
+  statutCompetition: Statut
+  idStructureOrganisatrice: string
+  nomStructureOrganisatrice: string
   observation: string
-  suiviCno?: string
 }
 
 export interface CompetitionParticipant {
@@ -249,10 +338,17 @@ export interface CompetitionParticipant {
   idCompetition: string
   nomCompetition: string
   discipline: CompetitionDiscipline
+  saison: string
+  idUnite: string
+  nomUnite: string
   idAthlete: string
   nomAthlete: string
+  sexe: string
+  idPoste: string
+  nomPoste: string
   nomClub: string
   statutParticipation: string
+  numeroMaillot: string
   observation: string
   typeParticipant?: string
   idClub?: string
@@ -265,9 +361,11 @@ export interface CompetitionUnite {
   idCompetition: string
   nomCompetition: string
   discipline: CompetitionDiscipline
+  saison: string
   typeUnite: string
   idClub: string
   nomClub: string
+  version: string
   idAthleteA: string
   nomAthleteA: string
   idAthleteB: string
@@ -283,7 +381,10 @@ export interface CompetitionResult {
   idCompetition: string
   nomCompetition: string
   discipline: CompetitionDiscipline
+  saison: string
   dateMatch: string
+  heureMatch: string
+  lieuMatch: string
   classementPoule: string
   phase: string
   poule: string
@@ -302,11 +403,15 @@ export interface CompetitionResult {
   set4B: number | null
   set5A: number | null
   set5B: number | null
+  setsGagnesA: number | null
+  setsGagnesB: number | null
   totalPointA: number | null
   totalPointB: number | null
   pointsClassementA: number | null
   pointsClassementB: number | null
   idUniteVainqueur: string
+  nomUniteVainqueur: string
+  forfait: string
   vainqueur: string
   statutMatch: string
   observation: string
@@ -333,6 +438,13 @@ export interface CompetitionClassement {
   pointsGagnes: number | null
   pointsPerdus: number | null
   pointsClassement: number | null
+  matchsJoues: number
+  matchsGagnes: number
+  matchsPerdus: number
+  pointsMarques: number
+  pointsEncaisses: number
+  ratioSets: number
+  ratioPoints: number
   matchJoue: number | null
   matchGagne: number | null
   matchPerdu: number | null
@@ -369,21 +481,52 @@ export interface EquipeNationale {
   genre: string
   saison: string
   statutEquipe: Statut
+  observation: string
 }
 
 export interface EquipeNationaleSelection {
   idSelection: string
   idEquipeNationale: string
   nomEquipeNationale: string
+  discipline: string
+  categorie: string
+  genre: string
+  idAthlete: string
   nomAthlete: string
+  idClub: string
   nomClub: string
   poste: string
+  idPoste: string
+  nomPoste: string
+  numeroMaillot: string
+  capitaine: string
+  saison: string
   dateDebutSelection: string
   dateFinSelection: string
   statutSelection: Statut
+  observation: string
+}
+
+export interface EquipeNationaleStaff {
+  idStaffSelection: string
+  idEquipeNationale: string
+  nomEquipeNationale: string
+  discipline: string
+  categorie: string
+  genre: string
+  typeActeur: string
+  idActeur: string
+  nomActeur: string
+  fonction: string
+  saison: string
+  dateDebut: string
+  dateFin: string
+  statutStaff: string
+  observation: string
 }
 
 export interface EquipeNationaleCompetition {
+  idParticipationEquipeNationale: string
   idParticipationEn: string
   idEquipeNationale: string
   nomEquipeNationale: string
@@ -393,6 +536,7 @@ export interface EquipeNationaleCompetition {
   idCompetition: string
   nomCompetition: string
   niveauCompetition: string
+  saison: string
   dateDebut: string
   dateFin: string
   lieu: string
@@ -401,6 +545,8 @@ export interface EquipeNationaleCompetition {
 }
 
 export interface EquipeNationaleResultat {
+  idResultatEquipeNationale: string
+  idParticipationEquipeNationale: string
   idResultatEn: string
   idParticipationEn: string
   idEquipeNationale: string
@@ -410,6 +556,7 @@ export interface EquipeNationaleResultat {
   genre: string
   idCompetition: string
   nomCompetition: string
+  saison: string
   dateMatch: string
   phase: string
   poule: string
@@ -418,14 +565,23 @@ export interface EquipeNationaleResultat {
   scoreGlobal: string
   set1Rdc: number | null
   set1Adv: number | null
+  set1Adversaire: number | null
   set2Rdc: number | null
   set2Adv: number | null
+  set2Adversaire: number | null
   set3Rdc: number | null
   set3Adv: number | null
+  set3Adversaire: number | null
   set4Rdc: number | null
   set4Adv: number | null
+  set4Adversaire: number | null
   set5Rdc: number | null
   set5Adv: number | null
+  set5Adversaire: number | null
+  setsGagnesRdc: number
+  setsGagnesAdversaire: number
+  totalPointsRdc: number
+  totalPointsAdversaire: number
   totalPointRdc: number | null
   totalPointAdv: number | null
   resultatMatch: string

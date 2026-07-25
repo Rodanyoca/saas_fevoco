@@ -26,7 +26,7 @@ export function CompetitionsStats({
     },
     {
       label: "En cours",
-      value: competitions.filter((competition) => isActive(competition.statut)).length,
+      value: competitions.filter((competition) => isActive(competition.statutCompetition)).length,
       icon: BadgeCheck,
       color: "text-green-700",
       bg: "bg-green-500/10",

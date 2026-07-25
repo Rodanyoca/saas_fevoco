@@ -18,10 +18,18 @@ export function mapOfficielRow(row: SheetRow): Officiel {
   const statutRaw = str(row, "statut") || str(row, "staut")
 
   return {
+    idOfficiel: str(row, "id_officiel"),
+    idNational: str(row, "id_national"),
+    idFivb: str(row, "id_fivb"),
+    sexe: str(row, "sexe"),
+    dateDeNaissance: str(row, "date_de_naissance"),
+    nationalite: str(row, "nationalite"),
+    avatarDriveId: str(row, "avatar_drive_id"),
+    avatarDriveUrl: str(row, "avatar_drive_url"),
     id: str(row, "id_officiel"),
     nomComplet: str(row, "nom_complet"),
     dateNaissance: str(row, "date_de_naissance"),
-    genre: str(row, "genre"),
+    genre: str(row, "sexe"),
     telephone: str(row, "telephone"),
     email: str(row, "email"),
     adresse: str(row, "adresse"),

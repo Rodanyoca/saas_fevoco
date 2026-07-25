@@ -13,7 +13,6 @@ import {
   Flag,
   Shield,
   Stethoscope,
-  ClipboardCheck,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -58,12 +57,14 @@ const groupedNavigation = [
       { name: "Performance", href: "/suivi-equipe-nationale", icon: Trophy },
     ],
   },
-]
-
-const secondaryNavigation = [
-  { name: "Competitions", href: "/competitions", icon: Trophy },
-  { name: "Transferts", href: "/transferts", icon: ArrowRightLeft },
-  { name: "Qualite donnees", href: "/qualite", icon: ClipboardCheck },
+  {
+    name: "Compétitions",
+    icon: Trophy,
+    items: [
+      { name: "Compétitions", href: "/competitions", icon: Trophy },
+      { name: "Transferts", href: "/transferts", icon: ArrowRightLeft },
+    ],
+  },
 ]
 
 export function Sidebar() {
@@ -73,6 +74,7 @@ export function Sidebar() {
     "Structure territoriale": true,
     Acteurs: true,
     "Equipe nationale": true,
+    Compétitions: true,
   })
 
   const renderLink = (item: { name: string; href: string; icon: ElementType }, nested = false) => {
@@ -185,10 +187,6 @@ export function Sidebar() {
               </div>
             )
           })}
-        </div>
-
-        <div className="mt-3 space-y-1 border-t border-sidebar-border/60 pt-3">
-          {secondaryNavigation.map((item) => renderLink(item))}
         </div>
       </nav>
 

@@ -5,16 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Transfert } from "@/lib/types"
 import { ArrowLeft, ArrowRight, ArrowRightLeft, CalendarDays, FileText, User } from "lucide-react"
+import { formatSheetDate } from "@/lib/date-utils"
 
 function formatDate(value: string) {
-  if (!value) return "-"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(date)
+  return formatSheetDate(value)
 }
 
 function getStatusClass(statut: string) {
@@ -69,7 +63,7 @@ export function TransfertDetail({
           <CardContent>
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_3rem_minmax(0,1fr)] md:items-center">
               <div className="rounded-md border p-4">
-                <p className="text-xs uppercase text-muted-foreground">Club d'origine</p>
+                <p className="text-xs uppercase text-muted-foreground">Club d&apos;origine</p>
                 <p className="mt-1 font-semibold">{transfert.clubOrigineNom || "-"}</p>
                 <p className="mt-1 font-mono text-xs text-muted-foreground">{transfert.clubOrigineId || "-"}</p>
               </div>
@@ -79,7 +73,7 @@ export function TransfertDetail({
               <div className="rounded-md border p-4">
                 <p className="text-xs uppercase text-muted-foreground">Club beneficiaire</p>
                 <p className="mt-1 font-semibold">{transfert.clubBeneficiaireNom || "-"}</p>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">{transfert.id || "-"}</p>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">{transfert.clubBeneficiaireId || "-"}</p>
               </div>
             </div>
           </CardContent>

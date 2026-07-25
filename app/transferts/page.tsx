@@ -1,13 +1,16 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { TransfertsClient } from "@/components/transferts/transferts-client"
-import { getTransferts } from "@/lib/data"
+import { getAthletes, getClubs, getTransferts } from "@/lib/data"
+import { getTransferTypes } from "@/lib/actor-references"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export default async function TransfertsPage() {
-  const transferts = await getTransferts()
+  const [transferts, athletes, clubs, transferTypes] = await Promise.all([
+    getTransferts(), getAthletes(), getClubs(), getTransferTypes(),
+  ])
 
   return (
     <DashboardLayout>
@@ -17,7 +20,7 @@ export default async function TransfertsPage() {
           subtitle="Suivi des transferts des athletes entre clubs FEVOCO"
         />
 
-        <TransfertsClient transferts={transferts} />
+        <TransfertsClient transferts={transferts} athletes={athletes} clubs={clubs} transferTypes={transferTypes} />
       </div>
     </DashboardLayout>
   )

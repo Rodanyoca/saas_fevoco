@@ -49,7 +49,7 @@ export function AthletesFilters({
             />
           </div>
 
-          <Select value={club} onValueChange={onClubChange}>
+          {clubsOptions.length > 0 && <Select value={club} onValueChange={onClubChange}>
             <SelectTrigger className="w-full lg:w-[220px]">
               <SelectValue placeholder="Club" />
             </SelectTrigger>
@@ -61,7 +61,7 @@ export function AthletesFilters({
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select>}
 
           <Select value={genre} onValueChange={onGenreChange}>
             <SelectTrigger className="w-full lg:w-[150px]">

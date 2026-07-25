@@ -1,210 +1,127 @@
 "use client"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  ArrowLeft,
-  Briefcase,
-  Edit,
-  MapPin,
-  Phone,
-  User,
-} from "lucide-react"
-import type { Officiel } from "@/lib/types"
-import { calculateAgeFromSheetDate, formatSheetDate, parseSheetDate } from "@/lib/date-utils"
+import { Card, CardContent } from "@/components/ui/card"
+import { getActorAvatarUrl } from "@/lib/actor-avatar"
+import { calculateAge, formatSheetDate } from "@/lib/date-utils"
+import { normalize } from "@/lib/sheet-values"
+import type { BaseActorLicence, Officiel, OfficielAffiliation } from "@/lib/types"
+import { AffiliationSection, LicenceSection } from "@/components/actors/record-sections"
+import { ArrowLeft } from "lucide-react"
+import { OfficielFormDialog } from "@/components/officiels/officiel-form-dialog"
+import type { SavedOfficiel } from "@/components/officiels/officiel-form-dialog"
+import type { ActorSexOption } from "@/lib/actor-references"
 
-interface OfficielDetailProps {
+function shown(value: unknown, fallback = "Non renseigné") {
+  const text = value === null || value === undefined ? "" : String(value).trim()
+  return text || fallback
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return "?"
+  return `${parts[0]?.[0] ?? ""}${parts.at(-1)?.[0] ?? ""}`.toUpperCase()
+}
+
+function sexeLabel(value: string) {
+  const sexe = normalize(value)
+  if (sexe === "M" || sexe === "MASCULIN") return "Masculin"
+  if (sexe === "F" || sexe === "FEMININ") return "Féminin"
+  return shown(value)
+}
+
+export function OfficielDetail({ officiel, affiliations, licences, sexes, onUpdated, onBack }: {
   officiel: Officiel
+  affiliations: OfficielAffiliation[]
+  licences: BaseActorLicence[]
+  sexes: ActorSexOption[]
+  onUpdated: (officiel: SavedOfficiel) => void
   onBack: () => void
-}
-
-export function OfficielDetail({ officiel, onBack }: OfficielDetailProps) {
-  const age = calculateAgeFromSheetDate(officiel.dateNaissance)
-  const mandatDuration = calculateDuration(officiel.dateNomination, officiel.dateFinMandat)
-
-  const getInitials = (nomComplet: string) => {
-    const parts = nomComplet.trim().split(/\s+/).filter(Boolean)
-    const first = parts[0]?.charAt(0) ?? ""
-    const second = parts[1]?.charAt(0) ?? parts[0]?.charAt(1) ?? ""
-    return `${first}${second}`.toUpperCase()
-  }
-
-  const getStatutBadge = (statut: Officiel["statut"]) => {
-    switch (statut) {
-      case "actif":
-        return <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/20">Actif</Badge>
-      case "inactif":
-        return <Badge variant="secondary">Inactif</Badge>
-      default:
-        return <Badge variant="outline">{statut || "Non defini"}</Badge>
-    }
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold text-foreground">{officiel.nomComplet}</h1>
-            <p className="text-sm text-muted-foreground">Fiche officiel</p>
-          </div>
-        </div>
-
-        <Button className="shrink-0">
-          <Edit className="mr-2 h-4 w-4" />
-          Modifier
-        </Button>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
-        <Card className="h-fit">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <Avatar className="h-24 w-24">
-                <AvatarFallback className="bg-primary/10 text-2xl font-semibold text-primary">
-                  {getInitials(officiel.nomComplet)}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="mt-4 min-w-0">
-                <h2 className="text-xl font-semibold text-foreground">{officiel.nomComplet}</h2>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">{officiel.id || "-"}</p>
-                <p className="mt-2 text-sm text-muted-foreground">{officiel.fonction || "Fonction non definie"}</p>
-              </div>
-
-              <div className="mt-3 flex flex-wrap justify-center gap-2">
-                {getStatutBadge(officiel.statut)}
-                {officiel.entite ? <Badge variant="outline">{officiel.entite}</Badge> : null}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="min-w-0">
-          <Tabs defaultValue="infos" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="infos">Informations</TabsTrigger>
-              <TabsTrigger value="mandat">Mandat</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="infos" className="mt-4">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <User className="h-4 w-4" />
-                      Identite
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("ID officiel", officiel.id)}
-                    {infoRow("Nom complet", officiel.nomComplet)}
-                    {infoRow("Date de naissance", formatSheetDate(officiel.dateNaissance))}
-                    {infoRow("Age", age !== null ? `${age} ans` : "-")}
-                    {infoRow("Genre", formatGender(officiel.genre))}
-                    {infoRow("Statut", officiel.statut)}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Phone className="h-4 w-4" />
-                      Contact
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Telephone", officiel.telephone)}
-                    {infoRow("Email", officiel.email)}
-                    {infoRow("Adresse", officiel.adresse)}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="mandat" className="mt-4">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Briefcase className="h-4 w-4" />
-                      Fonction
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Fonction", officiel.fonction)}
-                    {infoRow("Structure", officiel.entite)}
-                    {infoRow("Equipe federale", officiel.equipeFederal)}
-                    {infoRow("Date nomination", formatSheetDate(officiel.dateNomination))}
-                    {infoRow("Fin de mandat", officiel.dateFinMandat ? formatSheetDate(officiel.dateFinMandat) : "En cours")}
-                    {infoRow("Duree", mandatDuration)}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <MapPin className="h-4 w-4" />
-                      Rattachement
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {infoRow("Structure", officiel.entite)}
-                    {infoRow("Rattachement", officiel.rattachement)}
-                    {infoRow("Adresse", officiel.adresse)}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function calculateDuration(dateDebut: string, dateFin: string) {
-  const start = parseSheetDate(dateDebut)
-  if (!start) return "-"
-
-  const end = parseSheetDate(dateFin) ?? new Date()
-  const months =
-    (end.getFullYear() - start.getFullYear()) * 12 +
-    (end.getMonth() - start.getMonth()) -
-    (end.getDate() < start.getDate() ? 1 : 0)
-
-  if (months < 0) return "-"
-  if (months < 1) return "Moins d'un mois"
-
-  const years = Math.floor(months / 12)
-  const remainingMonths = months % 12
-  return [
-    years > 0 ? `${years} an${years > 1 ? "s" : ""}` : "",
-    remainingMonths > 0 ? `${remainingMonths} mois` : "",
+}) {
+  const avatarUrl = getActorAvatarUrl(officiel.avatarDriveUrl, officiel.avatarDriveId)
+  const age = calculateAge(officiel.dateDeNaissance)
+  const formattedDate = formatSheetDate(officiel.dateDeNaissance)
+  const active = ["ACTIF", "ACTIVE"].includes(normalize(officiel.statut))
+  const sections = [
+    {
+      title: "Identifiants",
+      fields: [
+        ["ID officiel", officiel.idOfficiel],
+        ["ID national", officiel.idNational],
+        ["ID FIVB", officiel.idFivb],
+      ],
+    },
+    {
+      title: "État civil",
+      fields: [
+        ["Date de naissance", formattedDate === "-" ? "Non renseignée" : formattedDate],
+        ["Âge", age === null ? "Non renseigné" : `${age} ans`],
+        ["Sexe", sexeLabel(officiel.sexe)],
+        ["Nationalité", officiel.nationalite],
+      ],
+    },
+    {
+      title: "Contact",
+      fields: [
+        ["Téléphone", officiel.telephone],
+        ["Adresse e-mail", officiel.email],
+        ["Adresse", officiel.adresse],
+      ],
+    },
   ]
-    .filter(Boolean)
-    .join(" ")
-}
 
-function formatGender(genre: string) {
-  if (genre === "M") return "Masculin"
-  if (genre === "F") return "Feminin"
-  return genre || "-"
-}
-
-function infoRow(label: string, value: string) {
   return (
-    <div className="grid min-w-0 gap-1 text-sm sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="min-w-0 whitespace-normal break-words font-medium text-foreground [overflow-wrap:anywhere] sm:text-right">
-        {value || "-"}
-      </span>
+    <div className="w-full">
+      <Button variant="ghost" className="mb-4" onClick={onBack}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Retour aux officiels
+      </Button>
+      <Card className="overflow-hidden border-border/60 shadow-sm">
+        <div className="h-2 bg-primary" />
+        <CardContent className="p-0">
+          <header className="grid gap-6 border-b bg-muted/20 p-6 md:grid-cols-[auto_1fr_auto] md:items-center md:p-8">
+            <Avatar className="h-24 w-24 border-4 border-background shadow-sm">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={officiel.nomComplet} />}
+              <AvatarFallback className="text-2xl font-semibold">{initials(officiel.nomComplet)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Profil officiel</p>
+              <h1 className="break-words text-2xl font-bold md:text-3xl">{shown(officiel.nomComplet)}</h1>
+              <p className="mt-2 font-mono text-sm text-muted-foreground">{shown(officiel.idOfficiel)}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <OfficielFormDialog officiel={officiel} sexes={sexes} onSaved={onUpdated} />
+              <Badge variant={active ? "default" : "secondary"} className="w-fit">{shown(officiel.statut)}</Badge>
+            </div>
+          </header>
+          <div className="space-y-10 p-6 md:p-8">
+            <section>
+              <div className="mb-5">
+                <h2 className="text-lg font-semibold">Général</h2>
+                <p className="text-sm text-muted-foreground">Identité et informations administratives</p>
+              </div>
+              <div className="grid auto-rows-fr gap-4 lg:grid-cols-3">
+                {sections.map((section) => (
+                  <div key={section.title} className="flex h-full min-h-72 flex-col overflow-hidden rounded-xl border bg-muted/10">
+                    <div className="border-b bg-muted/30 px-5 py-3"><h3 className="text-sm font-semibold">{section.title}</h3></div>
+                    <div className="flex flex-1 flex-col divide-y px-5">
+                      {section.fields.map(([label, value]) => (
+                        <div key={label} className="flex flex-1 flex-col justify-center py-3">
+                          <span className="text-xs text-muted-foreground">{label}</span>
+                          <span className="mt-1 break-words font-medium">{shown(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+            <AffiliationSection affiliations={affiliations} actorId={officiel.idOfficiel} />
+            <LicenceSection licences={licences} actorId={officiel.idOfficiel} />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

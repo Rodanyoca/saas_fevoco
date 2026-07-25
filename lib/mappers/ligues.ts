@@ -25,6 +25,11 @@ export function mapLigueRow(row: SheetRow): Ligue {
   const statutRaw = str(row, "statut") || str(row, "staut")
 
   return {
+    idLigue: str(row, "id_ligue"),
+    nomLigue: str(row, "nom_ligue"),
+    idProvince: str(row, "id_province"),
+    nomProvince: str(row, "nom_province"),
+    observations: str(row, "observations"),
     id: str(row, "id_ligue"),
     nom: str(row, "nom_ligue"),
     provinceId: str(row, "id_province"),

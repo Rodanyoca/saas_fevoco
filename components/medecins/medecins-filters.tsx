@@ -57,7 +57,7 @@ export function MedecinsFilters({
             />
           </div>
 
-          <Select value={niveau} onValueChange={onNiveauChange}>
+          {niveauOptions.length > 0 && <Select value={niveau} onValueChange={onNiveauChange}>
             <SelectTrigger>
               <SelectValue placeholder="Niveau" />
             </SelectTrigger>
@@ -69,7 +69,7 @@ export function MedecinsFilters({
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select>}
 
           <Select value={specialite} onValueChange={onSpecialiteChange}>
             <SelectTrigger>

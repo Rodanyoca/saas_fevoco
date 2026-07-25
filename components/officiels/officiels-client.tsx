@@ -1,23 +1,51 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import type { Officiel } from "@/lib/types"
+import { useEffect, useMemo, useState } from "react"
+import type { BaseActorLicence, Officiel, OfficielAffiliation } from "@/lib/types"
 import { OfficielsStats } from "@/components/officiels/officiels-stats"
 import { OfficielsFilters } from "@/components/officiels/officiels-filters"
 import { OfficielsTable } from "@/components/officiels/officiels-table"
 import { OfficielDetail } from "@/components/officiels/officiel-detail"
+import { OfficielFormDialog } from "@/components/officiels/officiel-form-dialog"
+import type { SavedOfficiel } from "@/components/officiels/officiel-form-dialog"
+import type { ActorSexOption } from "@/lib/actor-references"
+import { compareLabels } from "@/lib/sort-utils"
 
-export function OfficielsClient({ officiels }: { officiels: Officiel[] }) {
+export function OfficielsClient({ officiels, affiliations, licences, sexes }: {
+  officiels: Officiel[]
+  affiliations: OfficielAffiliation[]
+  licences: BaseActorLicence[]
+  sexes: ActorSexOption[]
+}) {
+  const [rows, setRows] = useState(officiels)
   const [selectedOfficiel, setSelectedOfficiel] = useState<Officiel | null>(null)
   const [search, setSearch] = useState("")
   const [entite, setEntite] = useState("all")
   const [fonction, setFonction] = useState("all")
   const [statut, setStatut] = useState("all")
+  useEffect(() => setRows(officiels), [officiels])
+
+  const applySavedOfficiel = (saved: SavedOfficiel) => {
+    setRows((current) => {
+      const existing = current.find((officiel) => officiel.idOfficiel === saved.idOfficiel)
+      const merged: Officiel = {
+        avatarDriveId: "", avatarDriveUrl: "", fonction: "", entite: "", rattachement: "",
+        dateNomination: "", dateFinMandat: "", equipeFederal: "",
+        ...existing, ...saved, id: saved.idOfficiel, dateNaissance: saved.dateDeNaissance, genre: saved.sexe,
+      }
+      return existing
+        ? current.map((officiel) => officiel.idOfficiel === saved.idOfficiel ? merged : officiel)
+        : [merged, ...current]
+    })
+    setSelectedOfficiel((current) => current?.idOfficiel === saved.idOfficiel
+      ? { ...current, ...saved, id: saved.idOfficiel, dateNaissance: saved.dateDeNaissance, genre: saved.sexe }
+      : current)
+  }
 
   const filteredOfficiels = useMemo(() => {
     const term = search.trim().toLowerCase()
 
-    return officiels.filter((officiel) => {
+    return rows.filter((officiel) => {
       if (entite !== "all" && officiel.entite !== entite) return false
       if (fonction !== "all" && officiel.fonction !== fonction) return false
       if (statut !== "all" && officiel.statut !== statut) return false
@@ -26,7 +54,10 @@ export function OfficielsClient({ officiels }: { officiels: Officiel[] }) {
         const haystack = [
           officiel.id,
           officiel.nomComplet,
-          officiel.genre,
+          officiel.idNational,
+          officiel.idFivb,
+          officiel.sexe,
+          officiel.nationalite,
           officiel.fonction,
           officiel.entite,
           officiel.rattachement,
@@ -43,18 +74,19 @@ export function OfficielsClient({ officiels }: { officiels: Officiel[] }) {
       }
 
       return true
-    })
-  }, [entite, fonction, officiels, search, statut])
+    }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
+  }, [entite, fonction, rows, search, statut])
 
   return (
     <div className="space-y-6">
       {selectedOfficiel ? (
-        <OfficielDetail officiel={selectedOfficiel} onBack={() => setSelectedOfficiel(null)} />
+        <OfficielDetail officiel={selectedOfficiel} affiliations={affiliations} licences={licences} sexes={sexes} onUpdated={applySavedOfficiel} onBack={() => setSelectedOfficiel(null)} />
       ) : (
         <>
-          <OfficielsStats officiels={officiels} />
+          <div className="flex justify-end"><OfficielFormDialog sexes={sexes} onSaved={applySavedOfficiel} /></div>
+          <OfficielsStats officiels={rows} />
           <OfficielsFilters
-            officiels={officiels}
+            officiels={rows}
             search={search}
             entite={entite}
             fonction={fonction}

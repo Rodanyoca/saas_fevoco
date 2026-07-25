@@ -57,7 +57,7 @@ export function OfficielsFilters({
             />
           </div>
 
-          <Select value={entite} onValueChange={onEntiteChange}>
+          {entiteOptions.length > 0 && <Select value={entite} onValueChange={onEntiteChange}>
             <SelectTrigger>
               <SelectValue placeholder="Entite" />
             </SelectTrigger>
@@ -69,9 +69,9 @@ export function OfficielsFilters({
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select>}
 
-          <Select value={fonction} onValueChange={onFonctionChange}>
+          {fonctionOptions.length > 0 && <Select value={fonction} onValueChange={onFonctionChange}>
             <SelectTrigger>
               <SelectValue placeholder="Fonction" />
             </SelectTrigger>
@@ -83,7 +83,7 @@ export function OfficielsFilters({
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select>}
 
           <Select value={statut} onValueChange={onStatutChange}>
             <SelectTrigger>
