@@ -3,6 +3,10 @@ export { asText, normalize } from "@/lib/sheet-values"
 
 export type SheetRow = Record<string, string | number | boolean | null>
 
+const READ_CACHE_TTL_MS = 30_000
+const sheetCache = new Map<string, { rows: SheetRow[]; expiresAt: number }>()
+const pendingReads = new Map<string, Promise<SheetRow[]>>()
+
 type SheetsClient = Awaited<ReturnType<typeof createSheetsClient>>
 let sharedSheetsClient: Promise<SheetsClient> | undefined
 
@@ -112,7 +116,28 @@ export async function getSheetDataFrom(
   if (!spreadsheetId.trim() || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) {
     return []
   }
-  return fetchSheetDataFrom(spreadsheetId, range)
+  const key = `${spreadsheetId}:${range}`
+  const cached = sheetCache.get(key)
+  if (cached && cached.expiresAt > Date.now()) return cached.rows
+
+  const pending = pendingReads.get(key)
+  if (pending) return pending
+
+  const request = fetchSheetDataFrom(spreadsheetId, range)
+    .then((rows) => {
+      sheetCache.set(key, { rows, expiresAt: Date.now() + READ_CACHE_TTL_MS })
+      return rows
+    })
+    .finally(() => pendingReads.delete(key))
+  pendingReads.set(key, request)
+  return request
+}
+
+function invalidateSheet(spreadsheetId: string, sheetName: string) {
+  const prefix = `${spreadsheetId}:${sheetName}!`
+  for (const key of sheetCache.keys()) {
+    if (key.startsWith(prefix)) sheetCache.delete(key)
+  }
 }
 
 export async function getSheetData(sheetName: string): Promise<SheetRow[]> {
@@ -176,6 +201,7 @@ export async function appendSheetRecord(
     insertDataOption: "INSERT_ROWS",
     requestBody: { values: [headers.map((header) => record[header] ?? "")] },
   })
+  invalidateSheet(spreadsheetId, sheetName)
 }
 
 export async function updateSheetRecordById(
@@ -213,4 +239,5 @@ export async function updateSheetRecordById(
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [row] },
   })
+  invalidateSheet(spreadsheetId, sheetName)
 }
