@@ -1,11 +1,10 @@
 import { env, isGoogleSheetsConfigured } from "@/lib/env"
+import { revalidateTag, unstable_cache } from "next/cache"
 export { asText, normalize } from "@/lib/sheet-values"
 
 export type SheetRow = Record<string, string | number | boolean | null>
 
-const READ_CACHE_TTL_MS = 30_000
-const sheetCache = new Map<string, { rows: SheetRow[]; expiresAt: number }>()
-const pendingReads = new Map<string, Promise<SheetRow[]>>()
+const READ_CACHE_TTL_SECONDS = 30
 
 type SheetsClient = Awaited<ReturnType<typeof createSheetsClient>>
 let sharedSheetsClient: Promise<SheetsClient> | undefined
@@ -116,28 +115,23 @@ export async function getSheetDataFrom(
   if (!spreadsheetId.trim() || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) {
     return []
   }
-  const key = `${spreadsheetId}:${range}`
-  const cached = sheetCache.get(key)
-  if (cached && cached.expiresAt > Date.now()) return cached.rows
+  const sheetName = range.split("!", 1)[0]
+  return unstable_cache(
+    () => fetchSheetDataFrom(spreadsheetId, range),
+    ["google-sheet", spreadsheetId, range],
+    {
+      revalidate: READ_CACHE_TTL_SECONDS,
+      tags: [sheetCacheTag(spreadsheetId, sheetName)],
+    },
+  )()
+}
 
-  const pending = pendingReads.get(key)
-  if (pending) return pending
-
-  const request = fetchSheetDataFrom(spreadsheetId, range)
-    .then((rows) => {
-      sheetCache.set(key, { rows, expiresAt: Date.now() + READ_CACHE_TTL_MS })
-      return rows
-    })
-    .finally(() => pendingReads.delete(key))
-  pendingReads.set(key, request)
-  return request
+function sheetCacheTag(spreadsheetId: string, sheetName: string) {
+  return `google-sheet:${spreadsheetId}:${sheetName}`
 }
 
 function invalidateSheet(spreadsheetId: string, sheetName: string) {
-  const prefix = `${spreadsheetId}:${sheetName}!`
-  for (const key of sheetCache.keys()) {
-    if (key.startsWith(prefix)) sheetCache.delete(key)
-  }
+  revalidateTag(sheetCacheTag(spreadsheetId, sheetName), { expire: 0 })
 }
 
 export async function getSheetData(sheetName: string): Promise<SheetRow[]> {
