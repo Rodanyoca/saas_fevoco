@@ -1,13 +1,14 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
-import { formatSheetDate } from "@/lib/date-utils"
+import { formatSheetDate, parseSheetDate } from "@/lib/date-utils"
 import {
   affiliationHistory,
   getCurrentAffiliationForActor,
   licenceHistory,
 } from "@/lib/actor-record-utils"
-import type { AthleteAffiliation, BaseActorAffiliation, BaseActorLicence } from "@/lib/types"
+import type { AthleteAffiliation, AthleteLicence, BaseActorAffiliation, BaseActorLicence } from "@/lib/types"
 
 const value = (text: string) => text?.trim() || "Non renseigné"
 const date = (text: string) => {
@@ -44,29 +45,44 @@ function Fields({
 export function AffiliationSection<T extends BaseActorAffiliation>({
   affiliations,
   actorId,
+  action,
+  title = "Affiliation",
+  description = "Situation actuelle et historique",
+  currentDetail,
+  fieldsClassName,
 }: {
   affiliations: T[]
   actorId: string
+  action?: ReactNode
+  title?: string
+  description?: string
+  currentDetail?: (affiliation: T) => [string, string]
+  fieldsClassName?: string
 }) {
   const history = affiliationHistory(affiliations, actorId)
   const current = getCurrentAffiliationForActor(affiliations, actorId)
-  const athlete = current as AthleteAffiliation | undefined
+  const currentStructureName = current && "nomClubBeneficiaire" in current
+    ? String(current.nomClubBeneficiaire ?? "")
+    : current?.nomStructure ?? ""
+  const detail: [string, string] = current && currentDetail
+    ? currentDetail(current)
+    : ["Observation", current?.observation ?? ""]
   return (
     <section className="border-t pt-8">
-      <div className="mb-5"><h2 className="text-lg font-semibold">Affiliation</h2><p className="text-sm text-muted-foreground">Situation actuelle et historique</p></div>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-semibold">{title}</h2><p className="text-sm text-muted-foreground">{description}</p></div>{action}</div>
       {current ? (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/15 p-4">
-            <div><p className="text-xs text-muted-foreground">Structure actuelle</p><p className="font-semibold">{value(athlete?.nomClubBeneficiaire || current.nomStructure)}</p></div>
+            <div><p className="text-xs text-muted-foreground">Structure actuelle</p><p className="font-semibold">{value(currentStructureName)}</p></div>
             <ActorStatusBadge status={current.statutAffiliation} />
           </div>
-          <Fields fields={[
+          <Fields className={fieldsClassName} fields={[
             ["ID affiliation", current.idAffiliation],
             ["Début", date(current.dateDebut)],
             ["Fin", date(current.dateFin)],
             ...("saison" in current ? [["Saison", String(current.saison)]] as Array<[string, string]> : []),
             ...("typeAffiliation" in current ? [["Type", String(current.typeAffiliation)]] as Array<[string, string]> : []),
-            ["Observation", current.observation],
+            detail,
           ]} />
         </div>
       ) : <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Aucune affiliation enregistrée.</p>}
@@ -82,15 +98,16 @@ export function AffiliationSection<T extends BaseActorAffiliation>({
   )
 }
 
-export function LicenceSection({ licences, actorId }: { licences: BaseActorLicence[]; actorId: string }) {
+export function LicenceSection({ licences, actorId, action, showId = true }: { licences: BaseActorLicence[]; actorId: string; action?: ReactNode; showId?: boolean }) {
   const history = licenceHistory(licences, actorId)
   const current = history.find((item) => {
-    const end = Date.parse(item.dateFinValidite)
-    return !item.dateFinValidite || (!Number.isNaN(end) && end >= Date.now())
+    const end = parseSheetDate(item.dateFinValidite)
+    return !item.dateFinValidite || Boolean(end && end.getTime() >= Date.now())
   }) ?? history[0]
+  const athleteLicence = current as AthleteLicence | undefined
   return (
     <section className="border-t pt-8">
-      <div className="mb-5"><h2 className="text-lg font-semibold">Licence</h2><p className="text-sm text-muted-foreground">Licence fédérale, validité et renouvellements</p></div>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-semibold">Licence</h2><p className="text-sm text-muted-foreground">Licence fédérale, validité et renouvellements</p></div>{action}</div>
       {current ? (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/15 p-4">
@@ -98,11 +115,18 @@ export function LicenceSection({ licences, actorId }: { licences: BaseActorLicen
             <ActorStatusBadge status={current.statutLicence} />
           </div>
           <Fields
-            className="sm:grid-cols-2 xl:grid-cols-4"
+            className="sm:grid-cols-3"
             fields={[
-              ["ID licence", current.idLicence],
+              ...(showId ? [["ID licence", current.idLicence]] as Array<[string, string]> : []),
               ["Délivrée le", date(current.dateDelivrance)],
               ["Valable jusqu’au", date(current.dateFinValidite)],
+              ...(athleteLicence?.saison ? [["Saison", athleteLicence.saison]] as Array<[string, string]> : []),
+              ...(athleteLicence?.nomClub || athleteLicence?.idClub
+                ? [["Club", athleteLicence.nomClub || athleteLicence.idClub]] as Array<[string, string]>
+                : []),
+              ...(athleteLicence?.idAffiliation
+                ? [["ID affiliation", athleteLicence.idAffiliation]] as Array<[string, string]>
+                : []),
               ["Licence précédente", current.numeroLicencePrecedente || current.idLicencePrecedente],
             ]}
           />

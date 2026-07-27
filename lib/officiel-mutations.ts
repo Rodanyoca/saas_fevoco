@@ -5,6 +5,7 @@ import { getActorSexes } from "@/lib/actor-references"
 import { nextActorId } from "@/lib/actor-id"
 import { getOfficiels } from "@/lib/data"
 import { appendSheetRecord, updateSheetRecordById } from "@/lib/google-sheets"
+import { assertValidDate } from "@/lib/date-validation"
 
 const text = (value: unknown) => String(value ?? "").trim()
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -29,6 +30,7 @@ function normalizeInput(payload: Record<string, unknown>): OfficielInput {
 async function validateInput(input: OfficielInput) {
   if (!input.nomComplet) throw new Error("Le nom complet est obligatoire.")
   if (!input.sexe) throw new Error("Le sexe est obligatoire.")
+  assertValidDate(input.dateDeNaissance, "La date de naissance")
   if (input.email && !emailPattern.test(input.email)) throw new Error("L’adresse e-mail est invalide.")
   if (!statuses.has(input.statut)) throw new Error("Le statut est invalide.")
   const sexes = await getActorSexes()
@@ -47,7 +49,8 @@ export async function createOfficiel(payload: Record<string, unknown>) {
     nationalite: input.nationalite, telephone: input.telephone, email: input.email,
     adresse: input.adresse, statut: input.statut,
   })
-  return { idOfficiel, ...input, avatarDriveId: "", avatarDriveUrl: "" }
+  return (await getOfficiels()).find((item) => item.idOfficiel === idOfficiel)
+    ?? { idOfficiel, ...input, avatarDriveId: "", avatarDriveUrl: "" }
 }
 
 export async function updateOfficiel(idOfficiel: string, payload: Record<string, unknown>) {
@@ -62,5 +65,17 @@ export async function updateOfficiel(idOfficiel: string, payload: Record<string,
     nationalite: input.nationalite, telephone: input.telephone,
     email: input.email, adresse: input.adresse, statut: input.statut,
   })
-  return { idOfficiel, ...input, avatarDriveId: current.avatarDriveId, avatarDriveUrl: current.avatarDriveUrl }
+  return (await getOfficiels()).find((item) => item.idOfficiel === idOfficiel)
+    ?? { idOfficiel, ...input, avatarDriveId: current.avatarDriveId, avatarDriveUrl: current.avatarDriveUrl }
+}
+
+export async function updateOfficielAvatar(idOfficiel: string, avatarDriveId: string, avatarDriveUrl: string) {
+  const current = (await getOfficiels()).find((item) => item.idOfficiel === idOfficiel)
+  if (!current) throw new Error("Officiel introuvable.")
+  await updateSheetRecordById(env.googleSheets.acteursSpreadsheetId, "OFFICIELS", "id_officiel", idOfficiel, {
+    avatar_drive_id: avatarDriveId,
+    avatar_drive_url: avatarDriveUrl,
+  })
+  return (await getOfficiels()).find((item) => item.idOfficiel === idOfficiel)
+    ?? { ...current, avatarDriveId, avatarDriveUrl }
 }

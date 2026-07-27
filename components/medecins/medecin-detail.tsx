@@ -12,7 +12,10 @@ import { AffiliationSection, LicenceSection } from "@/components/actors/record-s
 import { ArrowLeft } from "lucide-react"
 import { MedecinFormDialog } from "@/components/medecins/medecin-form-dialog"
 import type { SavedMedecin } from "@/components/medecins/medecin-form-dialog"
-import type { ActorSexOption } from "@/lib/actor-references"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
+import { MedecinAffiliationFormDialog } from "@/components/medecins/medecin-affiliation-form-dialog"
+import type { MedecinStructureOption } from "@/components/medecins/medecin-affiliation-form-dialog"
+import { MedecinLicenceFormDialog } from "@/components/medecins/medecin-licence-form-dialog"
 
 function shown(value: unknown, fallback = "Non renseigné") {
   const text = value === null || value === undefined ? "" : String(value).trim()
@@ -32,11 +35,16 @@ function sexeLabel(value: string) {
   return shown(value)
 }
 
-export function MedecinDetail({ medecin, affiliations, licences, sexes, onUpdated, onBack }: {
+export function MedecinDetail({ medecin, affiliations, licences, sexes, specialties, structures, affiliationTypes, onAffiliationCreated, onLicenceCreated, onUpdated, onBack }: {
   medecin: Medecin
   affiliations: MedecinAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
+  specialties: CoachReferenceOption[]
+  structures: MedecinStructureOption[]
+  affiliationTypes: CoachReferenceOption[]
+  onAffiliationCreated: (affiliation: MedecinAffiliation, deactivatedAffiliationId: string) => void
+  onLicenceCreated: (licence: BaseActorLicence, deactivatedLicenceId: string) => void
   onUpdated: (medecin: SavedMedecin) => void
   onBack: () => void
 }) {
@@ -44,6 +52,9 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, onUpdate
   const age = calculateAge(medecin.dateDeNaissance)
   const formattedDate = formatSheetDate(medecin.dateDeNaissance)
   const active = ["ACTIF", "ACTIVE"].includes(normalize(medecin.statut))
+  const affiliationKind = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
+  const clubAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "CLUB")
+  const nationalTeamAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "EQUIPE_NATIONALE")
   const generalSections = [
     {
       title: "Identifiants",
@@ -93,7 +104,7 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, onUpdate
               <p className="mt-2 font-mono text-sm text-muted-foreground">{shown(medecin.idMedecin)}</p>
             </div>
             <div className="flex items-center gap-3">
-              <MedecinFormDialog medecin={medecin} sexes={sexes} onSaved={onUpdated} />
+              <MedecinFormDialog medecin={medecin} sexes={sexes} specialties={specialties} onSaved={onUpdated} />
               <Badge variant={active ? "default" : "secondary"} className="w-fit">{shown(medecin.statut)}</Badge>
             </div>
           </header>
@@ -124,8 +135,19 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, onUpdate
               </div>
             </section>
 
-            <AffiliationSection affiliations={affiliations} actorId={medecin.idMedecin} />
-            <LicenceSection licences={licences} actorId={medecin.idMedecin} />
+            <div>
+              <div className="mb-5 flex justify-end"><MedecinAffiliationFormDialog medecin={medecin} structures={structures} affiliationTypes={affiliationTypes} specialties={specialties} onSaved={onAffiliationCreated} /></div>
+              <div className="space-y-8">
+                <AffiliationSection affiliations={clubAffiliations} actorId={medecin.idMedecin} title="Affiliation club" description="Club actuel et historique des affiliations en club" currentDetail={(item) => ["Spécialité", item.fonction]} />
+                <AffiliationSection affiliations={nationalTeamAffiliations} actorId={medecin.idMedecin} title="Affiliation équipe nationale" description="Équipe nationale actuelle et historique" currentDetail={(item) => ["Spécialité", item.fonction]} />
+              </div>
+            </div>
+            <LicenceSection
+              licences={licences}
+              actorId={medecin.idMedecin}
+              showId={false}
+              action={<MedecinLicenceFormDialog medecin={medecin} hasAffiliation={affiliations.some((item) => item.actorId === medecin.idMedecin)} onSaved={onLicenceCreated} />}
+            />
           </div>
         </CardContent>
       </Card>

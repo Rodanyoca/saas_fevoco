@@ -65,7 +65,8 @@ export async function createLigue(payload: Record<string, unknown>) {
     statut: input.statut,
     observations: input.observations,
   })
-  return ligueResult(idLigue, input, province)
+  return (await getLigues()).find((item) => item.idLigue === idLigue)
+    ?? ligueResult(idLigue, input, province)
 }
 
 export async function updateLigue(idLigue: string, payload: Record<string, unknown>) {
@@ -88,7 +89,8 @@ export async function updateLigue(idLigue: string, payload: Record<string, unkno
     id_province: province.idProvince, nom_province: province.nomProvince,
     statut: input.statut, observations: input.observations,
   })
-  return ligueResult(idLigue, input, province)
+  return (await getLigues()).find((item) => item.idLigue === idLigue)
+    ?? ligueResult(idLigue, input, province)
 }
 
 function ententeResult(input: {
@@ -149,7 +151,8 @@ export async function createEntente(payload: Record<string, unknown>) {
     id_province: ligue.idProvince, nom_province: ligue.nomProvince,
     email_entente: emailEntente, statut, observations,
   })
-  return ententeResult({ idEntente, codeEntente, nomEntente, pseudoEntente, ligue, emailEntente, statut, observations })
+  return (await getEntentes()).find((item) => item.idEntente === idEntente)
+    ?? ententeResult({ idEntente, codeEntente, nomEntente, pseudoEntente, ligue, emailEntente, statut, observations })
 }
 
 export async function updateEntente(idEntente: string, payload: Record<string, unknown>) {
@@ -187,12 +190,14 @@ export async function updateEntente(idEntente: string, payload: Record<string, u
     pseudo_entente: pseudoEntente,
     id_ligue: ligue.idLigue,
     nom_ligue: ligue.nomLigue,
+    id_province: ligue.idProvince,
     nom_province: ligue.nomProvince,
     email_entente: emailEntente,
     statut,
     observations,
   })
-  return ententeResult({
+  const saved = (await getEntentes()).find((item) => item.idEntente === nextIdEntente)
+  return saved ? { ...saved, previousIdEntente: idEntente } : ententeResult({
     idEntente: nextIdEntente,
     previousIdEntente: idEntente,
     codeEntente,

@@ -44,7 +44,7 @@ export function CoachsFilters({
             <Input
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Rechercher un coach..."
+              placeholder="Rechercher par nom ou numéro de licence..."
               className="pl-9"
             />
           </div>

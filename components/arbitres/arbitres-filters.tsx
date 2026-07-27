@@ -52,7 +52,7 @@ export function ArbitresFilters({
             <Input
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Rechercher un arbitre..."
+              placeholder="Rechercher par nom ou numéro de licence..."
               className="pl-9"
             />
           </div>

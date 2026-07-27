@@ -8,22 +8,33 @@ import { MedecinsTable } from "@/components/medecins/medecins-table"
 import { MedecinDetail } from "@/components/medecins/medecin-detail"
 import { MedecinFormDialog } from "@/components/medecins/medecin-form-dialog"
 import type { SavedMedecin } from "@/components/medecins/medecin-form-dialog"
-import type { ActorSexOption } from "@/lib/actor-references"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
 import { compareLabels } from "@/lib/sort-utils"
+import type { MedecinStructureOption } from "@/components/medecins/medecin-affiliation-form-dialog"
 
-export function MedecinsClient({ medecins, affiliations, licences, sexes }: {
+const affiliationKind = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
+
+export function MedecinsClient({ medecins, affiliations, licences, sexes, structures, affiliationTypes, specialties }: {
   medecins: Medecin[]
   affiliations: MedecinAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
+  structures: MedecinStructureOption[]
+  affiliationTypes: CoachReferenceOption[]
+  specialties: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(medecins)
+  const [affiliationRows, setAffiliationRows] = useState(affiliations)
+  const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedMedecin, setSelectedMedecin] = useState<Medecin | null>(null)
   const [search, setSearch] = useState("")
   const [niveau, setNiveau] = useState("all")
   const [specialite, setSpecialite] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(medecins), [medecins])
+  useEffect(() => setAffiliationRows(affiliations), [affiliations])
+  useEffect(() => setLicenceRows(licences), [licences])
 
   const applySavedMedecin = (saved: SavedMedecin) => {
     setRows((current) => {
@@ -44,6 +55,20 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes }: {
       : current)
   }
 
+  const applyCreatedAffiliation = (affiliation: MedecinAffiliation, deactivatedId: string) => {
+    const closesPreviousClub = affiliationKind(affiliation.typeAffiliation) === "CLUB"
+    setAffiliationRows((current) => [
+      affiliation,
+      ...current.map((item) => item.idAffiliation === deactivatedId
+        ? {
+            ...item,
+            statutAffiliation: "inactif",
+            ...(closesPreviousClub ? { dateFin: affiliation.dateDebut } : {}),
+          }
+        : item),
+    ])
+  }
+
   const filteredMedecins = useMemo(() => {
     const term = search.trim().toLowerCase()
 
@@ -53,40 +78,26 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes }: {
       if (statut !== "all" && medecin.statut !== statut) return false
 
       if (term) {
-        const haystack = [
-          medecin.id,
-          medecin.nomComplet,
-          medecin.idNational,
-          medecin.idFivb,
-          medecin.sexe,
-          medecin.nationalite,
-          medecin.telephone,
-          medecin.email,
-          medecin.adresse,
-          medecin.numeroOrdre,
-          medecin.specialite,
-          medecin.niveau,
-          medecin.dateAffiliation,
-          medecin.equipeNationale,
-          medecin.statut,
-        ]
+        const licenceNumbers = licenceRows
+          .filter((licence) => licence.actorId === medecin.idMedecin)
+          .map((licence) => licence.numeroLicence)
           .join(" ")
-          .toLowerCase()
+        const haystack = `${medecin.nomComplet} ${licenceNumbers}`.toLowerCase()
 
         if (!haystack.includes(term)) return false
       }
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, niveau, search, specialite, statut])
+  }, [rows, licenceRows, niveau, search, specialite, statut])
 
   return (
     <div className="space-y-6">
       {selectedMedecin ? (
-        <MedecinDetail medecin={selectedMedecin} affiliations={affiliations} licences={licences} sexes={sexes} onUpdated={applySavedMedecin} onBack={() => setSelectedMedecin(null)} />
+        <MedecinDetail medecin={selectedMedecin} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} specialties={specialties} structures={structures} affiliationTypes={affiliationTypes} onAffiliationCreated={applyCreatedAffiliation} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedMedecin} onBack={() => setSelectedMedecin(null)} />
       ) : (
         <>
-          <div className="flex justify-end"><MedecinFormDialog sexes={sexes} onSaved={applySavedMedecin} /></div>
+          <div className="flex justify-end"><MedecinFormDialog sexes={sexes} specialties={specialties} onSaved={applySavedMedecin} /></div>
           <MedecinsStats medecins={rows} />
           <MedecinsFilters
             medecins={rows}
@@ -99,7 +110,7 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes }: {
             onSpecialiteChange={setSpecialite}
             onStatutChange={setStatut}
           />
-          <MedecinsTable medecins={filteredMedecins} onViewMedecin={setSelectedMedecin} />
+          <MedecinsTable medecins={filteredMedecins} licences={licenceRows} onViewMedecin={setSelectedMedecin} />
         </>
       )}
     </div>

@@ -46,6 +46,7 @@ export function ActorTable<T>({
   onView,
   emptyMessage,
   showId = true,
+  firstColumn,
 }: {
   title: string
   items: T[]
@@ -53,6 +54,10 @@ export function ActorTable<T>({
   onView?: (item: T) => void
   emptyMessage: string
   showId?: boolean
+  firstColumn?: {
+    label: string
+    value: (item: T) => string
+  }
 }) {
   return (
     <Card>
@@ -61,6 +66,7 @@ export function ActorTable<T>({
         <Table className={showId ? "min-w-[900px]" : "min-w-[820px]"}>
           <TableHeader>
             <TableRow>
+              {firstColumn && <TableHead>{firstColumn.label}</TableHead>}
               {showId && <TableHead>ID</TableHead>}
               <TableHead>Avatar</TableHead>
               <TableHead>Nom complet</TableHead>
@@ -77,6 +83,7 @@ export function ActorTable<T>({
               const imageUrl = getActorAvatarUrl(row.avatarDriveUrl, row.avatarDriveId)
               return (
                 <TableRow key={`${row.id || "acteur"}-${index}`}>
+                  {firstColumn && <TableCell className="font-mono">{firstColumn.value(item) || "Non renseigné"}</TableCell>}
                   {showId && <TableCell className="font-mono">{row.id || "Non renseigné"}</TableCell>}
                   <TableCell>
                     <Avatar className="h-10 w-10">
@@ -105,7 +112,7 @@ export function ActorTable<T>({
               )
             })}
             {items.length === 0 && (
-              <TableRow><TableCell colSpan={(showId ? 7 : 6) + (onView ? 1 : 0)} className="h-24 text-center text-muted-foreground">{emptyMessage}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={(showId ? 7 : 6) + (onView ? 1 : 0) + (firstColumn ? 1 : 0)} className="h-24 text-center text-muted-foreground">{emptyMessage}</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

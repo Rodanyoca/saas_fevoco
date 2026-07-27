@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ActorSexOption } from "@/lib/actor-references"
 import type { Coach } from "@/lib/types"
+import { AvatarFileField, uploadAvatarFile } from "@/components/actors/avatar-file-field"
 
 export type SavedCoach = Pick<Coach, "idCoach" | "idNational" | "idFivb" | "nomComplet" | "sexe" | "dateNaissance" | "nationalite" | "niveau" | "telephone" | "email" | "adresse" | "statut"> & {
   avatarDriveId?: string
@@ -24,6 +25,7 @@ export function CoachFormDialog({ coach, sexes, onSaved }: {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState("")
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [form, setForm] = useState({
     idNational: coach?.idNational ?? "", idFivb: coach?.idFivb ?? "",
     nomComplet: coach?.nomComplet ?? "",
@@ -43,7 +45,17 @@ export function CoachFormDialog({ coach, sexes, onSaved }: {
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || "Enregistrement impossible.")
-      onSaved(result.coach); toast.success(result.message); setOpen(false)
+      let savedCoach: SavedCoach = result.coach
+      if (avatarFile) {
+        try {
+          savedCoach = { ...savedCoach, ...await uploadAvatarFile("coach", savedCoach.idCoach, avatarFile) }
+        } catch (avatarError) {
+          onSaved(savedCoach)
+          toast.warning(`${result.message} ${avatarError instanceof Error ? avatarError.message : "L’avatar n’a pas pu être enregistré."}`)
+          setOpen(false); setAvatarFile(null); return
+        }
+      }
+      onSaved(savedCoach); toast.success(result.message); setOpen(false); setAvatarFile(null)
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Enregistrement impossible."
       setError(message); toast.error(message)
@@ -68,6 +80,7 @@ export function CoachFormDialog({ coach, sexes, onSaved }: {
             <div className="space-y-2"><Label>Téléphone</Label><Input type="tel" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} /></div>
             <div className="space-y-2"><Label>Adresse e-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <div className="space-y-2"><Label>Adresse</Label><Input value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} /></div>
+            <AvatarFileField editing={editing} onFileChange={setAvatarFile} />
             <div className="space-y-2"><Label>Statut</Label><Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="inactif">Inactif</SelectItem></SelectContent></Select></div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}

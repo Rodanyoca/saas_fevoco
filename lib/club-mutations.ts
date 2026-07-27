@@ -4,6 +4,7 @@ import { env } from "@/lib/env"
 import { getClubs, getEntentes } from "@/lib/data"
 import { appendSheetRecord, updateSheetRecordById } from "@/lib/google-sheets"
 import { getClubCategories, getClubVersions } from "@/lib/club-references"
+import { assertValidDate } from "@/lib/date-validation"
 
 const text = (value: unknown) => String(value ?? "").trim()
 const statuses = new Set(["actif", "inactif", "active", "inactive"])
@@ -37,6 +38,7 @@ function validateInput(input: ClubInput, editing: boolean) {
   if (!editing && !input.codeClub) throw new Error("Le code du club est obligatoire.")
   if (!input.nomClub) throw new Error("Le nom du club est obligatoire.")
   if (!input.idEntente) throw new Error("L’entente est obligatoire.")
+  assertValidDate(input.dateAffiliationClub, "La date d’affiliation du club")
   if (!statuses.has(input.statut)) throw new Error("Le statut du club est invalide.")
 }
 
@@ -104,7 +106,8 @@ export async function createClub(payload: Record<string, unknown>) {
     id_ligue: entente.idLigue, nom_ligue: entente.nomLigue,
     statut: input.statut, observations: input.observations,
   })
-  return clubResult(idClub, input, entente)
+  return (await getClubs()).find((club) => club.idClub === idClub)
+    ?? clubResult(idClub, input, entente)
 }
 
 export async function updateClub(idClub: string, payload: Record<string, unknown>) {
@@ -140,5 +143,6 @@ export async function updateClub(idClub: string, payload: Record<string, unknown
     id_ligue: entente.idLigue, nom_ligue: entente.nomLigue,
     statut: input.statut, observations: input.observations,
   })
-  return clubResult(nextIdClub, input, entente, idClub)
+  const saved = (await getClubs()).find((club) => club.idClub === nextIdClub)
+  return saved ? { ...saved, previousIdClub: idClub } : clubResult(nextIdClub, input, entente, idClub)
 }

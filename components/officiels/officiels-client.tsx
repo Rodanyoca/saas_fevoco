@@ -8,22 +8,29 @@ import { OfficielsTable } from "@/components/officiels/officiels-table"
 import { OfficielDetail } from "@/components/officiels/officiel-detail"
 import { OfficielFormDialog } from "@/components/officiels/officiel-form-dialog"
 import type { SavedOfficiel } from "@/components/officiels/officiel-form-dialog"
-import type { ActorSexOption } from "@/lib/actor-references"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
 import { compareLabels } from "@/lib/sort-utils"
+import type { OfficielStructureOption } from "@/components/officiels/officiel-affiliation-form-dialog"
 
-export function OfficielsClient({ officiels, affiliations, licences, sexes }: {
+export function OfficielsClient({ officiels, affiliations, licences, sexes, structures, functions }: {
   officiels: Officiel[]
   affiliations: OfficielAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
+  structures: OfficielStructureOption[]
+  functions: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(officiels)
+  const [affiliationRows, setAffiliationRows] = useState(affiliations)
+  const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedOfficiel, setSelectedOfficiel] = useState<Officiel | null>(null)
   const [search, setSearch] = useState("")
   const [entite, setEntite] = useState("all")
   const [fonction, setFonction] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(officiels), [officiels])
+  useEffect(() => setAffiliationRows(affiliations), [affiliations])
+  useEffect(() => setLicenceRows(licences), [licences])
 
   const applySavedOfficiel = (saved: SavedOfficiel) => {
     setRows((current) => {
@@ -42,6 +49,15 @@ export function OfficielsClient({ officiels, affiliations, licences, sexes }: {
       : current)
   }
 
+  const applyCreatedAffiliation = (affiliation: OfficielAffiliation, deactivatedId: string) => {
+    setAffiliationRows((current) => [
+      affiliation,
+      ...current.map((item) => item.idAffiliation === deactivatedId
+        ? { ...item, statutAffiliation: "inactif", dateFin: affiliation.dateDebut }
+        : item),
+    ])
+  }
+
   const filteredOfficiels = useMemo(() => {
     const term = search.trim().toLowerCase()
 
@@ -51,36 +67,23 @@ export function OfficielsClient({ officiels, affiliations, licences, sexes }: {
       if (statut !== "all" && officiel.statut !== statut) return false
 
       if (term) {
-        const haystack = [
-          officiel.id,
-          officiel.nomComplet,
-          officiel.idNational,
-          officiel.idFivb,
-          officiel.sexe,
-          officiel.nationalite,
-          officiel.fonction,
-          officiel.entite,
-          officiel.rattachement,
-          officiel.equipeFederal,
-          officiel.adresse,
-          officiel.telephone,
-          officiel.email,
-          officiel.statut,
-        ]
+        const licenceNumbers = licenceRows
+          .filter((licence) => licence.actorId === officiel.idOfficiel)
+          .map((licence) => licence.numeroLicence)
           .join(" ")
-          .toLowerCase()
+        const haystack = `${officiel.nomComplet} ${licenceNumbers}`.toLowerCase()
 
         if (!haystack.includes(term)) return false
       }
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [entite, fonction, rows, search, statut])
+  }, [entite, fonction, licenceRows, rows, search, statut])
 
   return (
     <div className="space-y-6">
       {selectedOfficiel ? (
-        <OfficielDetail officiel={selectedOfficiel} affiliations={affiliations} licences={licences} sexes={sexes} onUpdated={applySavedOfficiel} onBack={() => setSelectedOfficiel(null)} />
+        <OfficielDetail officiel={selectedOfficiel} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} structures={structures} functions={functions} onAffiliationCreated={applyCreatedAffiliation} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedOfficiel} onBack={() => setSelectedOfficiel(null)} />
       ) : (
         <>
           <div className="flex justify-end"><OfficielFormDialog sexes={sexes} onSaved={applySavedOfficiel} /></div>
@@ -96,7 +99,7 @@ export function OfficielsClient({ officiels, affiliations, licences, sexes }: {
             onFonctionChange={setFonction}
             onStatutChange={setStatut}
           />
-          <OfficielsTable officiels={filteredOfficiels} onViewOfficiel={setSelectedOfficiel} />
+          <OfficielsTable officiels={filteredOfficiels} licences={licenceRows} onViewOfficiel={setSelectedOfficiel} />
         </>
       )}
     </div>

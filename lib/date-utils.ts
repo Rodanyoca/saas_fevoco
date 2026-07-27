@@ -14,11 +14,25 @@ export function parseSheetDate(value: unknown): Date | null {
   if (frenchDateMatch) {
     const [, day, month, year] = frenchDateMatch
     const date = new Date(Number(year), Number(month) - 1, Number(day))
-    return Number.isNaN(date.getTime()) ? null : date
+    return date.getFullYear() === Number(year) &&
+      date.getMonth() === Number(month) - 1 &&
+      date.getDate() === Number(day)
+      ? date
+      : null
   }
 
-  const date = new Date(raw)
-  return Number.isNaN(date.getTime()) ? null : date
+  const isoDateMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)
+  if (isoDateMatch) {
+    const [, year, month, day] = isoDateMatch
+    const date = new Date(Number(year), Number(month) - 1, Number(day))
+    return date.getFullYear() === Number(year) &&
+      date.getMonth() === Number(month) - 1 &&
+      date.getDate() === Number(day)
+      ? date
+      : null
+  }
+
+  return null
 }
 
 export function calculateAgeFromSheetDate(value: unknown): number | null {

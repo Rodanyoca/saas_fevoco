@@ -7,23 +7,26 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { ActorSexOption } from "@/lib/actor-references"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
 import type { Medecin } from "@/lib/types"
+import { AvatarFileField, uploadAvatarFile } from "@/components/actors/avatar-file-field"
 
 export type SavedMedecin = Pick<Medecin, "idMedecin" | "idNational" | "idFivb" | "nomComplet" | "sexe" | "dateDeNaissance" | "nationalite" | "telephone" | "email" | "adresse" | "specialite" | "statut"> & {
   avatarDriveId?: string
   avatarDriveUrl?: string
 }
 
-export function MedecinFormDialog({ medecin, sexes, onSaved }: {
+export function MedecinFormDialog({ medecin, sexes, specialties, onSaved }: {
   medecin?: Medecin
   sexes: ActorSexOption[]
+  specialties: CoachReferenceOption[]
   onSaved: (medecin: SavedMedecin) => void
 }) {
   const editing = Boolean(medecin)
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState("")
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [form, setForm] = useState({
     idNational: medecin?.idNational ?? "", idFivb: medecin?.idFivb ?? "",
     nomComplet: medecin?.nomComplet ?? "",
@@ -43,7 +46,17 @@ export function MedecinFormDialog({ medecin, sexes, onSaved }: {
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || "Enregistrement impossible.")
-      onSaved(result.medecin); toast.success(result.message); setOpen(false)
+      let savedMedecin: SavedMedecin = result.medecin
+      if (avatarFile) {
+        try {
+          savedMedecin = { ...savedMedecin, ...await uploadAvatarFile("medecin", savedMedecin.idMedecin, avatarFile) }
+        } catch (avatarError) {
+          onSaved(savedMedecin)
+          toast.warning(`${result.message} ${avatarError instanceof Error ? avatarError.message : "L’avatar n’a pas pu être enregistré."}`)
+          setOpen(false); setAvatarFile(null); return
+        }
+      }
+      onSaved(savedMedecin); toast.success(result.message); setOpen(false); setAvatarFile(null)
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Enregistrement impossible."
       setError(message); toast.error(message)
@@ -64,10 +77,11 @@ export function MedecinFormDialog({ medecin, sexes, onSaved }: {
             <div className="space-y-2"><Label>ID FIVB</Label><Input value={form.idFivb} onChange={(e) => setForm({ ...form, idFivb: e.target.value })} /></div>
             <div className="space-y-2"><Label>Date de naissance</Label><Input value={form.dateDeNaissance} onChange={(e) => setForm({ ...form, dateDeNaissance: e.target.value })} placeholder="JJ/MM/AAAA" /></div>
             <div className="space-y-2"><Label>Nationalité</Label><Input value={form.nationalite} onChange={(e) => setForm({ ...form, nationalite: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Spécialité</Label><Input value={form.specialite} onChange={(e) => setForm({ ...form, specialite: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Spécialité</Label><Select value={form.specialite} onValueChange={(value) => setForm({ ...form, specialite: value })} disabled={!specialties.length}><SelectTrigger><SelectValue placeholder={specialties.length ? "Sélectionner la spécialité" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{specialties.map((option) => <SelectItem key={`${option.id}:${option.nom}`} value={option.nom}>{option.nom}</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-2"><Label>Téléphone</Label><Input type="tel" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} /></div>
             <div className="space-y-2"><Label>Adresse e-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <div className="space-y-2"><Label>Adresse</Label><Input value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} /></div>
+            <AvatarFileField editing={editing} onFileChange={setAvatarFile} />
             <div className="space-y-2"><Label>Statut</Label><Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="inactif">Inactif</SelectItem></SelectContent></Select></div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}

@@ -5,6 +5,7 @@ import { getActorSexes } from "@/lib/actor-references"
 import { nextActorId } from "@/lib/actor-id"
 import { getCoachs } from "@/lib/data"
 import { appendSheetRecord, updateSheetRecordById } from "@/lib/google-sheets"
+import { assertValidDate } from "@/lib/date-validation"
 
 const text = (value: unknown) => String(value ?? "").trim()
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -30,6 +31,7 @@ function normalizeInput(payload: Record<string, unknown>): CoachInput {
 async function validateInput(input: CoachInput) {
   if (!input.nomComplet) throw new Error("Le nom complet est obligatoire.")
   if (!input.sexe) throw new Error("Le sexe est obligatoire.")
+  assertValidDate(input.dateNaissance, "La date de naissance")
   if (input.email && !emailPattern.test(input.email)) throw new Error("L’adresse e-mail est invalide.")
   if (!statuses.has(input.statut)) throw new Error("Le statut est invalide.")
   const sexes = await getActorSexes()
@@ -49,7 +51,8 @@ export async function createCoach(payload: Record<string, unknown>) {
     niveau: input.niveau, telephone: input.telephone, email: input.email,
     adresse: input.adresse, statut: input.statut,
   })
-  return { idCoach, ...input }
+  return (await getCoachs()).find((coach) => coach.idCoach === idCoach)
+    ?? { idCoach, ...input }
 }
 
 export async function updateCoach(idCoach: string, payload: Record<string, unknown>) {
@@ -65,5 +68,17 @@ export async function updateCoach(idCoach: string, payload: Record<string, unkno
     niveau: input.niveau, telephone: input.telephone, email: input.email,
     adresse: input.adresse, statut: input.statut,
   })
-  return { idCoach, ...input, avatarDriveId: current.avatarDriveId, avatarDriveUrl: current.avatarDriveUrl }
+  return (await getCoachs()).find((coach) => coach.idCoach === idCoach)
+    ?? { idCoach, ...input, avatarDriveId: current.avatarDriveId, avatarDriveUrl: current.avatarDriveUrl }
+}
+
+export async function updateCoachAvatar(idCoach: string, avatarDriveId: string, avatarDriveUrl: string) {
+  const current = (await getCoachs()).find((coach) => coach.idCoach === idCoach)
+  if (!current) throw new Error("Coach introuvable.")
+  await updateSheetRecordById(env.googleSheets.acteursSpreadsheetId, "COACHS", "id_coach", idCoach, {
+    avatar_drive_id: avatarDriveId,
+    avatar_drive_url: avatarDriveUrl,
+  })
+  return (await getCoachs()).find((coach) => coach.idCoach === idCoach)
+    ?? { ...current, avatarDriveId, avatarDriveUrl }
 }

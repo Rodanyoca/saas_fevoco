@@ -12,11 +12,12 @@ import type { Athlete, Club, Transfert } from "@/lib/types"
 
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
 
-export function TransfertFormDialog({ athletes, clubs, types, onSaved }: {
+export function TransfertFormDialog({ athletes, clubs, types, affiliations, onSaved }: {
   athletes: Athlete[]
   clubs: Club[]
   types: TransferTypeOption[]
-  onSaved: (transfert: Transfert) => void
+  affiliations: Transfert[]
+  onSaved: (transfert: Transfert, deactivatedAffiliationId: string) => void
 }) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
@@ -42,13 +43,35 @@ export function TransfertFormDialog({ athletes, clubs, types, onSaved }: {
     [uniqueClubs, form.idClubOrigine],
   )
 
+  const latestClubFor = (athleteId: string) => {
+    const time = (value: string) => {
+      const french = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+      if (french) return new Date(Number(french[3]), Number(french[2]) - 1, Number(french[1])).getTime()
+      const parsed = Date.parse(value)
+      return Number.isNaN(parsed) ? 0 : parsed
+    }
+    return affiliations
+      .filter((item) => item.athleteId === athleteId)
+      .sort((left, right) => time(right.dateDebut) - time(left.dateDebut))[0]
+      ?.clubBeneficiaireId ?? ""
+  }
+
   const changeType = (value: string) => {
     const kind = normalize(value)
     setForm((current) => ({
       ...current,
       typeAffiliation: value,
-      idClubOrigine: kind.includes("PREMIERE") && kind.includes("AFFILIATION") ? "" : current.idClubOrigine,
+      idClubOrigine: kind.includes("PREMIERE") && kind.includes("AFFILIATION") ? "" : latestClubFor(current.idAthlete),
       dateFin: kind.includes("TEMPORAIRE") ? current.dateFin : "",
+    }))
+  }
+
+  const changeAthlete = (value: string) => {
+    setForm((current) => ({
+      ...current,
+      idAthlete: value,
+      idClubOrigine: firstAffiliation ? "" : latestClubFor(value),
+      idClubBeneficiaire: "",
     }))
   }
 
@@ -62,7 +85,7 @@ export function TransfertFormDialog({ athletes, clubs, types, onSaved }: {
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || "Création impossible.")
-      onSaved(result.transfert)
+      onSaved(result.transfert, result.deactivatedAffiliationId || "")
       toast.success(result.message)
       setOpen(false)
       setForm({ saison: "", typeAffiliation: "", idAthlete: "", idClubOrigine: "", idClubBeneficiaire: "", dateDebut: "", dateFin: "", statutAffiliation: "actif", observation: "" })
@@ -87,8 +110,8 @@ export function TransfertFormDialog({ athletes, clubs, types, onSaved }: {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2"><Label>Type d’affiliation *</Label><Select required value={form.typeAffiliation} onValueChange={changeType} disabled={!types.length}><SelectTrigger><SelectValue placeholder={types.length ? "Sélectionner un type" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{types.map((type) => <SelectItem key={type.id} value={type.nom}>{type.nom}</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-2"><Label>Saison *</Label><Input required value={form.saison} onChange={(e) => setForm({ ...form, saison: e.target.value })} placeholder="2026-2027" /></div>
-            <div className="space-y-2"><Label>Athlète *</Label><Select required value={form.idAthlete} onValueChange={(value) => setForm({ ...form, idAthlete: value })}><SelectTrigger><SelectValue placeholder="Sélectionner l’athlète" /></SelectTrigger><SelectContent>{uniqueAthletes.map((athlete) => <SelectItem key={athlete.idAthlete} value={athlete.idAthlete}>{athlete.nomComplet}</SelectItem>)}</SelectContent></Select></div>
-            {!firstAffiliation && <div className="space-y-2"><Label>Club d’origine *</Label><Select required value={form.idClubOrigine} onValueChange={(value) => setForm({ ...form, idClubOrigine: value, idClubBeneficiaire: value === form.idClubBeneficiaire ? "" : form.idClubBeneficiaire })}><SelectTrigger><SelectValue placeholder="Sélectionner le club d’origine" /></SelectTrigger><SelectContent>{uniqueClubs.map((club) => <SelectItem key={club.idClub} value={club.idClub}>{club.nomClub}</SelectItem>)}</SelectContent></Select></div>}
+            <div className="space-y-2"><Label>Athlète *</Label><Select required value={form.idAthlete} onValueChange={changeAthlete}><SelectTrigger><SelectValue placeholder="Sélectionner l’athlète" /></SelectTrigger><SelectContent>{uniqueAthletes.map((athlete) => <SelectItem key={athlete.idAthlete} value={athlete.idAthlete}>{athlete.nomComplet}</SelectItem>)}</SelectContent></Select></div>
+            {!firstAffiliation && <div className="space-y-2"><Label>Club d’origine *</Label><Select required disabled value={form.idClubOrigine}><SelectTrigger><SelectValue placeholder={form.idAthlete ? "Aucune affiliation précédente" : "Sélectionnez d’abord l’athlète"} /></SelectTrigger><SelectContent>{uniqueClubs.map((club) => <SelectItem key={club.idClub} value={club.idClub}>{club.nomClub}</SelectItem>)}</SelectContent></Select></div>}
             <div className="space-y-2"><Label>Club bénéficiaire *</Label><Select required value={form.idClubBeneficiaire} onValueChange={(value) => setForm({ ...form, idClubBeneficiaire: value })}><SelectTrigger><SelectValue placeholder="Sélectionner le club bénéficiaire" /></SelectTrigger><SelectContent>{availableBeneficiaries.map((club) => <SelectItem key={club.idClub} value={club.idClub}>{club.nomClub}</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-2"><Label>Date de début *</Label><Input required type="date" value={form.dateDebut} onChange={(e) => setForm({ ...form, dateDebut: e.target.value })} /></div>
             {temporary && <div className="space-y-2"><Label>Date de fin *</Label><Input required type="date" min={form.dateDebut || undefined} value={form.dateFin} onChange={(e) => setForm({ ...form, dateFin: e.target.value })} /></div>}

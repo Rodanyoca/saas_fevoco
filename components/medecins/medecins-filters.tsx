@@ -52,7 +52,7 @@ export function MedecinsFilters({
             <Input
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Rechercher un médecin..."
+              placeholder="Rechercher par nom ou numéro de licence..."
               className="pl-9"
             />
           </div>

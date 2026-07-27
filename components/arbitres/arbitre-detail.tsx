@@ -13,6 +13,7 @@ import { ArrowLeft } from "lucide-react"
 import { ArbitreFormDialog } from "@/components/arbitres/arbitre-form-dialog"
 import type { SavedArbitre } from "@/components/arbitres/arbitre-form-dialog"
 import type { ActorSexOption } from "@/lib/actor-references"
+import { ArbitreLicenceFormDialog } from "@/components/arbitres/arbitre-licence-form-dialog"
 
 function shown(value: unknown, fallback = "Non renseigné") {
   const text = value === null || value === undefined ? "" : String(value).trim()
@@ -32,10 +33,11 @@ function sexeLabel(value: string) {
   return shown(value)
 }
 
-export function ArbitreDetail({ arbitre, licences, sexes, onUpdated, onBack }: {
+export function ArbitreDetail({ arbitre, licences, sexes, onLicenceCreated, onUpdated, onBack }: {
   arbitre: Arbitre
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
+  onLicenceCreated: (licence: BaseActorLicence, deactivatedLicenceId: string) => void
   onUpdated: (arbitre: SavedArbitre) => void
   onBack: () => void
 }) {
@@ -125,7 +127,12 @@ export function ArbitreDetail({ arbitre, licences, sexes, onUpdated, onBack }: {
               </div>
             </section>
 
-            <LicenceSection licences={licences} actorId={arbitre.idArbitre} />
+            <LicenceSection
+              licences={licences}
+              actorId={arbitre.idArbitre}
+              showId={false}
+              action={<ArbitreLicenceFormDialog arbitre={arbitre} onSaved={onLicenceCreated} />}
+            />
           </div>
         </CardContent>
       </Card>

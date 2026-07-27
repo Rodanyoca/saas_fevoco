@@ -3,10 +3,6 @@ export { asText, normalize } from "@/lib/sheet-values"
 
 export type SheetRow = Record<string, string | number | boolean | null>
 
-const SHEET_CACHE_TTL_MS = 60_000
-const sheetCache = new Map<string, { rows: SheetRow[]; expiresAt: number }>()
-const pendingSheetReads = new Map<string, Promise<SheetRow[]>>()
-
 function normalizeHeader(value: unknown): string {
   return String(value ?? "")
     .trim()
@@ -92,7 +88,7 @@ async function fetchSheetDataFrom(
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Erreur inconnue"
     console.warn(`Google Sheets indisponible pour ${range}: ${reason}`)
-    return []
+    throw new Error(`Impossible de lire Google Sheets (${range}) : ${reason}`, { cause: error })
   }
 }
 
@@ -103,32 +99,7 @@ export async function getSheetDataFrom(
   if (!spreadsheetId.trim() || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) {
     return []
   }
-
-  const key = `${spreadsheetId}:${range}`
-  const cached = sheetCache.get(key)
-  if (cached && cached.expiresAt > Date.now()) return cached.rows
-
-  const pending = pendingSheetReads.get(key)
-  if (pending) return pending
-
-  const request = fetchSheetDataFrom(spreadsheetId, range)
-    .then((rows) => {
-      sheetCache.set(key, { rows, expiresAt: Date.now() + SHEET_CACHE_TTL_MS })
-      return rows
-    })
-    .finally(() => pendingSheetReads.delete(key))
-
-  pendingSheetReads.set(key, request)
-  return request
-}
-
-export function invalidateSheetCache(spreadsheetId: string, sheetName?: string) {
-  const prefix = `${spreadsheetId}:`
-  for (const key of sheetCache.keys()) {
-    if (key.startsWith(prefix) && (!sheetName || key.startsWith(`${prefix}${sheetName}!`))) {
-      sheetCache.delete(key)
-    }
-  }
+  return fetchSheetDataFrom(spreadsheetId, range)
 }
 
 export async function getSheetData(sheetName: string): Promise<SheetRow[]> {
@@ -160,8 +131,9 @@ export async function getSheetCell(range: string): Promise<string> {
 
     const value = res.data.values?.[0]?.[0]
     return value === null || value === undefined ? "" : String(value).trim()
-  } catch {
-    return ""
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Erreur inconnue"
+    throw new Error(`Impossible de lire Google Sheets (${range}) : ${reason}`, { cause: error })
   }
 }
 
@@ -205,7 +177,6 @@ export async function appendSheetRecord(
     insertDataOption: "INSERT_ROWS",
     requestBody: { values: [headers.map((header) => record[header] ?? "")] },
   })
-  invalidateSheetCache(spreadsheetId, sheetName)
 }
 
 export async function updateSheetRecordById(
@@ -224,8 +195,14 @@ export async function updateSheetRecordById(
   const headers = (values[0] ?? []).map(normalizeHeader)
   const idIndex = headers.indexOf(idHeader)
   if (idIndex < 0) throw new Error(`Colonne ${idHeader} absente dans ${sheetName}`)
-  const dataIndex = values.slice(1).findIndex((row) => String(row[idIndex] ?? "").trim() === id)
-  if (dataIndex < 0) throw new Error(`${sheetName}: identifiant ${id} introuvable`)
+  const matchingIndexes = values.slice(1)
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => String(row[idIndex] ?? "").trim() === id)
+  if (!matchingIndexes.length) throw new Error(`${sheetName}: identifiant ${id} introuvable`)
+  if (matchingIndexes.length > 1) {
+    throw new Error(`${sheetName}: identifiant ${id} dupliqué (${matchingIndexes.length} lignes). Mise à jour refusée.`)
+  }
+  const dataIndex = matchingIndexes[0].index
   const rowIndex = dataIndex + 2
   const existing = values[rowIndex - 1] ?? []
   const row = headers.map((header, index) =>
@@ -237,5 +214,4 @@ export async function updateSheetRecordById(
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [row] },
   })
-  invalidateSheetCache(spreadsheetId, sheetName)
 }

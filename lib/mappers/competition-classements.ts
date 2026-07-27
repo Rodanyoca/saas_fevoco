@@ -46,7 +46,7 @@ export function mapCompetitionClassementRow(row: SheetRow): CompetitionClassemen
     scoreGlobal: str(row, "score_global"),
     resultatMatch: str(row, "resultat_match"),
     setsGagnes: num(row, "sets_gagnes"),
-    setsPerdus: num(row, "sets_perdus"),
+    setsPerdus: num(row, "sets_perdues"),
     pointsGagnes: num(row, "points_gagnes"),
     pointsPerdus: num(row, "points_perdus"),
     pointsClassement: num(row, "points_classement"),

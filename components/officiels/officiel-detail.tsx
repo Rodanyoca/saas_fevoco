@@ -12,7 +12,10 @@ import { AffiliationSection, LicenceSection } from "@/components/actors/record-s
 import { ArrowLeft } from "lucide-react"
 import { OfficielFormDialog } from "@/components/officiels/officiel-form-dialog"
 import type { SavedOfficiel } from "@/components/officiels/officiel-form-dialog"
-import type { ActorSexOption } from "@/lib/actor-references"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
+import { OfficielAffiliationFormDialog } from "@/components/officiels/officiel-affiliation-form-dialog"
+import type { OfficielStructureOption } from "@/components/officiels/officiel-affiliation-form-dialog"
+import { OfficielLicenceFormDialog } from "@/components/officiels/officiel-licence-form-dialog"
 
 function shown(value: unknown, fallback = "Non renseigné") {
   const text = value === null || value === undefined ? "" : String(value).trim()
@@ -32,11 +35,15 @@ function sexeLabel(value: string) {
   return shown(value)
 }
 
-export function OfficielDetail({ officiel, affiliations, licences, sexes, onUpdated, onBack }: {
+export function OfficielDetail({ officiel, affiliations, licences, sexes, structures, functions, onAffiliationCreated, onLicenceCreated, onUpdated, onBack }: {
   officiel: Officiel
   affiliations: OfficielAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
+  structures: OfficielStructureOption[]
+  functions: CoachReferenceOption[]
+  onAffiliationCreated: (affiliation: OfficielAffiliation, deactivatedAffiliationId: string) => void
+  onLicenceCreated: (licence: BaseActorLicence, deactivatedLicenceId: string) => void
   onUpdated: (officiel: SavedOfficiel) => void
   onBack: () => void
 }) {
@@ -117,8 +124,16 @@ export function OfficielDetail({ officiel, affiliations, licences, sexes, onUpda
                 ))}
               </div>
             </section>
-            <AffiliationSection affiliations={affiliations} actorId={officiel.idOfficiel} />
-            <LicenceSection licences={licences} actorId={officiel.idOfficiel} />
+            <div>
+              <div className="mb-5 flex justify-end"><OfficielAffiliationFormDialog officiel={officiel} structures={structures} functions={functions} onSaved={onAffiliationCreated} /></div>
+              <AffiliationSection affiliations={affiliations} actorId={officiel.idOfficiel} fieldsClassName="sm:grid-cols-2 lg:grid-cols-4" currentDetail={(item) => ["Fonction", item.fonction]} />
+            </div>
+            <LicenceSection
+              licences={licences}
+              actorId={officiel.idOfficiel}
+              showId={false}
+              action={<OfficielLicenceFormDialog officiel={officiel} hasAffiliation={affiliations.some((item) => item.actorId === officiel.idOfficiel)} onSaved={onLicenceCreated} />}
+            />
           </div>
         </CardContent>
       </Card>

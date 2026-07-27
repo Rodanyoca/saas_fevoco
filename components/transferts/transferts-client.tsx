@@ -45,7 +45,7 @@ export function TransfertsClient({ transferts, athletes, clubs, transferTypes }:
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end"><TransfertFormDialog athletes={athletes} clubs={clubs} types={transferTypes} onSaved={(transfert) => setRows((current) => [transfert, ...current])} /></div>
+      <div className="flex justify-end"><TransfertFormDialog athletes={athletes} clubs={clubs} types={transferTypes} affiliations={rows} onSaved={(transfert, deactivatedId) => setRows((current) => [transfert, ...current.map((item) => item.id === deactivatedId ? { ...item, statut: "inactif" } : item)])} /></div>
       <TransfertsStats transferts={rows} />
       <TransfertsFilters
         transferts={rows}

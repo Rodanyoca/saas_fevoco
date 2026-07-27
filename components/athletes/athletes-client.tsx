@@ -23,12 +23,29 @@ export function AthletesClient({
   sexes: ActorSexOption[]
 }) {
   const [rows, setRows] = useState(athletes)
+  const [affiliationRows, setAffiliationRows] = useState(affiliations)
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null)
   const [search, setSearch] = useState("")
   const [club, setClub] = useState("all")
   const [genre, setGenre] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(athletes), [athletes])
+  useEffect(() => setAffiliationRows(affiliations), [affiliations])
+
+  const refreshAffiliations = async (athleteId: string) => {
+    const response = await fetch(`/api/athletes/${encodeURIComponent(athleteId)}/affiliations`, { cache: "no-store" })
+    if (!response.ok) throw new Error("Actualisation des affiliations impossible.")
+    const result = await response.json()
+    setAffiliationRows((current) => [
+      ...current.filter((item) => item.actorId !== athleteId),
+      ...result.affiliations,
+    ])
+  }
+
+  const openAthlete = (athlete: Athlete) => {
+    setSelectedAthlete(athlete)
+    void refreshAffiliations(athlete.idAthlete).catch(() => undefined)
+  }
 
   const applySavedAthlete = (saved: SavedAthlete) => {
     setRows((current) => {
@@ -59,19 +76,22 @@ export function AthletesClient({
       if (statut !== "all" && athlete.statut !== statut) return false
 
       if (s) {
-        const haystack =
-          `${athlete.idAthlete} ${athlete.nomComplet} ${athlete.idNational} ${athlete.idFivb} ${athlete.sexe} ${athlete.nationalite} ${athlete.telephone} ${athlete.email} ${athlete.statut} ${athlete.lieuNaissance}`.toLowerCase()
+        const licenceNumbers = licences
+          .filter((licence) => licence.actorId === athlete.idAthlete)
+          .map((licence) => licence.numeroLicence)
+          .join(" ")
+        const haystack = `${athlete.nomComplet} ${licenceNumbers}`.toLowerCase()
         if (!haystack.includes(s)) return false
       }
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, club, genre, search, statut])
+  }, [rows, licences, club, genre, search, statut])
 
   return (
     <div className="space-y-6">
       {selectedAthlete ? (
-        <AthleteDetail athlete={selectedAthlete} affiliations={affiliations} licences={licences} sexes={sexes} onUpdated={applySavedAthlete} onBack={() => setSelectedAthlete(null)} />
+        <AthleteDetail athlete={selectedAthlete} affiliations={affiliationRows} licences={licences} sexes={sexes} onRefreshAffiliations={() => refreshAffiliations(selectedAthlete.idAthlete)} onUpdated={applySavedAthlete} onBack={() => setSelectedAthlete(null)} />
       ) : (
         <>
           <div className="flex justify-end"><AthleteFormDialog sexes={sexes} onSaved={applySavedAthlete} /></div>
@@ -87,7 +107,7 @@ export function AthletesClient({
             onGenreChange={setGenre}
             onStatutChange={setStatut}
           />
-          <AthletesTable athletes={filtered} onViewAthlete={setSelectedAthlete} />
+          <AthletesTable athletes={filtered} licences={licences} onViewAthlete={openAthlete} />
         </>
       )}
     </div>

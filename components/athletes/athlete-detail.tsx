@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -32,14 +34,27 @@ function sexeLabel(value: string) {
   return shown(value)
 }
 
-export function AthleteDetail({ athlete, affiliations, licences, sexes, onUpdated, onBack }: {
+export function AthleteDetail({ athlete, affiliations, licences, sexes, onRefreshAffiliations, onUpdated, onBack }: {
   athlete: Athlete
   affiliations: AthleteAffiliation[]
   licences: AthleteLicence[]
   sexes: ActorSexOption[]
+  onRefreshAffiliations: () => Promise<void>
   onUpdated: (athlete: SavedAthlete) => void
   onBack: () => void
 }) {
+  const [refreshingAffiliations, setRefreshingAffiliations] = useState(false)
+  const refreshAffiliations = async () => {
+    setRefreshingAffiliations(true)
+    try {
+      await onRefreshAffiliations()
+      toast.success("Affiliations actualisées.")
+    } catch {
+      toast.error("Actualisation des affiliations impossible.")
+    } finally {
+      setRefreshingAffiliations(false)
+    }
+  }
   const avatarUrl = getActorAvatarUrl(athlete.avatarDriveUrl, athlete.avatarDriveId)
   const age = calculateAge(athlete.dateDeNaissance)
   const dateNaissance = formatSheetDate(athlete.dateDeNaissance)
@@ -125,7 +140,11 @@ export function AthleteDetail({ athlete, affiliations, licences, sexes, onUpdate
               </div>
             </section>
 
-            <AffiliationSection affiliations={affiliations} actorId={athlete.idAthlete} />
+            <AffiliationSection
+              affiliations={affiliations}
+              actorId={athlete.idAthlete}
+              action={<Button type="button" variant="outline" size="sm" disabled={refreshingAffiliations} onClick={refreshAffiliations}>{refreshingAffiliations ? "Actualisation..." : "Actualiser"}</Button>}
+            />
             <LicenceSection licences={licences} actorId={athlete.idAthlete} />
           </div>
         </CardContent>

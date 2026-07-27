@@ -17,12 +17,14 @@ export function ArbitresClient({ arbitres, licences, sexes }: {
   sexes: ActorSexOption[]
 }) {
   const [rows, setRows] = useState(arbitres)
+  const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedArbitre, setSelectedArbitre] = useState<Arbitre | null>(null)
   const [search, setSearch] = useState("")
   const [equipeNationale, setEquipeNationale] = useState("all")
   const [grade, setGrade] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(arbitres), [arbitres])
+  useEffect(() => setLicenceRows(licences), [licences])
 
   const applySavedArbitre = (saved: SavedArbitre) => {
     setRows((current) => {
@@ -52,37 +54,23 @@ export function ArbitresClient({ arbitres, licences, sexes }: {
       if (statut !== "all" && arbitre.statut !== statut) return false
 
       if (term) {
-        const haystack = [
-          arbitre.id,
-          arbitre.nomComplet,
-          arbitre.idNational,
-          arbitre.idFivb,
-          arbitre.sexe,
-          arbitre.nationalite,
-          arbitre.niveau,
-          arbitre.grade,
-          arbitre.telephone,
-          arbitre.email,
-          arbitre.adresse,
-          arbitre.dateAffiliation,
-          arbitre.equipeNational,
-          arbitre.dateHomologation,
-          arbitre.statut,
-        ]
+        const licenceNumbers = licenceRows
+          .filter((licence) => licence.actorId === arbitre.idArbitre)
+          .map((licence) => licence.numeroLicence)
           .join(" ")
-          .toLowerCase()
+        const haystack = `${arbitre.nomComplet} ${licenceNumbers}`.toLowerCase()
 
         if (!haystack.includes(term)) return false
       }
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, equipeNationale, grade, search, statut])
+  }, [rows, licenceRows, equipeNationale, grade, search, statut])
 
   return (
     <div className="space-y-6">
       {selectedArbitre ? (
-        <ArbitreDetail arbitre={selectedArbitre} licences={licences} sexes={sexes} onUpdated={applySavedArbitre} onBack={() => setSelectedArbitre(null)} />
+        <ArbitreDetail arbitre={selectedArbitre} licences={licenceRows} sexes={sexes} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedArbitre} onBack={() => setSelectedArbitre(null)} />
       ) : (
         <>
           <div className="flex justify-end"><ArbitreFormDialog sexes={sexes} onSaved={applySavedArbitre} /></div>
@@ -98,7 +86,7 @@ export function ArbitresClient({ arbitres, licences, sexes }: {
             onGradeChange={setGrade}
             onStatutChange={setStatut}
           />
-          <ArbitresTable arbitres={filteredArbitres} onViewArbitre={setSelectedArbitre} />
+          <ArbitresTable arbitres={filteredArbitres} licences={licenceRows} onViewArbitre={setSelectedArbitre} />
         </>
       )}
     </div>

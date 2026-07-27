@@ -12,9 +12,10 @@ import { AffiliationSection, LicenceSection } from "@/components/actors/record-s
 import { ArrowLeft } from "lucide-react"
 import { CoachFormDialog } from "@/components/coachs/coach-form-dialog"
 import type { SavedCoach } from "@/components/coachs/coach-form-dialog"
-import type { ActorSexOption } from "@/lib/actor-references"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
 import { CoachAffiliationFormDialog } from "@/components/coachs/coach-affiliation-form-dialog"
 import type { CoachStructureOption } from "@/components/coachs/coach-affiliation-form-dialog"
+import { CoachLicenceFormDialog } from "@/components/coachs/coach-licence-form-dialog"
 
 function shown(value: unknown, fallback = "Non renseigné") {
   const text = value === null || value === undefined ? "" : String(value).trim()
@@ -34,13 +35,16 @@ function sexeLabel(value: string) {
   return shown(value)
 }
 
-export function CoachDetail({ coach, affiliations, licences, sexes, structures, onAffiliationCreated, onUpdated, onBack }: {
+export function CoachDetail({ coach, affiliations, licences, sexes, structures, affiliationTypes, coachFunctions, onAffiliationCreated, onLicenceCreated, onUpdated, onBack }: {
   coach: Coach
   affiliations: CoachAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
   structures: CoachStructureOption[]
-  onAffiliationCreated: (affiliation: CoachAffiliation) => void
+  affiliationTypes: CoachReferenceOption[]
+  coachFunctions: CoachReferenceOption[]
+  onAffiliationCreated: (affiliation: CoachAffiliation, deactivatedAffiliationId: string) => void
+  onLicenceCreated: (licence: BaseActorLicence, deactivatedLicenceId: string) => void
   onUpdated: (coach: SavedCoach) => void
   onBack: () => void
 }) {
@@ -48,6 +52,9 @@ export function CoachDetail({ coach, affiliations, licences, sexes, structures, 
   const age = calculateAge(coach.dateNaissance)
   const formattedDate = formatSheetDate(coach.dateNaissance)
   const active = ["ACTIF", "ACTIVE"].includes(normalize(coach.statut))
+  const affiliationKind = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
+  const clubAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "CLUB")
+  const nationalTeamAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "EQUIPE_NATIONALE")
   const generalSections = [
     {
       title: "Identifiants",
@@ -129,10 +136,18 @@ export function CoachDetail({ coach, affiliations, licences, sexes, structures, 
             </section>
 
             <div>
-              <div className="flex justify-end"><CoachAffiliationFormDialog coach={coach} structures={structures} onSaved={onAffiliationCreated} /></div>
-              <AffiliationSection affiliations={affiliations} actorId={coach.idCoach} />
+              <div className="mb-5 flex justify-end"><CoachAffiliationFormDialog coach={coach} structures={structures} affiliationTypes={affiliationTypes} coachFunctions={coachFunctions} onSaved={onAffiliationCreated} /></div>
+              <div className="space-y-8">
+                <AffiliationSection affiliations={clubAffiliations} actorId={coach.idCoach} title="Affiliation club" description="Club actuel et historique des affiliations en club" currentDetail={(item) => ["Fonction", item.fonction]} />
+                <AffiliationSection affiliations={nationalTeamAffiliations} actorId={coach.idCoach} title="Affiliation équipe nationale" description="Équipe nationale actuelle et historique" currentDetail={(item) => ["Fonction", item.fonction]} />
+              </div>
             </div>
-            <LicenceSection licences={licences} actorId={coach.idCoach} />
+            <LicenceSection
+              licences={licences}
+              actorId={coach.idCoach}
+              showId={false}
+              action={<CoachLicenceFormDialog coach={coach} hasAffiliation={affiliations.some((item) => item.actorId === coach.idCoach)} onSaved={onLicenceCreated} />}
+            />
           </div>
         </CardContent>
       </Card>

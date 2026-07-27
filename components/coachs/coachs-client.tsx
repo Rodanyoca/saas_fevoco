@@ -8,9 +8,12 @@ import { CoachsTable } from "@/components/coachs/coachs-table"
 import { CoachDetail } from "@/components/coachs/coach-detail"
 import { CoachFormDialog } from "@/components/coachs/coach-form-dialog"
 import type { SavedCoach } from "@/components/coachs/coach-form-dialog"
-import type { ActorSexOption } from "@/lib/actor-references"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
 import { compareLabels } from "@/lib/sort-utils"
 import type { CoachStructureOption } from "@/components/coachs/coach-affiliation-form-dialog"
+
+const affiliationKind = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
 
 export function CoachsClient({
   coachs,
@@ -18,21 +21,27 @@ export function CoachsClient({
   licences,
   sexes,
   structures,
+  affiliationTypes,
+  coachFunctions,
 }: {
   coachs: Coach[]
   affiliations: CoachAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
   structures: CoachStructureOption[]
+  affiliationTypes: CoachReferenceOption[]
+  coachFunctions: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(coachs)
   const [affiliationRows, setAffiliationRows] = useState(affiliations)
+  const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null)
   const [search, setSearch] = useState("")
   const [niveau, setNiveau] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(coachs), [coachs])
   useEffect(() => setAffiliationRows(affiliations), [affiliations])
+  useEffect(() => setLicenceRows(licences), [licences])
 
   const applySavedCoach = (saved: SavedCoach) => {
     setRows((current) => {
@@ -48,6 +57,20 @@ export function CoachsClient({
       : current)
   }
 
+  const applyCreatedAffiliation = (affiliation: CoachAffiliation, deactivatedId: string) => {
+    const closesPreviousClub = affiliationKind(affiliation.typeAffiliation) === "CLUB"
+    setAffiliationRows((current) => [
+      affiliation,
+      ...current.map((item) => item.idAffiliation === deactivatedId
+        ? {
+            ...item,
+            statutAffiliation: "inactif",
+            ...(closesPreviousClub ? { dateFin: affiliation.dateDebut } : {}),
+          }
+        : item),
+    ])
+  }
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
 
@@ -56,19 +79,22 @@ export function CoachsClient({
       if (statut !== "all" && coach.statut !== statut) return false
 
       if (s) {
-        const haystack =
-          `${coach.idCoach} ${coach.nomComplet} ${coach.idNational} ${coach.idFivb} ${coach.sexe} ${coach.nationalite} ${coach.telephone} ${coach.email} ${coach.adresse} ${coach.statut} ${coach.niveau}`.toLowerCase()
+        const licenceNumbers = licenceRows
+          .filter((licence) => licence.actorId === coach.idCoach)
+          .map((licence) => licence.numeroLicence)
+          .join(" ")
+        const haystack = `${coach.nomComplet} ${licenceNumbers}`.toLowerCase()
         if (!haystack.includes(s)) return false
       }
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, niveau, search, statut])
+  }, [rows, licenceRows, niveau, search, statut])
 
   return (
     <div className="space-y-6">
       {selectedCoach ? (
-        <CoachDetail coach={selectedCoach} affiliations={affiliationRows} licences={licences} sexes={sexes} structures={structures} onAffiliationCreated={(affiliation) => setAffiliationRows((current) => [affiliation, ...current])} onUpdated={applySavedCoach} onBack={() => setSelectedCoach(null)} />
+        <CoachDetail coach={selectedCoach} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} structures={structures} affiliationTypes={affiliationTypes} coachFunctions={coachFunctions} onAffiliationCreated={applyCreatedAffiliation} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedCoach} onBack={() => setSelectedCoach(null)} />
       ) : (
         <>
           <div className="flex justify-end"><CoachFormDialog sexes={sexes} onSaved={applySavedCoach} /></div>
@@ -82,7 +108,7 @@ export function CoachsClient({
             onNiveauChange={setNiveau}
             onStatutChange={setStatut}
           />
-          <CoachsTable coachs={filtered} onViewCoach={setSelectedCoach} />
+          <CoachsTable coachs={filtered} licences={licenceRows} onViewCoach={setSelectedCoach} />
         </>
       )}
     </div>
