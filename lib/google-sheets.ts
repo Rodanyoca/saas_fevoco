@@ -3,6 +3,27 @@ export { asText, normalize } from "@/lib/sheet-values"
 
 export type SheetRow = Record<string, string | number | boolean | null>
 
+type SheetsClient = Awaited<ReturnType<typeof createSheetsClient>>
+let sharedSheetsClient: Promise<SheetsClient> | undefined
+
+async function createSheetsClient() {
+  const { google } = await import("googleapis")
+  const auth = new google.auth.JWT({
+    email: env.googleSheets.clientEmail,
+    key: env.googleSheets.privateKey,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  })
+  return google.sheets({ version: "v4", auth })
+}
+
+function sheetsClient(): Promise<SheetsClient> {
+  sharedSheetsClient ??= createSheetsClient().catch((error) => {
+    sharedSheetsClient = undefined
+    throw error
+  })
+  return sharedSheetsClient
+}
+
 function normalizeHeader(value: unknown): string {
   return String(value ?? "")
     .trim()
@@ -41,15 +62,7 @@ async function fetchSheetDataFrom(
   }
 
   try {
-    const { google } = await import("googleapis")
-
-    const auth = new google.auth.JWT({
-      email: env.googleSheets.clientEmail,
-      key: env.googleSheets.privateKey,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    })
-
-    const sheets = google.sheets({ version: "v4", auth })
+    const sheets = await sheetsClient()
 
     const res = await withTimeout(
       sheets.spreadsheets.values.get({
@@ -111,15 +124,7 @@ export async function getSheetCell(range: string): Promise<string> {
   if (!isGoogleSheetsConfigured()) return ""
 
   try {
-    const { google } = await import("googleapis")
-
-    const auth = new google.auth.JWT({
-      email: env.googleSheets.clientEmail,
-      key: env.googleSheets.privateKey,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    })
-
-    const sheets = google.sheets({ version: "v4", auth })
+    const sheets = await sheetsClient()
 
     const res = await withTimeout(
       sheets.spreadsheets.values.get({
@@ -149,13 +154,7 @@ function columnLetter(index: number): string {
 }
 
 async function writableSheets() {
-  const { google } = await import("googleapis")
-  const auth = new google.auth.JWT({
-    email: env.googleSheets.clientEmail,
-    key: env.googleSheets.privateKey,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-  })
-  return google.sheets({ version: "v4", auth })
+  return sheetsClient()
 }
 
 export async function appendSheetRecord(
