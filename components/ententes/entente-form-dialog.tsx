@@ -18,10 +18,12 @@ type SavedEntente = Pick<Entente, "idEntente" | "codeEntente" | "nomEntente" | "
 function EntenteFormDialog({
   entente,
   ligues,
+  lockedLigue,
   onSaved,
 }: {
   entente?: Entente
   ligues: Ligue[]
+  lockedLigue?: Ligue
   onSaved: (entente: SavedEntente) => void
 }) {
   const editing = Boolean(entente)
@@ -32,7 +34,7 @@ function EntenteFormDialog({
     codeEntente: entente?.codeEntente ?? "",
     nomEntente: entente?.nomEntente ?? "",
     pseudoEntente: entente?.pseudoEntente ?? "",
-    idLigue: entente?.idLigue ?? "",
+    idLigue: lockedLigue?.idLigue ?? entente?.idLigue ?? "",
     emailEntente: entente?.emailEntente ?? "",
     statut: entente?.statut || "active",
     observations: entente?.observations ?? "",
@@ -92,7 +94,7 @@ function EntenteFormDialog({
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>Ligue *</Label>
-              <Select required value={form.idLigue} onValueChange={(value) => setForm({ ...form, idLigue: value })}>
+              <Select required disabled={Boolean(lockedLigue)} value={form.idLigue} onValueChange={(value) => setForm({ ...form, idLigue: value })}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner une ligue" /></SelectTrigger>
                 <SelectContent>{ligues.map((ligue) => <SelectItem key={ligue.idLigue} value={ligue.idLigue}>{ligue.nomLigue}</SelectItem>)}</SelectContent>
               </Select>
@@ -120,12 +122,12 @@ function EntenteFormDialog({
   )
 }
 
-export function CreateEntenteDialog({ ligues, onSaved }: { ligues: Ligue[]; onSaved: (entente: SavedEntente) => void }) {
-  return <EntenteFormDialog ligues={ligues} onSaved={onSaved} />
+export function CreateEntenteDialog({ ligues, lockedLigue, onSaved }: { ligues: Ligue[]; lockedLigue?: Ligue; onSaved: (entente: SavedEntente) => void }) {
+  return <EntenteFormDialog ligues={ligues} lockedLigue={lockedLigue} onSaved={onSaved} />
 }
 
-export function EditEntenteDialog({ entente, ligues, onSaved }: { entente: Entente; ligues: Ligue[]; onSaved: (entente: SavedEntente) => void }) {
-  return <EntenteFormDialog entente={entente} ligues={ligues} onSaved={onSaved} />
+export function EditEntenteDialog({ entente, ligues, lockedLigue, onSaved }: { entente: Entente; ligues: Ligue[]; lockedLigue?: Ligue; onSaved: (entente: SavedEntente) => void }) {
+  return <EntenteFormDialog entente={entente} ligues={ligues} lockedLigue={lockedLigue} onSaved={onSaved} />
 }
 
 export type { SavedEntente }

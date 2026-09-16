@@ -69,8 +69,8 @@ export function ClubsTable({ clubs, onViewClub }: ClubsTableProps) {
                       variant={club.statut === "actif" ? "default" : "secondary"}
                       className={
                         club.statut === "actif"
-                          ? "bg-green-100 text-green-800 hover:bg-green-100"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-100"
+                          ? "bg-success/10 text-success hover:bg-success/15"
+                          : "bg-muted text-muted-foreground hover:bg-muted"
                       }
                     >
                       {club.statut === "actif" ? "Actif" : "Inactif"}

@@ -216,9 +216,9 @@ export function EquipeNationaleClient({
 
   const cards = [
     { label: "Equipes", value: equipes.length, icon: Target, color: "bg-primary/10 text-primary" },
-    { label: "Equipes actives", value: equipesActives, icon: Trophy, color: "bg-green-500/10 text-green-700" },
-    { label: "Membres", value: selections.length, icon: Users, color: "bg-blue-500/10 text-blue-700" },
-    { label: "Membres actifs", value: selectionsActives, icon: Medal, color: "bg-amber-500/10 text-amber-700" },
+    { label: "Equipes actives", value: equipesActives, icon: Trophy, color: "bg-success/10 text-success" },
+    { label: "Membres", value: selections.length, icon: Users, color: "bg-info/10 text-info" },
+    { label: "Membres actifs", value: selectionsActives, icon: Medal, color: "bg-warning/15 text-warning-foreground" },
   ]
 
   return (

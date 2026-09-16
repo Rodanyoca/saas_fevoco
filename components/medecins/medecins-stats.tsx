@@ -22,22 +22,22 @@ export function MedecinsStats({ medecins }: { medecins: Medecin[] }) {
       title: "Actifs",
       value: medecinsActifs,
       icon: BadgeCheck,
-      color: "text-green-700",
-      bgColor: "bg-green-500/10",
+      color: "text-success",
+      bgColor: "bg-success/10",
     },
     {
       title: "Specialites",
       value: specialites,
       icon: Users,
-      color: "text-blue-700",
-      bgColor: "bg-blue-500/10",
+      color: "text-info",
+      bgColor: "bg-info/10",
     },
     {
       title: "Equipe nationale",
       value: equipeNationale,
       icon: Trophy,
-      color: "text-amber-700",
-      bgColor: "bg-amber-500/10",
+      color: "text-warning-foreground",
+      bgColor: "bg-warning/15",
     },
   ]
 

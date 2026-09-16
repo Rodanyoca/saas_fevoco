@@ -16,12 +16,14 @@ export function LiguesClient({
   clubs,
   athletes,
   provinceOptions,
+  relationsReady,
 }: {
   ligues: Ligue[]
   ententes: Entente[]
   clubs: Club[]
   athletes: Athlete[]
   provinceOptions: Province[]
+  relationsReady: boolean
 }) {
   const [rows, setRows] = useState(ligues)
   const [search, setSearch] = useState("")
@@ -62,7 +64,7 @@ export function LiguesClient({
 
       if (s) {
         const haystack =
-          `${ligue.id} ${ligue.nom} ${ligue.provinceNom} ${ligue.emailLigue} ${ligue.statut}`.toLowerCase()
+          `${ligue.id} ${ligue.nom} ${ligue.provinceNom} ${ligue.presidentNom} ${ligue.emailLigue} ${ligue.statut}`.toLowerCase()
         if (!haystack.includes(s)) return false
       }
 
@@ -80,6 +82,7 @@ export function LiguesClient({
         provinces={provinceOptions}
         onBack={() => setSelectedLigue(null)}
         onUpdated={applySavedLigue}
+        relationsReady={relationsReady}
       />
     )
   }
@@ -105,6 +108,7 @@ export function LiguesClient({
         ligues={filtered}
         totalCount={filtered.length}
         onViewLigue={setSelectedLigue}
+        relationsReady={relationsReady}
       />
     </div>
   )

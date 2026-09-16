@@ -27,7 +27,7 @@ export default async function EquipeNationalePage() {
       <div className="space-y-6 p-6">
         <Header title="Leopards RDC" subtitle="Equipes nationales et membres selectionnes" />
         {!isEquipeNationaleGoogleSheetsConfigured() && (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm text-warning-foreground" role="status">
             Ajoutez <code>FEVOCO_EQUIPE_NATIONALE_SPREADSHEET_ID</code> dans votre environnement.
           </div>
         )}

@@ -71,9 +71,9 @@ export default async function SuiviEquipeNationalePage() {
 
   const cards = [
     { label: "Matchs", value: resultats.length, icon: Target, color: "bg-primary/10 text-primary" },
-    { label: "Victoires", value: victoires, icon: Trophy, color: "bg-green-500/10 text-green-700" },
-    { label: "Autres resultats", value: autresResultats, icon: Medal, color: "bg-slate-500/10 text-slate-700" },
-    { label: "Points RDC", value: pointsRdc, icon: CalendarDays, color: "bg-amber-500/10 text-amber-700" },
+    { label: "Victoires", value: victoires, icon: Trophy, color: "bg-success/10 text-success" },
+    { label: "Autres resultats", value: autresResultats, icon: Medal, color: "bg-muted text-muted-foreground" },
+    { label: "Points RDC", value: pointsRdc, icon: CalendarDays, color: "bg-warning/15 text-warning-foreground" },
   ]
 
   return (

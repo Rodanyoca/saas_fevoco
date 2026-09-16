@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body className={`${geist.className} ${geistMono.className} font-sans antialiased`}>
         {children}
         <Toaster />

@@ -22,12 +22,12 @@ function formatDate(value: string) {
 function getStatusClass(statut: string) {
   const value = statut.trim().toLowerCase()
   if (value === "en cours" || value === "active" || value === "actif") {
-    return "bg-green-100 text-green-800 hover:bg-green-100"
+    return "bg-success/10 text-success hover:bg-success/15"
   }
   if (value === "terminee" || value === "termine") {
-    return "bg-slate-100 text-slate-700 hover:bg-slate-100"
+    return "bg-muted text-muted-foreground hover:bg-muted"
   }
-  return "bg-blue-100 text-blue-800 hover:bg-blue-100"
+  return "bg-info/10 text-info hover:bg-info/15"
 }
 
 export function CompetitionsTable({

@@ -67,7 +67,7 @@ const groupedNavigation = [
   },
 ]
 
-export function Sidebar() {
+export function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
@@ -88,10 +88,12 @@ export function Sidebar() {
           "flex items-center gap-3 rounded-md text-sm font-medium transition-colors",
           nested && !collapsed ? "px-3 py-2 pl-9" : "px-3 py-2.5",
           isActive
-            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+            ? "border-l-4 border-brand-gold bg-sidebar-primary pl-2 text-sidebar-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]"
             : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         )}
         title={collapsed ? item.name : undefined}
+        aria-current={isActive ? "page" : undefined}
+        onClick={onNavigate}
       >
         <item.icon className="h-5 w-5 flex-shrink-0" />
         {!collapsed && <span>{item.name}</span>}
@@ -102,27 +104,30 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "relative flex h-screen flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300",
+        "relative flex h-screen flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Header avec logo */}
-      <div className="flex shrink-0 items-center gap-3 border-b border-sidebar-border p-4">
-        <Image
-          src="/logo-fevoco.png"
-          alt="FEVOCO"
-          width={40}
-          height={40}
-          className="flex-shrink-0"
-        />
+      <div className="relative flex shrink-0 items-center gap-3 border-b border-sidebar-border px-4 py-5">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-md bg-white p-1 shadow-sm ring-1 ring-white/20">
+          <Image
+            src="/logo-fevoco.png"
+            alt="Logo officiel FEVOCO"
+            width={40}
+            height={40}
+            className="size-full object-contain"
+          />
+        </div>
         {!collapsed && (
           <div className="flex flex-col min-w-0">
-            <span className="font-bold text-sm tracking-wide text-sidebar-foreground">FEVOCO</span>
-            <span className="text-[10px] text-sidebar-foreground/70 truncate">
+            <span className="text-sm font-bold tracking-[0.12em] text-sidebar-foreground">FEVOCO</span>
+            <span className="mt-0.5 truncate text-[10px] leading-tight text-sidebar-foreground/65">
               Federation de Volleyball du Congo
             </span>
           </div>
         )}
+        <span className="fevoco-brand-line absolute inset-x-0 bottom-0 h-0.5" aria-hidden="true" />
       </div>
 
       {/* Navigation principale */}

@@ -31,7 +31,7 @@ export default async function CompetitionsPage() {
           subtitle="Vue liste et details des competitions FEVOCO"
         />
         {!isCompetitionsGoogleSheetsConfigured() && (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm text-warning-foreground" role="status">
             Le classeur Compétitions n’est pas configuré. Ajoutez
             {" "}<code>FEVOCO_COMPETITIONS_SPREADSHEET_ID</code> dans votre environnement.
           </div>

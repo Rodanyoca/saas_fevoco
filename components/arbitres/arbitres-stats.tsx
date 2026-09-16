@@ -21,19 +21,19 @@ export function ArbitresStats({ arbitres }: { arbitres: Arbitre[] }) {
       label: "Actifs",
       value: arbitresActifs,
       icon: Shield,
-      color: "bg-green-500/10 text-green-700",
+      color: "bg-success/10 text-success",
     },
     {
       label: "Grades",
       value: grades,
       icon: Award,
-      color: "bg-blue-500/10 text-blue-700",
+      color: "bg-info/10 text-info",
     },
     {
       label: "Équipe nationale",
       value: equipeNationale,
       icon: Trophy,
-      color: "bg-amber-500/10 text-amber-700",
+      color: "bg-warning/15 text-warning-foreground",
     },
   ]
 

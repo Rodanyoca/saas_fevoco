@@ -49,7 +49,7 @@ export function KpiCard({ title, value, icon: Icon, subIndicators, trend, varian
             {trend && (
               <p className={cn(
                 "text-xs mt-1",
-                trend.positive ? "text-green-600" : "text-red-500"
+                trend.positive ? "text-success" : "text-destructive"
               )}>
                 {trend.positive ? "+" : ""}{trend.value}% vs mois dernier
               </p>

@@ -25,19 +25,19 @@ export function OfficielsStats({ officiels }: { officiels: Officiel[] }) {
       label: "Actifs",
       value: officielsActifs,
       icon: UserCheck,
-      color: "bg-green-500/10 text-green-700",
+      color: "bg-success/10 text-success",
     },
     {
       label: "Fonctions",
       value: fonctionsUniques,
       icon: Briefcase,
-      color: "bg-blue-500/10 text-blue-700",
+      color: "bg-info/10 text-info",
     },
     {
       label: "Entités fédérales",
       value: entitesFederales,
       icon: Building2,
-      color: "bg-amber-500/10 text-amber-700",
+      color: "bg-warning/15 text-warning-foreground",
     },
   ]
 

@@ -21,8 +21,8 @@ export function CoachsStats({ coachs }: { coachs: Coach[] }) {
       value: coachsActifs,
       icon: UserCheck,
       description: "En activité",
-      color: "text-green-600",
-      bgColor: "bg-green-500/10",
+      color: "text-success",
+      bgColor: "bg-success/10",
     },
     {
       title: "Certification Nationale",

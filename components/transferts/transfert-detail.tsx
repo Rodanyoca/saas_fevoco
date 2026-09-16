@@ -14,11 +14,11 @@ function formatDate(value: string) {
 function getStatusClass(statut: string) {
   const value = statut.trim().toLowerCase()
   if (value === "valide" || value === "validee" || value === "active" || value === "actif") {
-    return "bg-green-100 text-green-800 hover:bg-green-100"
+    return "bg-success/10 text-success hover:bg-success/15"
   }
-  if (value === "en attente") return "bg-amber-100 text-amber-800 hover:bg-amber-100"
-  if (value === "rejete" || value === "refuse") return "bg-red-100 text-red-800 hover:bg-red-100"
-  return "bg-slate-100 text-slate-700 hover:bg-slate-100"
+  if (value === "en attente") return "bg-warning/15 text-warning-foreground hover:bg-warning/20"
+  if (value === "rejete" || value === "refuse") return "bg-destructive/10 text-destructive hover:bg-destructive/15"
+  return "bg-muted text-muted-foreground hover:bg-muted"
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {

@@ -23,8 +23,8 @@ export function AthletesStats({ athletes }: { athletes: Athlete[] }) {
       value: actifs.toString(),
       icon: UserCheck,
       description: "En activite",
-      color: "text-green-600",
-      bgColor: "bg-green-500/10",
+      color: "text-success",
+      bgColor: "bg-success/10",
     },
     {
       title: "Inactifs",

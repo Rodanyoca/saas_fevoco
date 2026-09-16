@@ -40,12 +40,12 @@ function isIndoor(discipline: string) {
 function getStatusClass(statut: string) {
   const value = statut.trim().toLowerCase()
   if (value === "qualifie" || value === "gagne" || value === "vainqueur" || value === "actif") {
-    return "bg-green-100 text-green-800 hover:bg-green-100"
+    return "bg-success/10 text-success hover:bg-success/15"
   }
   if (value === "perdu" || value === "elimine" || value === "forfait") {
-    return "bg-red-100 text-red-800 hover:bg-red-100"
+    return "bg-destructive/10 text-destructive hover:bg-destructive/15"
   }
-  return "bg-slate-100 text-slate-700 hover:bg-slate-100"
+  return "bg-muted text-muted-foreground hover:bg-muted"
 }
 
 function InfoField({ label, value }: { label: string; value: string }) {

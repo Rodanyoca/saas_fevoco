@@ -29,22 +29,22 @@ export function TransfertsStats({ transferts }: { transferts: Transfert[] }) {
       label: "Valides",
       value: transferts.filter((transfert) => isValidated(transfert.statut)).length,
       icon: BadgeCheck,
-      color: "text-green-700",
-      bg: "bg-green-500/10",
+      color: "text-success",
+      bg: "bg-success/10",
     },
     {
       label: "En attente",
       value: transferts.filter((transfert) => isPending(transfert.statut)).length,
       icon: Clock,
-      color: "text-amber-700",
-      bg: "bg-amber-500/10",
+      color: "text-warning-foreground",
+      bg: "bg-warning/15",
     },
     {
       label: "Rejetes",
       value: transferts.filter((transfert) => isRejected(transfert.statut)).length,
       icon: XCircle,
-      color: "text-red-700",
-      bg: "bg-red-500/10",
+      color: "text-destructive",
+      bg: "bg-destructive/10",
     },
   ]
 

@@ -20,8 +20,8 @@ export function EntentesStats({ ententes }: { ententes: Entente[] }) {
       title: "Ententes Actives",
       value: ententesActives,
       icon: CheckCircle,
-      color: "text-green-600",
-      bgColor: "bg-green-100",
+      color: "text-success",
+      bgColor: "bg-success/10",
     },
     {
       title: "Clubs Affiliés",

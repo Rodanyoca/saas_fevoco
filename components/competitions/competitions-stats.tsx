@@ -28,22 +28,22 @@ export function CompetitionsStats({
       label: "En cours",
       value: competitions.filter((competition) => isActive(competition.statutCompetition)).length,
       icon: BadgeCheck,
-      color: "text-green-700",
-      bg: "bg-green-500/10",
+      color: "text-success",
+      bg: "bg-success/10",
     },
     {
       label: "Matchs",
       value: results.length,
       icon: ClipboardList,
-      color: "text-blue-700",
-      bg: "bg-blue-500/10",
+      color: "text-info",
+      bg: "bg-info/10",
     },
     {
       label: "Unites",
       value: unites.length,
       icon: UserRound,
-      color: "text-amber-700",
-      bg: "bg-amber-500/10",
+      color: "text-warning-foreground",
+      bg: "bg-warning/15",
     },
   ]
 
