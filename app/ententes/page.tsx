@@ -37,7 +37,7 @@ export default async function EntentesPage() {
       />
 
       <div className="p-6 space-y-6">
-        <EntentesClient ententes={ententesWithCounts} ligues={ligues} />
+        <EntentesClient ententes={ententesWithCounts} ligues={ligues} clubs={clubs} athletes={athletes} />
       </div>
     </DashboardLayout>
   )

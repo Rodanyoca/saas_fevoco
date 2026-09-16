@@ -1,19 +1,21 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import type { Entente, Ligue } from "@/lib/types"
+import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
 import type { SavedEntente } from "@/components/ententes/entente-form-dialog"
 import { CreateEntenteDialog } from "@/components/ententes/entente-form-dialog"
 import { EntentesFilters } from "@/components/ententes/ententes-filters"
 import { EntentesStats } from "@/components/ententes/ententes-stats"
 import { EntentesTable } from "@/components/ententes/ententes-table"
 import { compareLabels } from "@/lib/sort-utils"
+import { EntenteDetail } from "@/components/ententes/entente-detail"
 
-export function EntentesClient({ ententes, ligues }: { ententes: Entente[]; ligues: Ligue[] }) {
+export function EntentesClient({ ententes, ligues, clubs, athletes }: { ententes: Entente[]; ligues: Ligue[]; clubs: Club[]; athletes: Athlete[] }) {
   const [rows, setRows] = useState(ententes)
   const [search, setSearch] = useState("")
   const [ligue, setLigue] = useState("all")
   const [statut, setStatut] = useState("all")
+  const [selectedEntente, setSelectedEntente] = useState<Entente | null>(null)
 
   useEffect(() => setRows(ententes), [ententes])
 
@@ -60,6 +62,10 @@ export function EntentesClient({ ententes, ligues }: { ententes: Entente[]; ligu
     )
   }, [rows, ligue, search, statut])
 
+  if (selectedEntente) {
+    return <EntenteDetail entente={selectedEntente} ligues={ligues} clubs={clubs} athletes={athletes} onBack={() => setSelectedEntente(null)} onUpdated={(saved) => { applySavedEntente(saved); setSelectedEntente((current) => current ? { ...current, ...saved, id: saved.idEntente, nom: saved.nomEntente, pseudo: saved.pseudoEntente, ligueId: saved.idLigue, ligueNom: saved.nomLigue } : current) }} />
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -76,7 +82,7 @@ export function EntentesClient({ ententes, ligues }: { ententes: Entente[]; ligu
         onStatutChange={setStatut}
       />
 
-      <EntentesTable ententes={filtered} ligues={ligues} totalCount={filtered.length} onSaved={applySavedEntente} />
+      <EntentesTable ententes={filtered} ligues={ligues} totalCount={filtered.length} onSaved={applySavedEntente} onView={setSelectedEntente} />
     </div>
   )
 }
