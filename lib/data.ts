@@ -68,7 +68,7 @@ export async function getProvinces(): Promise<Province[]> {
 
 export async function getProvinceOptions(): Promise<Province[]> {
   const rows = await getSheetDataFrom(
-    env.googleSheets.territorialSpreadsheetId,
+    env.googleSheets.referentielsSpreadsheetId,
     "PROVINCES!A:B",
   )
   return rows
