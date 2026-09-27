@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import type { Athlete, AthleteAffiliation, AthleteLicence } from "@/lib/types"
-import { AthletesStats } from "@/components/athletes/athletes-stats"
 import { AthletesFilters } from "@/components/athletes/athletes-filters"
 import { AthletesTable } from "@/components/athletes/athletes-table"
 import { AthleteDetail } from "@/components/athletes/athlete-detail"
@@ -31,6 +30,16 @@ export function AthletesClient({
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(athletes), [athletes])
   useEffect(() => setAffiliationRows(affiliations), [affiliations])
+  useEffect(() => {
+    const returnToList = (event: Event) => {
+      if ((event as CustomEvent<string>).detail === "/athletes") {
+        setSelectedAthlete(null)
+      }
+    }
+
+    window.addEventListener("fevoco:navigate", returnToList)
+    return () => window.removeEventListener("fevoco:navigate", returnToList)
+  }, [])
 
   const refreshAffiliations = async (athleteId: string) => {
     const response = await fetch(`/api/athletes/${encodeURIComponent(athleteId)}/affiliations`, { cache: "no-store" })
@@ -76,17 +85,13 @@ export function AthletesClient({
       if (statut !== "all" && athlete.statut !== statut) return false
 
       if (s) {
-        const licenceNumbers = licences
-          .filter((licence) => licence.actorId === athlete.idAthlete)
-          .map((licence) => licence.numeroLicence)
-          .join(" ")
-        const haystack = `${athlete.nomComplet} ${licenceNumbers}`.toLowerCase()
+        const haystack = `${athlete.idAthlete} ${athlete.nomComplet} ${athlete.idNational} ${athlete.idFivb}`.toLowerCase()
         if (!haystack.includes(s)) return false
       }
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, licences, club, genre, search, statut])
+  }, [rows, club, genre, search, statut])
 
   return (
     <div className="space-y-6">
@@ -95,7 +100,6 @@ export function AthletesClient({
       ) : (
         <>
           <div className="flex justify-end"><AthleteFormDialog sexes={sexes} onSaved={applySavedAthlete} /></div>
-          <AthletesStats athletes={rows} />
           <AthletesFilters
             athletes={rows}
             search={search}
@@ -107,7 +111,7 @@ export function AthletesClient({
             onGenreChange={setGenre}
             onStatutChange={setStatut}
           />
-          <AthletesTable athletes={filtered} licences={licences} onViewAthlete={openAthlete} />
+          <AthletesTable athletes={filtered} onViewAthlete={openAthlete} />
         </>
       )}
     </div>

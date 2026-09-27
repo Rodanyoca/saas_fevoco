@@ -18,6 +18,7 @@ import type {
   MedecinAffiliation,
   OfficielAffiliation,
 } from "@/lib/types"
+import { getOfficialActorType } from "@/lib/actor-references"
 
 async function rows(sheet: string) {
   if (!env.googleSheets.affiliationsSpreadsheetId) return []
@@ -30,8 +31,11 @@ export const getCoachAffiliations = async (): Promise<CoachAffiliation[]> =>
   (await rows("COACH_AFFILIATIONS")).map(mapCoachAffiliation).filter((item) => item.actorId)
 export const getMedecinAffiliations = async (): Promise<MedecinAffiliation[]> =>
   (await rows("MEDECIN_AFFILIATIONS")).map(mapMedecinAffiliation).filter((item) => item.actorId)
-export const getOfficielAffiliations = async (): Promise<OfficielAffiliation[]> =>
-  (await rows("OFFICIELS_AFFILIATIONS")).map(mapOfficielAffiliation).filter((item) => item.actorId)
+export const getOfficielAffiliations = async (): Promise<OfficielAffiliation[]> => {
+  const [mandates, actorType] = await Promise.all([rows("MANDATS"), getOfficialActorType()])
+  if (!actorType) return []
+  return mandates.map(mapOfficielAffiliation).filter((item) => item.actorId && item.idTypeActeur === actorType.id)
+}
 
 export const getAthleteLicences = async (): Promise<AthleteLicence[]> =>
   (await rows("ATHLETE_LICENCE")).map(mapAthleteLicence).filter((item) => item.idLicence && item.actorId)

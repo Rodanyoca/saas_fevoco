@@ -43,6 +43,25 @@ function toCellValue(value: unknown): string | number | boolean | null {
   return s
 }
 
+function valuesToRows(values: unknown[][]): SheetRow[] {
+  if (values.length === 0) return []
+  const headers = (values[0] ?? []).map(normalizeHeader)
+  const mapped: SheetRow[] = []
+  for (const row of values.slice(1)) {
+    const obj: SheetRow = {}
+    let hasAnyValue = false
+    for (let i = 0; i < headers.length; i++) {
+      const key = headers[i]
+      if (!key) continue
+      const cellValue = toCellValue(row?.[i])
+      obj[key] = cellValue
+      if (cellValue !== null && cellValue !== "") hasAnyValue = true
+    }
+    if (hasAnyValue) mapped.push(obj)
+  }
+  return mapped
+}
+
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   let timeoutId: NodeJS.Timeout | undefined
   const timeoutPromise = new Promise<never>((_, reject) => {
@@ -75,36 +94,30 @@ async function fetchSheetDataFrom(
       20_000,
     )
 
-    const values = res.data.values ?? []
-    if (values.length === 0) return []
-
-    const rawHeaders = values[0] ?? []
-    const headers = rawHeaders.map(normalizeHeader)
-
-    const rows = values.slice(1)
-
-    const mapped: SheetRow[] = []
-
-    for (const row of rows) {
-      const obj: SheetRow = {}
-      let hasAnyValue = false
-
-      for (let i = 0; i < headers.length; i++) {
-        const key = headers[i]
-        if (!key) continue
-        const cellValue = toCellValue(row?.[i])
-        obj[key] = cellValue
-        if (cellValue !== null && cellValue !== "") hasAnyValue = true
-      }
-
-      if (hasAnyValue) mapped.push(obj)
-    }
-
-    return mapped
+    return valuesToRows((res.data.values ?? []) as unknown[][])
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Erreur inconnue"
     console.warn(`Google Sheets indisponible pour ${range}: ${reason}`)
     throw new Error(`Impossible de lire Google Sheets (${range}) : ${reason}`, { cause: error })
+  }
+}
+
+async function fetchSheetsDataFrom(spreadsheetId: string, ranges: string[]) {
+  if (!spreadsheetId.trim() || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) return {}
+  try {
+    const sheets = await sheetsClient()
+    const response = await withTimeout(
+      sheets.spreadsheets.values.batchGet({ spreadsheetId, ranges }),
+      20_000,
+    )
+    return Object.fromEntries(ranges.map((range, index) => [
+      range.split("!", 1)[0],
+      valuesToRows((response.data.valueRanges?.[index]?.values ?? []) as unknown[][]),
+    ])) as Record<string, SheetRow[]>
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Erreur inconnue"
+    console.warn(`Google Sheets indisponible pour la lecture groupée: ${reason}`)
+    throw new Error(`Impossible de lire Google Sheets en lecture groupée : ${reason}`, { cause: error })
   }
 }
 
@@ -122,6 +135,22 @@ export async function getSheetDataFrom(
     {
       revalidate: READ_CACHE_TTL_SECONDS,
       tags: [sheetCacheTag(spreadsheetId, sheetName)],
+    },
+  )()
+}
+
+export async function getSheetsDataFrom(
+  spreadsheetId: string,
+  ranges: string[],
+): Promise<Record<string, SheetRow[]>> {
+  if (!spreadsheetId.trim() || !ranges.length || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) return {}
+  const stableRanges = [...ranges]
+  return unstable_cache(
+    () => fetchSheetsDataFrom(spreadsheetId, stableRanges),
+    ["google-sheets-batch", spreadsheetId, ...stableRanges],
+    {
+      revalidate: READ_CACHE_TTL_SECONDS,
+      tags: stableRanges.map((range) => sheetCacheTag(spreadsheetId, range.split("!", 1)[0])),
     },
   )()
 }
@@ -180,6 +209,7 @@ export async function appendSheetRecord(
   spreadsheetId: string,
   sheetName: string,
   record: Record<string, string>,
+  insertDataOption: "INSERT_ROWS" | "OVERWRITE" = "INSERT_ROWS",
 ): Promise<void> {
   const sheets = await writableSheets()
   const headerResult = await sheets.spreadsheets.values.get({
@@ -192,7 +222,7 @@ export async function appendSheetRecord(
     spreadsheetId,
     range: `${sheetName}!A:${columnLetter(headers.length - 1)}`,
     valueInputOption: "USER_ENTERED",
-    insertDataOption: "INSERT_ROWS",
+    insertDataOption,
     requestBody: { values: [headers.map((header) => record[header] ?? "")] },
   })
   invalidateSheet(spreadsheetId, sheetName)
@@ -234,4 +264,51 @@ export async function updateSheetRecordById(
     requestBody: { values: [row] },
   })
   invalidateSheet(spreadsheetId, sheetName)
+}
+
+export async function formatSheetDateColumn(
+  spreadsheetId: string,
+  sheetName: string,
+  headerName: string,
+  pattern = "dd/mm/yyyy",
+): Promise<void> {
+  const sheets = await writableSheets()
+  const [spreadsheet, headerResult] = await Promise.all([
+    sheets.spreadsheets.get({
+      spreadsheetId,
+      fields: "sheets.properties(sheetId,title)",
+    }),
+    sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!1:1`,
+    }),
+  ])
+  const sheetId = spreadsheet.data.sheets?.find((sheet) => sheet.properties?.title === sheetName)?.properties?.sheetId
+  if (sheetId === null || sheetId === undefined) throw new Error(`Onglet ${sheetName} introuvable`)
+
+  const headers = (headerResult.data.values?.[0] ?? []).map(normalizeHeader)
+  const columnIndex = headers.indexOf(normalizeHeader(headerName))
+  if (columnIndex < 0) throw new Error(`Colonne ${headerName} absente dans ${sheetName}`)
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [{
+        repeatCell: {
+          range: {
+            sheetId,
+            startRowIndex: 1,
+            startColumnIndex: columnIndex,
+            endColumnIndex: columnIndex + 1,
+          },
+          cell: {
+            userEnteredFormat: {
+              numberFormat: { type: "DATE", pattern },
+            },
+          },
+          fields: "userEnteredFormat.numberFormat",
+        },
+      }],
+    },
+  })
 }

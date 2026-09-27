@@ -1,7 +1,9 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DataLoadNotice } from "@/components/dashboard/data-load-notice"
+import { StatCard } from "@/components/dashboard/stat-card"
+import { StatusBadge } from "@/components/dashboard/status-badge"
 import { getEquipeNationaleResultats } from "@/lib/data"
 import { formatSheetDate, parseSheetDate } from "@/lib/date-utils"
 import type { EquipeNationaleResultat } from "@/lib/types"
@@ -62,7 +64,8 @@ function getWinnerSide(resultat: EquipeNationaleResultat) {
 }
 
 export default async function SuiviEquipeNationalePage() {
-  const resultats = await getEquipeNationaleResultats()
+  const loaded = await Promise.allSettled([getEquipeNationaleResultats()])
+  const resultats = loaded[0].status === "fulfilled" ? loaded[0].value : []
 
   const resultatsTries = sortResultats(resultats)
   const victoires = resultats.filter((resultat) => isWin(resultat.resultatMatch)).length
@@ -70,41 +73,30 @@ export default async function SuiviEquipeNationalePage() {
   const autresResultats = Math.max(resultats.length - victoires, 0)
 
   const cards = [
-    { label: "Matchs", value: resultats.length, icon: Target, color: "bg-primary/10 text-primary" },
-    { label: "Victoires", value: victoires, icon: Trophy, color: "bg-success/10 text-success" },
-    { label: "Autres resultats", value: autresResultats, icon: Medal, color: "bg-muted text-muted-foreground" },
-    { label: "Points RDC", value: pointsRdc, icon: CalendarDays, color: "bg-warning/15 text-warning-foreground" },
+    { label: "Matchs", value: resultats.length, icon: Target },
+    { label: "Victoires", value: victoires, icon: Trophy },
+    { label: "Autres résultats", value: autresResultats, icon: Medal },
+    { label: "Points RDC", value: pointsRdc, icon: CalendarDays },
   ]
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 p-6">
-        <Header title="Performance equipe nationale" subtitle="Resultats des Leopards RDC" />
+      <Header title="Performances nationales" subtitle="Résultats des équipes nationales de volleyball de la RDC" />
+      <main className="space-y-6 p-4 sm:p-6">
+        <DataLoadNotice visible={loaded[0].status === "rejected"} description="Les résultats des équipes nationales n’ont pas pu être chargés. Aucune donnée fictive n’est affichée." />
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {cards.map((card) => (
-            <Card key={card.label} className="border-border/50">
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className={`rounded-lg p-3 ${card.color}`}>
-                  <card.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
-                  <p className="text-2xl font-bold">{card.value}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {cards.map((card) => <StatCard key={card.label} title={card.label} value={card.value} icon={card.icon} />)}
         </div>
 
-        <Card className="border-border/50">
+        <Card>
           <CardHeader>
-            <CardTitle>Resultats</CardTitle>
+            <CardTitle>Résultats</CardTitle>
           </CardHeader>
           <CardContent>
             {resultatsTries.length === 0 ? (
               <div className="rounded-md border py-10 text-center text-sm text-muted-foreground">
-                Aucun resultat EN disponible.
+                Aucun résultat d’équipe nationale disponible.
               </div>
             ) : (
               <div className="divide-y rounded-md border">
@@ -176,7 +168,7 @@ export default async function SuiviEquipeNationalePage() {
                       </div>
 
                       <div className="md:text-right">
-                        <Badge variant="outline">{resultat.resultatMatch || resultat.statutMatch || "-"}</Badge>
+                        <StatusBadge status={resultat.resultatMatch || resultat.statutMatch} />
                       </div>
                     </div>
                   )
@@ -185,7 +177,7 @@ export default async function SuiviEquipeNationalePage() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </main>
     </DashboardLayout>
   )
 }

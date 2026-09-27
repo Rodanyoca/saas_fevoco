@@ -1,6 +1,5 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -44,8 +43,7 @@ export function ArbitresFilters({
   ).sort((a, b) => a.localeCompare(b))
 
   return (
-    <Card className="border-border/50">
-      <CardContent className="p-4">
+    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap">
         <div className="grid gap-3 md:grid-cols-[1fr_190px_160px_132px]">
           <div className="relative min-w-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -97,7 +95,6 @@ export function ArbitresFilters({
             </SelectContent>
           </Select>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   )
 }

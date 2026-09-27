@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { getEquipeNationale, getEquipeNationaleCompetitions, getEquipeNationaleResultats, getEquipeNationaleSelections, getEquipeNationaleStaff } from "@/lib/data"
 import { isEquipeNationaleGoogleSheetsConfigured } from "@/lib/env"
+import { DataLoadNotice } from "@/components/dashboard/data-load-notice"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -24,15 +25,16 @@ export default async function EquipeNationalePage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 p-6">
-        <Header title="Leopards RDC" subtitle="Equipes nationales et membres selectionnes" />
+      <Header title="Équipes nationales" subtitle="Sélections, staff, compétitions et résultats des Léopards RDC" />
+      <main className="space-y-6 p-4 sm:p-6">
         {!isEquipeNationaleGoogleSheetsConfigured() && (
           <div className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm text-warning-foreground" role="status">
             Ajoutez <code>FEVOCO_EQUIPE_NATIONALE_SPREADSHEET_ID</code> dans votre environnement.
           </div>
         )}
+        <DataLoadNotice visible={loaded.some((result) => result.status === "rejected")} description="Une partie des données des équipes nationales n’a pas pu être chargée. Les données disponibles restent affichées sans contenu fictif." />
         <EquipeNationaleClient equipes={equipes} selections={selections} staff={staff} competitions={competitions} resultats={resultats} />
-      </div>
+      </main>
     </DashboardLayout>
   )
 }

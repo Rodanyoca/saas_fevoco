@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -42,10 +42,10 @@ export function ArbitreLicenceFormDialog({ arbitre, onSaved }: {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline">Ajouter une licence</Button></DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Créer une licence pour {arbitre.nomComplet}</DialogTitle><DialogDescription>La licence précédente sera automatiquement clôturée.</DialogDescription></DialogHeader>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild><Button variant="outline">Ajouter une licence</Button></SheetTrigger>
+      <SheetContent>
+        <SheetHeader><SheetTitle>Créer une licence pour {arbitre.nomComplet}</SheetTitle><SheetDescription>La licence précédente sera automatiquement clôturée.</SheetDescription></SheetHeader>
         <form onSubmit={submit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2"><Label>Numéro de licence *</Label><Input required value={form.numeroLicence} onChange={(event) => setForm({ ...form, numeroLicence: event.target.value })} /></div>
@@ -54,9 +54,9 @@ export function ArbitreLicenceFormDialog({ arbitre, onSaved }: {
             <div className="space-y-2 sm:col-span-2"><Label>Statut</Label><Select value={form.statutLicence} onValueChange={(value) => setForm({ ...form, statutLicence: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="en attente">En attente</SelectItem><SelectItem value="inactif">Inactif</SelectItem><SelectItem value="expiré">Expiré</SelectItem></SelectContent></Select></div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending}>{pending ? "Enregistrement..." : "Créer la licence"}</Button></DialogFooter>
+          <SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending}>{pending ? "Enregistrement..." : "Créer la licence"}</Button></SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -41,9 +41,9 @@ async function getReferenceOptions(
 }
 
 export function getClubCategories() {
-  return getReferenceOptions("CATEGORIES_CLUB", "id_categorie", "nom_categorie")
+  return getReferenceOptions("CATEGORIES_CLUB", "id_categorie_club", "nom_categorie_club")
 }
 
-export function getClubVersions() {
-  return getReferenceOptions("VERSION_CLUB", "id_version", "nom_version")
+export function getClubSexes() {
+  return getReferenceOptions("ACTEURS_SEXE", "id_sexe", "nom_sexe")
 }

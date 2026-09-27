@@ -1,17 +1,14 @@
 "use client"
 
 import { ActorTable } from "@/components/actors/actor-table"
-import { licenceHistory } from "@/lib/actor-record-utils"
-import type { Athlete, AthleteLicence } from "@/lib/types"
+import type { Athlete } from "@/lib/types"
 
 export function AthletesTable({
   athletes,
-  licences,
   title = "Liste des Athlètes",
   onViewAthlete,
 }: {
   athletes: Athlete[]
-  licences?: AthleteLicence[]
   title?: string
   onViewAthlete?: (athlete: Athlete) => void
 }) {
@@ -21,10 +18,9 @@ export function AthletesTable({
       items={athletes}
       onView={onViewAthlete}
       showId={false}
-      firstColumn={licences ? {
-        label: "Numéro de licence",
-        value: (athlete) => licenceHistory(licences, athlete.idAthlete)[0]?.numeroLicence ?? "",
-      } : undefined}
+      showCount={false}
+      firstColumn={{ label: "ID athlète", value: (athlete) => athlete.idAthlete }}
+      stackSexAge
       emptyMessage="Aucun athlète enregistré."
       toRow={(item) => ({
         id: item.idAthlete,

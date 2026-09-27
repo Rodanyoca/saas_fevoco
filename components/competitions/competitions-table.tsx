@@ -1,115 +1,39 @@
 "use client"
 
+import { CalendarDays, Eye } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import type { Competition } from "@/lib/types"
-import { CalendarDays, Eye, Trophy } from "lucide-react"
+import { StatusBadge } from "@/components/dashboard/status-badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatSheetDate } from "@/lib/date-utils"
+import type { Competition } from "@/lib/types"
 
-function formatDate(value: string) {
-  return formatSheetDate(value)
-}
-
-function getStatusClass(statut: string) {
-  const value = statut.trim().toLowerCase()
-  if (value === "en cours" || value === "active" || value === "actif") {
-    return "bg-success/10 text-success hover:bg-success/15"
-  }
-  if (value === "terminee" || value === "termine") {
-    return "bg-muted text-muted-foreground hover:bg-muted"
-  }
-  return "bg-info/10 text-info hover:bg-info/15"
-}
-
-export function CompetitionsTable({
-  competitions,
-  totalCount,
-  onViewCompetition,
-}: {
-  competitions: Competition[]
-  totalCount: number
-  onViewCompetition: (competition: Competition) => void
-}) {
+export function CompetitionsTable({ competitions, totalCount, onViewCompetition }: { competitions: Competition[]; totalCount: number; onViewCompetition: (competition: Competition) => void }) {
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-            <Trophy className="h-5 w-5 text-primary" />
-            Liste des competitions
-          </CardTitle>
-          <Badge variant="outline" className="text-xs">
-            {totalCount} competitions
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table className="w-full min-w-[860px] table-fixed">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[20%]">Compétition</TableHead>
-                <TableHead className="w-[9%]">Saison</TableHead>
-                <TableHead className="w-[12%]">Discipline</TableHead>
-                <TableHead className="w-[20%]">Période</TableHead>
-                <TableHead className="w-[15%]">Niveau / lieu</TableHead>
-                <TableHead className="w-[14%]">Organisation</TableHead>
-                <TableHead className="w-[7%] text-center">Statut</TableHead>
-                <TableHead className="w-[3%] text-right"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {competitions.map((competition, index) => {
-                return (
-                  <TableRow key={`${competition.idCompetition || "competition"}-${competition.nomCompetition || "sans-nom"}-${index}`}>
-                    <TableCell className="whitespace-normal break-words font-medium leading-snug">
-                      {competition.nomCompetition}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{competition.saison || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{competition.nomDiscipline || "-"}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <div className="flex items-center gap-1.5 whitespace-nowrap text-xs leading-none xl:text-sm">
-                        <CalendarDays className="h-4 w-4 shrink-0" />
-                        <span>
-                          {formatDate(competition.dateDebut)} - {formatDate(competition.dateFin)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell><p>{competition.niveau || "-"}</p><p className="text-xs text-muted-foreground">{competition.lieu || "-"}</p></TableCell>
-                    <TableCell>{competition.nomStructureOrganisatrice || "-"}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge className={getStatusClass(competition.statutCompetition)}>
-                        {competition.statutCompetition}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onViewCompetition(competition)}
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">Voir les details</span>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+    <section className="space-y-3" aria-label="Liste des compétitions">
+      <div className="flex items-center justify-between gap-3"><h2 className="text-sm font-medium text-muted-foreground">Liste des compétitions</h2><span className="text-sm text-muted-foreground">{totalCount} résultat{totalCount > 1 ? "s" : ""}</span></div>
+      <div className="grid gap-3 md:hidden">
+        {competitions.map((competition, index) => <article key={`${competition.idCompetition || "competition"}-${index}`} className="rounded-xl border border-border/80 bg-card/95 p-4 shadow-[0_12px_30px_rgba(1,10,20,0.12)]">
+          <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="break-words font-medium">{competition.nomCompetition || "-"}</p><p className="mt-1 text-xs text-muted-foreground">{competition.saison || "-"} · {competition.nomDiscipline || "-"}</p></div><StatusBadge status={competition.statutCompetition} /></div>
+          <div className="mt-4 grid gap-2 text-sm"><p><span className="text-muted-foreground">Niveau :</span> {competition.niveau || "-"}</p><p><span className="text-muted-foreground">Lieu :</span> {competition.lieu || "-"}</p><p className="flex items-center gap-2 text-xs text-muted-foreground"><CalendarDays className="size-4" />{formatSheetDate(competition.dateDebut)} — {formatSheetDate(competition.dateFin)}</p></div>
+          <div className="mt-3 flex justify-end"><Button variant="ghost" size="icon" onClick={() => onViewCompetition(competition)} aria-label={`Voir ${competition.nomCompetition}`} title="Voir le détail"><Eye className="size-4" /></Button></div>
+        </article>)}
+        {!competitions.length && <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">Aucune compétition enregistrée.</p>}
+      </div>
+      <div className="hidden overflow-hidden rounded-xl border border-border/80 bg-card/90 shadow-[0_12px_30px_rgba(1,10,20,0.12)] md:block">
+        <Table className="min-w-[920px] table-fixed">
+          <TableHeader><TableRow className="bg-muted/70 hover:bg-muted/70"><TableHead className="w-[22%]">Compétition</TableHead><TableHead className="w-[10%]">Saison</TableHead><TableHead className="w-[11%]">Discipline</TableHead><TableHead className="w-[20%]">Période</TableHead><TableHead className="w-[16%]">Niveau / lieu</TableHead><TableHead className="w-[13%]">Organisation</TableHead><TableHead className="w-[8%]">Statut</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+          <TableBody>
+            {competitions.map((competition, index) => <TableRow key={`${competition.idCompetition || "competition"}-${competition.nomCompetition || "sans-nom"}-${index}`} className="hover:bg-muted/30">
+              <TableCell className="whitespace-normal break-words font-medium">{competition.nomCompetition || "-"}</TableCell><TableCell>{competition.saison || "-"}</TableCell><TableCell><Badge variant="outline">{competition.nomDiscipline || "-"}</Badge></TableCell>
+              <TableCell><span className="flex items-center gap-2 whitespace-nowrap text-xs"><CalendarDays className="size-4" />{formatSheetDate(competition.dateDebut)} — {formatSheetDate(competition.dateFin)}</span></TableCell>
+              <TableCell><p>{competition.niveau || "-"}</p><p className="text-xs text-muted-foreground">{competition.lieu || "-"}</p></TableCell><TableCell>{competition.nomStructureOrganisatrice || "-"}</TableCell><TableCell><StatusBadge status={competition.statutCompetition} /></TableCell>
+              <TableCell><Button variant="ghost" size="icon" onClick={() => onViewCompetition(competition)} aria-label={`Voir ${competition.nomCompetition}`} title="Voir le détail"><Eye className="size-4" /></Button></TableCell>
+            </TableRow>)}
+            {!competitions.length && <TableRow><TableCell colSpan={8} className="h-24 text-center text-muted-foreground">Aucune compétition enregistrée.</TableCell></TableRow>}
+          </TableBody>
+        </Table>
+      </div>
+    </section>
   )
 }

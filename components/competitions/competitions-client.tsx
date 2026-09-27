@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react"
 import { CompetitionDetail } from "@/components/competitions/competition-detail"
 import { CompetitionsFilters } from "@/components/competitions/competitions-filters"
-import { CompetitionsStats } from "@/components/competitions/competitions-stats"
 import { CompetitionsTable } from "@/components/competitions/competitions-table"
 import { parseSheetDate } from "@/lib/date-utils"
 import type { Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite } from "@/lib/types"
@@ -84,7 +83,6 @@ export function CompetitionsClient({
 
   return (
     <div className="space-y-6">
-      <CompetitionsStats competitions={competitions} unites={unites} results={results} />
       <CompetitionsFilters
         search={search}
         discipline={discipline}

@@ -1,7 +1,8 @@
 "use client"
 
-import { LogOut } from "lucide-react"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useDashboardNavigation } from "./dashboard-navigation-context"
 
 interface HeaderProps {
   title: string
@@ -9,29 +10,21 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const handleLogout = () => {
-    // Logique de déconnexion à implémenter avec la base de données
-    console.log("Déconnexion")
-  }
+  const openNavigation = useDashboardNavigation()
 
   return (
-    <header className="relative flex min-h-20 flex-col items-start justify-between gap-3 border-b bg-card px-4 py-4 sm:flex-row sm:items-center sm:px-6">
-      <span className="fevoco-brand-line absolute inset-x-0 top-0 h-0.5" aria-hidden="true" />
-      <div className="min-w-0">
-        <h1 className="text-xl font-bold tracking-[-0.025em] text-card-foreground sm:text-2xl">{title}</h1>
-        {subtitle && (
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
-        )}
+    <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-4 border-b border-border/80 bg-background/90 px-4 py-3 shadow-[0_10px_30px_rgba(2,12,23,0.18)] backdrop-blur-xl sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        <Button variant="outline" size="icon" onClick={openNavigation ?? undefined} className="shrink-0 border-white/15 bg-white/[0.04] hover:border-brand-gold/60 hover:bg-brand-gold/10 hover:text-brand-gold lg:hidden" aria-label="Ouvrir la navigation principale">
+          <Menu className="size-5" />
+        </Button>
+        <div className="min-w-0 border-l-2 border-brand-gold pl-3">
+          <h1 className="truncate text-xl font-bold tracking-[-0.02em] text-foreground">{title}</h1>
+          {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
       </div>
 
-      <Button 
-        variant="outline" 
-        onClick={handleLogout}
-        className="hidden items-center gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive sm:flex"
-      >
-        <LogOut className="h-4 w-4" />
-        <span>Déconnexion</span>
-      </Button>
+      <span aria-hidden="true" />
     </header>
   )
 }

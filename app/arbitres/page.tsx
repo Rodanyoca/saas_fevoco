@@ -5,20 +5,25 @@ import { getArbitres } from "@/lib/data"
 import { isActeursGoogleSheetsConfigured } from "@/lib/env"
 import { ActorsConfigNotice } from "@/components/actors/actors-config-notice"
 import { getArbitreLicences } from "@/lib/actor-records"
-import { getActorSexes } from "@/lib/actor-references"
+import { getActorSexes, getArbitreGrades } from "@/lib/actor-references"
+import { ActorsLoadNotice } from "@/components/actors/actors-load-notice"
+import { safeDataLoad } from "@/lib/safe-data-load"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export default async function ArbitresPage() {
-  const [arbitres, licences, sexes] = await Promise.all([getArbitres(), getArbitreLicences(), getActorSexes()])
+  const [arbitres, licences, sexes, grades] = await Promise.all([
+    safeDataLoad(getArbitres, []), safeDataLoad(getArbitreLicences, []), safeDataLoad(getActorSexes, []), safeDataLoad(getArbitreGrades, []),
+  ])
 
   return (
     <DashboardLayout>
       <Header title="Arbitres" subtitle="Gérez les arbitres officiels de la FEVOCO" />
       <div className="space-y-6 p-6">
         {!isActeursGoogleSheetsConfigured() && <ActorsConfigNotice />}
-        <ArbitresClient arbitres={arbitres} licences={licences} sexes={sexes} />
+        <ActorsLoadNotice errors={[arbitres.error, licences.error, sexes.error, grades.error]} />
+        <ArbitresClient arbitres={arbitres.data} licences={licences.data} sexes={sexes.data} grades={grades.data} />
       </div>
     </DashboardLayout>
   )

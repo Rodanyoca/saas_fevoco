@@ -3,15 +3,17 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DetailCard } from "@/components/dashboard/detail-card"
+import { StatusBadge } from "@/components/dashboard/status-badge"
 import { getActorAvatarUrl } from "@/lib/actor-avatar"
 import { calculateAge, formatSheetDate } from "@/lib/date-utils"
 import { normalize } from "@/lib/sheet-values"
 import type { Athlete, AthleteAffiliation, AthleteLicence } from "@/lib/types"
 import { AffiliationSection, LicenceSection } from "@/components/actors/record-sections"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Contact, Fingerprint, Info, User } from "lucide-react"
 import { AthleteFormDialog } from "@/components/athletes/athlete-form-dialog"
 import type { SavedAthlete } from "@/components/athletes/athlete-form-dialog"
 import type { ActorSexOption } from "@/lib/actor-references"
@@ -58,97 +60,93 @@ export function AthleteDetail({ athlete, affiliations, licences, sexes, onRefres
   const avatarUrl = getActorAvatarUrl(athlete.avatarDriveUrl, athlete.avatarDriveId)
   const age = calculateAge(athlete.dateDeNaissance)
   const dateNaissance = formatSheetDate(athlete.dateDeNaissance)
-  const active = ["ACTIF", "ACTIVE"].includes(normalize(athlete.statut))
-
-  const generalSections = [
-    {
-      title: "Identifiants",
-      fields: [
-        ["ID athlète", athlete.idAthlete],
-        ["ID national", athlete.idNational],
-        ["ID FIVB", athlete.idFivb],
-      ],
-    },
-    {
-      title: "État civil",
-      fields: [
-        ["Date de naissance", dateNaissance === "-" ? "Non renseignée" : dateNaissance],
-        ["Âge", age === null ? "Non renseigné" : `${age} ans`],
-        ["Lieu de naissance", athlete.lieuNaissance],
-        ["Sexe", sexeLabel(athlete.sexe)],
-        ["Nationalité", athlete.nationalite],
-      ],
-    },
-    {
-      title: "Contact",
-      fields: [
-        ["Téléphone", athlete.telephone],
-        ["Adresse e-mail", athlete.email],
-        ["Adresse", athlete.adresse],
-      ],
-    },
-  ]
 
   return (
-    <div className="w-full">
-      <Button variant="ghost" className="mb-4" onClick={onBack}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Retour aux athlètes
-      </Button>
+    <div className="w-full space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la liste
+        </Button>
+        <AthleteFormDialog athlete={athlete} sexes={sexes} onSaved={onUpdated} />
+      </div>
 
-      <Card className="overflow-hidden border-border/60 shadow-sm">
-        <div className="h-2 bg-primary" />
-        <CardContent className="p-0">
-          <header className="grid gap-6 border-b bg-muted/20 p-6 md:grid-cols-[auto_1fr_auto] md:items-center md:p-8">
-            <Avatar className="h-24 w-24 border-4 border-background shadow-sm">
-              {avatarUrl && <AvatarImage src={avatarUrl} alt={athlete.nomComplet} />}
-              <AvatarFallback className="text-2xl font-semibold">{initials(athlete.nomComplet)}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Profil athlète</p>
-              <h1 className="break-words text-2xl font-bold md:text-3xl">{shown(athlete.nomComplet)}</h1>
-              <p className="mt-2 font-mono text-sm text-muted-foreground">{shown(athlete.idAthlete)}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <AthleteFormDialog athlete={athlete} sexes={sexes} onSaved={onUpdated} />
-              <Badge variant={active ? "default" : "secondary"} className="w-fit">{shown(athlete.statut)}</Badge>
-            </div>
-          </header>
-
-          <div className="space-y-10 p-6 md:p-8">
-            <section>
-              <div className="mb-5">
-                <h2 className="text-lg font-semibold">Général</h2>
-                <p className="text-sm text-muted-foreground">Identité et informations administratives</p>
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <Avatar className="size-20 shrink-0">
+                {avatarUrl && <AvatarImage src={avatarUrl} alt={athlete.nomComplet} />}
+                <AvatarFallback className="text-lg">{initials(athlete.nomComplet)}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <h2 className="break-words text-2xl font-bold">{shown(athlete.nomComplet)}</h2>
+                <p className="mt-1 break-all font-mono text-sm text-muted-foreground">{shown(athlete.idAthlete)}</p>
               </div>
-
-              <div className="grid auto-rows-fr gap-4 lg:grid-cols-3">
-                {generalSections.map((section) => (
-                  <div key={section.title} className="flex h-full min-h-72 flex-col overflow-hidden rounded-xl border bg-muted/10">
-                    <div className="border-b bg-muted/30 px-5 py-3">
-                      <h3 className="text-sm font-semibold">{section.title}</h3>
-                    </div>
-                    <div className="flex flex-1 flex-col divide-y px-5">
-                      {section.fields.map(([label, value]) => (
-                        <div key={label} className="flex flex-1 flex-col justify-center py-3">
-                          <span className="text-xs text-muted-foreground">{label}</span>
-                          <span className="mt-1 break-words font-medium">{shown(value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <AffiliationSection
-              affiliations={affiliations}
-              actorId={athlete.idAthlete}
-              action={<Button type="button" variant="outline" size="sm" disabled={refreshingAffiliations} onClick={refreshAffiliations}>{refreshingAffiliations ? "Actualisation..." : "Actualiser"}</Button>}
-            />
-            <LicenceSection licences={licences} actorId={athlete.idAthlete} />
+            </div>
+            <StatusBadge status={athlete.statut} />
           </div>
         </CardContent>
       </Card>
+
+      <Tabs defaultValue="general" className="gap-4">
+        <TabsList className="grid h-auto w-full grid-cols-3">
+          <TabsTrigger value="general" className="w-full">Général</TabsTrigger>
+          <TabsTrigger value="affiliation" className="w-full">Affiliations</TabsTrigger>
+          <TabsTrigger value="licence" className="w-full">Licence</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general">
+          <div className="grid gap-6 md:grid-cols-2">
+            <DetailCard
+              title="Identité"
+              icon={User}
+              fields={[
+                { label: "Nom complet", value: athlete.nomComplet },
+                { label: "Sexe", value: sexeLabel(athlete.sexe) },
+                { label: "Date de naissance", value: dateNaissance === "-" ? "—" : dateNaissance },
+                { label: "Âge", value: age === null ? "—" : `${age} ans` },
+                { label: "Lieu de naissance", value: athlete.lieuNaissance },
+                { label: "Nationalité", value: athlete.nationalite },
+              ]}
+            />
+            <DetailCard
+              title="Contact"
+              icon={Contact}
+              fields={[
+                { label: "Téléphone", value: athlete.telephone },
+                { label: "E-mail", value: athlete.email },
+                { label: "Adresse", value: athlete.adresse },
+              ]}
+            />
+            <DetailCard
+              title="Identifiants"
+              icon={Fingerprint}
+              fields={[
+                { label: "ID athlète", value: athlete.idAthlete },
+                { label: "ID national", value: athlete.idNational },
+                { label: "ID FIVB", value: athlete.idFivb },
+                { label: "Statut", value: athlete.statut },
+              ]}
+            />
+            <DetailCard
+              title="Observations"
+              icon={Info}
+              fields={[{ label: "Remarques", value: athlete.observations }]}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="affiliation" className="[&>section]:border-t-0 [&>section]:pt-0">
+          <AffiliationSection
+            affiliations={affiliations}
+            actorId={athlete.idAthlete}
+            action={<Button type="button" variant="outline" size="sm" disabled={refreshingAffiliations} onClick={refreshAffiliations}>{refreshingAffiliations ? "Actualisation..." : "Actualiser"}</Button>}
+          />
+        </TabsContent>
+        <TabsContent value="licence" className="[&>section]:border-t-0 [&>section]:pt-0">
+          <LicenceSection licences={licences} actorId={athlete.idAthlete} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

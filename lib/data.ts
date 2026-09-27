@@ -1,4 +1,4 @@
-import { getSheetCell, getSheetData, getSheetDataFrom } from "@/lib/google-sheets"
+import { getSheetCell, getSheetData, getSheetDataFrom, getSheetsDataFrom, type SheetRow } from "@/lib/google-sheets"
 import { env } from "@/lib/env"
 import type { Arbitre, Athlete, Club, Coach, Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite, Entente, EquipeNationale, EquipeNationaleCompetition, EquipeNationaleResultat, EquipeNationaleSelection, EquipeNationaleStaff, Ligue, Medecin, Officiel, Province, Transfert } from "@/lib/types"
 import { mapProvinceRow } from "@/lib/mappers/provinces"
@@ -21,6 +21,7 @@ import { mapEquipeNationaleSelectionRow } from "@/lib/mappers/equipe-nationale-s
 import { mapEquipeNationaleCompetitionRow } from "@/lib/mappers/equipe-nationale-competitions"
 import { mapEquipeNationaleResultatRow } from "@/lib/mappers/equipe-nationale-resultats"
 import { mapEquipeNationaleStaffRow } from "@/lib/mappers/equipe-nationale-staff"
+import { getActorSexes, getArbitreGrades, getCoachLevels, getMedecinSpecialties } from "@/lib/actor-references"
 
 function computeProvinceCompletude(p: Province): number {
   const fields: Array<string> = [p.id, p.nom, p.chefLieu, p.responsable, p.telephone, p.email, String(p.statut)]
@@ -28,17 +29,77 @@ function computeProvinceCompletude(p: Province): number {
   return Math.round((filled / fields.length) * 100)
 }
 
-export async function getProvinces(): Promise<Province[]> {
-  const base = await getProvinceOptions()
+const cell = (row: SheetRow | undefined, key: string) => String(row?.[key] ?? "").trim()
 
-  const [ligues, ententes, clubs, athletes, arbitres, medecins] = await Promise.all([
-    getLigues(),
-    getEntentes(),
-    getClubs(),
+async function getTerritorialHierarchy() {
+  const [territorial, references, sexes] = await Promise.all([
+    getSheetsDataFrom(env.googleSheets.territorialSpreadsheetId, [
+      "LIGUES!A:ZZ",
+      "ENTENTES!A:ZZ",
+      "CLUBS!A:ZZ",
+    ]),
+    getSheetsDataFrom(env.googleSheets.referentielsSpreadsheetId, [
+      "PROVINCES!A:ZZ",
+      "VILLES!A:ZZ",
+      "CATEGORIES_CLUB!A:ZZ",
+    ]),
+    getActorSexes(),
+  ])
+
+  const provinces = (references.PROVINCES ?? []).map(mapProvinceRow).filter((item) => item.id && item.nom)
+  const provincesById = new Map(provinces.map((item) => [item.idProvince, item]))
+  const citiesById = new Map((references.VILLES ?? []).map((row) => [cell(row, "id_ville"), cell(row, "nom_ville")]))
+  const categoriesById = new Map((references.CATEGORIES_CLUB ?? []).map((row) => [cell(row, "id_categorie_club"), cell(row, "nom_categorie_club")]))
+  const sexesById = new Map(sexes.map((option) => [option.id, option.nom]))
+
+  const ligues = (territorial.LIGUES ?? []).map((row) => {
+    const province = provincesById.get(cell(row, "id_province"))
+    return mapLigueRow({ ...row, nom_province: province?.nomProvince ?? "" })
+  }).filter((item) => item.id && item.nom)
+  const liguesById = new Map(ligues.map((item) => [item.idLigue, item]))
+
+  const ententes = (territorial.ENTENTES ?? []).map((row) => {
+    const ligue = liguesById.get(cell(row, "id_ligue"))
+    return mapEntenteRow({
+      ...row,
+      nom_ligue: ligue?.nomLigue ?? "",
+      id_province: ligue?.idProvince ?? "",
+      nom_province: ligue?.nomProvince ?? "",
+      nom_ville: citiesById.get(cell(row, "id_ville")) ?? "",
+    })
+  }).filter((item) => item.id && item.nom)
+  const ententesById = new Map(ententes.map((item) => [item.idEntente, item]))
+
+  const clubs = (territorial.CLUBS ?? []).map((row) => {
+    const entente = ententesById.get(cell(row, "id_entente"))
+    const ligue = entente ? liguesById.get(entente.idLigue) : undefined
+    const categoryId = cell(row, "id_categorie_club")
+    const sexId = cell(row, "id_sexe")
+    return mapClubRow({
+      ...row,
+      nom_entente: entente?.nomEntente ?? "",
+      pseudo_entente: entente?.pseudoEntente ?? "",
+      id_ligue: ligue?.idLigue ?? "",
+      nom_ligue: ligue?.nomLigue ?? "",
+      id_province: ligue?.idProvince ?? "",
+      nom_province: ligue?.nomProvince ?? "",
+      nom_categorie_club: categoriesById.get(categoryId) ?? "",
+      nom_sexe: sexesById.get(sexId) ?? "",
+      nom_ville: citiesById.get(cell(row, "id_ville")) ?? "",
+    })
+  }).filter((item) => item.id && item.nom)
+
+  return { provinces, ligues, ententes, clubs }
+}
+
+export async function getProvinces(): Promise<Province[]> {
+  const [territorial, athletes, arbitres, medecins] = await Promise.all([
+    getTerritorialHierarchy(),
     getAthletes(),
     getArbitres(),
     getMedecins(),
   ])
+  const { provinces: base, ligues, ententes, clubs } = territorial
 
   return base
     .map((p) => {
@@ -78,52 +139,79 @@ export async function getProvinceOptions(): Promise<Province[]> {
 }
 
 export async function getLigues(): Promise<Ligue[]> {
-  const rows = await getSheetDataFrom(
-    env.googleSheets.territorialSpreadsheetId,
-    "LIGUES!A:G",
-  )
-  return rows.map(mapLigueRow).filter((l) => l.id && l.nom)
+  return (await getTerritorialHierarchy()).ligues
 }
 
 export async function getEntentes(): Promise<Entente[]> {
-  const rows = await getSheetDataFrom(
-    env.googleSheets.territorialSpreadsheetId,
-    "ENTENTES!A:K",
-  )
-  return rows.map(mapEntenteRow).filter((e) => e.id && e.nom)
+  return (await getTerritorialHierarchy()).ententes
 }
 
 export async function getClubs(): Promise<Club[]> {
-  const rows = await getSheetDataFrom(
-    env.googleSheets.territorialSpreadsheetId,
-    "CLUBS!A:M",
-  )
-  return rows.map(mapClubRow).filter((c) => c.id && c.nom)
+  return (await getTerritorialHierarchy()).clubs
 }
 
 export async function getAthletes(): Promise<Athlete[]> {
-  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "ATHLETES!A:N")
-  return rows.map(mapAthleteRow).filter((a) => a.id && a.nomComplet)
+  const [rows, sexes] = await Promise.all([
+    getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "ATHLETES!A:ZZ"),
+    getActorSexes(),
+  ])
+  const sexesById = new Map(sexes.map((option) => [option.id, option.nom]))
+  return rows
+    .map((row) => mapAthleteRow({ ...row, nom_sexe: sexesById.get(cell(row, "id_sexe")) ?? "" }))
+    .filter((a) => a.id && a.nomComplet)
 }
 
 export async function getCoachs(): Promise<Coach[]> {
-  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "COACHS!A:N")
-  return rows.map(mapCoachRow).filter((c) => c.id && c.nomComplet)
+  const [rows, sexes, levels] = await Promise.all([
+    getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "COACHS!A:ZZ"),
+    getActorSexes(),
+    getCoachLevels(),
+  ])
+  const sexesById = new Map(sexes.map((option) => [option.id, option.nom]))
+  const levelsById = new Map(levels.map((option) => [option.id, option.nom]))
+  return rows
+    .map((row) => mapCoachRow({
+      ...row,
+      nom_sexe: sexesById.get(cell(row, "id_sexe")) ?? "",
+      nom_niveau_coach: levelsById.get(cell(row, "id_niveau")) ?? "",
+    }))
+    .filter((c) => c.id && c.nomComplet)
 }
 
 export async function getOfficiels(): Promise<Officiel[]> {
-  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "OFFICIELS!A:M")
-  return rows.map(mapOfficielRow).filter((o) => o.id && o.nomComplet)
+  const [rows, sexes] = await Promise.all([getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "OFFICIELS!A:ZZ"), getActorSexes()])
+  const sexesById = new Map(sexes.map((option) => [option.id, option.nom]))
+  return rows.map((row) => mapOfficielRow({ ...row, nom_sexe: sexesById.get(cell(row, "id_sexe")) ?? "" })).filter((o) => o.id && o.nomComplet)
 }
 
 export async function getMedecins(): Promise<Medecin[]> {
-  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "MEDECINS!A:N")
-  return rows.map(mapMedecinRow).filter((m) => m.id && m.nomComplet)
+  const [rows, sexes, specialties] = await Promise.all([
+    getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "MEDECINS!A:ZZ"),
+    getActorSexes(),
+    getMedecinSpecialties(),
+  ])
+  const sexesById = new Map(sexes.map((option) => [option.id, option.nom]))
+  const specialtiesById = new Map(specialties.map((option) => [option.id, option.nom]))
+  return rows.map((row) => mapMedecinRow({
+    ...row,
+    nom_sexe: sexesById.get(cell(row, "id_sexe")) ?? "",
+    nom_specialite: specialtiesById.get(cell(row, "id_specialite") || cell(row, "id_specialite_sante")) ?? "",
+  })).filter((m) => m.id && m.nomComplet)
 }
 
 export async function getArbitres(): Promise<Arbitre[]> {
-  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "ARBITRES!A:O")
-  return rows.map(mapArbitreRow).filter((a) => a.id && a.nomComplet)
+  const [rows, sexes, grades] = await Promise.all([
+    getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "ARBITRES!A:ZZ"),
+    getActorSexes(),
+    getArbitreGrades(),
+  ])
+  const sexeById = new Map(sexes.map((option) => [option.id, option.nom]))
+  const gradeById = new Map(grades.map((option) => [option.id, option.nom]))
+  return rows.map((row) => mapArbitreRow({
+    ...row,
+    nom_sexe: sexeById.get(String(row.id_sexe ?? "").trim()) ?? "",
+    nom_grade_arbitre: gradeById.get(String(row.id_niveau ?? "").trim()) ?? "",
+  })).filter((a) => a.id && a.nomComplet)
 }
 
 export async function getCompetitions(): Promise<Competition[]> {

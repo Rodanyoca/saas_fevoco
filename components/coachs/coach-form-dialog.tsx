@@ -3,22 +3,38 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { ActorSexOption } from "@/lib/actor-references"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
 import type { Coach } from "@/lib/types"
+import { formatSheetDate } from "@/lib/date-utils"
 import { AvatarFileField, uploadAvatarFile } from "@/components/actors/avatar-file-field"
+import { Pencil } from "lucide-react"
 
-export type SavedCoach = Pick<Coach, "idCoach" | "idNational" | "idFivb" | "nomComplet" | "sexe" | "dateNaissance" | "nationalite" | "niveau" | "telephone" | "email" | "adresse" | "statut"> & {
+export type SavedCoach = Pick<Coach, "idCoach" | "idNational" | "idFivb" | "idSexe" | "idNiveau" | "nomComplet" | "sexe" | "dateNaissance" | "nationalite" | "niveau" | "telephone" | "email" | "adresse" | "statut"> & {
   avatarDriveId?: string
   avatarDriveUrl?: string
 }
 
-export function CoachFormDialog({ coach, sexes, onSaved }: {
+function formatDateInput(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 8)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
+}
+
+function initialDateValue(value: string | undefined) {
+  if (!value) return ""
+  const formatted = formatSheetDate(value)
+  return formatted === "-" ? "" : formatted
+}
+
+export function CoachFormDialog({ coach, sexes, levels, onSaved }: {
   coach?: Coach
   sexes: ActorSexOption[]
+  levels: CoachReferenceOption[]
   onSaved: (coach: SavedCoach) => void
 }) {
   const editing = Boolean(coach)
@@ -29,9 +45,9 @@ export function CoachFormDialog({ coach, sexes, onSaved }: {
   const [form, setForm] = useState({
     idNational: coach?.idNational ?? "", idFivb: coach?.idFivb ?? "",
     nomComplet: coach?.nomComplet ?? "",
-    sexe: sexes.some((option) => option.nom === coach?.sexe) ? coach?.sexe ?? "" : "",
-    dateNaissance: coach?.dateNaissance ?? "", nationalite: coach?.nationalite ?? "",
-    niveau: coach?.niveau ?? "", telephone: coach?.telephone ?? "",
+    idSexe: sexes.find((option) => option.id === coach?.idSexe || option.nom === coach?.sexe)?.id ?? "",
+    dateNaissance: initialDateValue(coach?.dateNaissance), nationalite: coach?.nationalite ?? "",
+    idNiveau: levels.find((option) => option.id === coach?.idNiveau || option.nom === coach?.niveau)?.id ?? "", telephone: coach?.telephone ?? "",
     email: coach?.email ?? "", adresse: coach?.adresse ?? "",
     statut: coach?.statut || "actif",
   })
@@ -63,20 +79,27 @@ export function CoachFormDialog({ coach, sexes, onSaved }: {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant={editing ? "outline" : "default"}>{editing ? "Modifier le coach" : "Créer un coach"}</Button></DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader><DialogTitle>{editing ? "Modifier le coach" : "Créer un coach"}</DialogTitle><DialogDescription>Le nom complet et le sexe sont obligatoires. Les avatars sont gérés séparément.</DialogDescription></DialogHeader>
-        <form onSubmit={submit} className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild><Button variant={editing ? "outline" : "default"} className={editing ? undefined : "bg-brand-gold text-[#071827] hover:bg-brand-gold/90"}>{editing ? <><Pencil className="mr-2 h-4 w-4" />Modifier</> : "Créer un coach"}</Button></SheetTrigger>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+        <SheetHeader><SheetTitle>{editing ? "Modifier le coach" : "Créer un coach"}</SheetTitle><SheetDescription>Le nom complet et le sexe sont obligatoires. Les avatars sont gérés séparément.</SheetDescription></SheetHeader>
+        <form onSubmit={submit} className="space-y-6 px-4 pb-6">
+          <div className="grid gap-4 md:grid-cols-2">
             {editing && <div className="space-y-2"><Label>Identifiant</Label><Input value={coach!.idCoach} disabled /></div>}
             <div className="space-y-2"><Label>Nom complet *</Label><Input required value={form.nomComplet} onChange={(e) => setForm({ ...form, nomComplet: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Sexe *</Label><Select required value={form.sexe} onValueChange={(value) => setForm({ ...form, sexe: value })} disabled={!sexes.length}><SelectTrigger><SelectValue placeholder={sexes.length ? "Sélectionner le sexe" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{sexes.map((option) => <SelectItem key={option.id} value={option.nom}>{option.nom}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2">
+              <Label>Sexe *</Label>
+              <Select required value={form.idSexe} onValueChange={(value) => setForm({ ...form, idSexe: value })} disabled={!sexes.length}>
+                <SelectTrigger className="w-full"><SelectValue placeholder={sexes.length ? "Sélectionner le sexe" : "Référentiel non configuré"} /></SelectTrigger>
+                <SelectContent>{sexes.map((option) => <SelectItem key={option.id} value={option.id}>{option.nom}</SelectItem>)}</SelectContent>
+              </Select>
+              {editing && !form.idSexe && sexes.length > 0 && <p className="text-xs text-muted-foreground">Sexe non renseigné dans le classeur. Sélectionnez une valeur pour compléter le profil.</p>}
+            </div>
             <div className="space-y-2"><Label>ID national</Label><Input value={form.idNational} onChange={(e) => setForm({ ...form, idNational: e.target.value })} /></div>
             <div className="space-y-2"><Label>ID FIVB</Label><Input value={form.idFivb} onChange={(e) => setForm({ ...form, idFivb: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Date de naissance</Label><Input value={form.dateNaissance} onChange={(e) => setForm({ ...form, dateNaissance: e.target.value })} placeholder="JJ/MM/AAAA" /></div>
+            <div className="space-y-2"><Label>Date de naissance</Label><Input inputMode="numeric" maxLength={10} value={form.dateNaissance} onChange={(e) => setForm({ ...form, dateNaissance: formatDateInput(e.target.value) })} placeholder="JJ/MM/AAAA" /></div>
             <div className="space-y-2"><Label>Nationalité</Label><Input value={form.nationalite} onChange={(e) => setForm({ ...form, nationalite: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Niveau</Label><Input value={form.niveau} onChange={(e) => setForm({ ...form, niveau: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Niveau</Label><Select value={form.idNiveau} onValueChange={(value) => setForm({ ...form, idNiveau: value })} disabled={!levels.length}><SelectTrigger className="w-full"><SelectValue placeholder={levels.length ? "Sélectionner le niveau" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{levels.map((option) => <SelectItem key={option.id} value={option.id}>{option.nom}</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-2"><Label>Téléphone</Label><Input type="tel" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} /></div>
             <div className="space-y-2"><Label>Adresse e-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <div className="space-y-2"><Label>Adresse</Label><Input value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} /></div>
@@ -84,9 +107,9 @@ export function CoachFormDialog({ coach, sexes, onSaved }: {
             <div className="space-y-2"><Label>Statut</Label><Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="inactif">Inactif</SelectItem></SelectContent></Select></div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending}>{pending ? "Enregistrement..." : editing ? "Enregistrer" : "Créer le coach"}</Button></DialogFooter>
+          <SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement..." : editing ? "Enregistrer" : "Créer le coach"}</Button></SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -99,13 +99,13 @@ export function TransfertFormDialog({ athletes, clubs, types, affiliations, onSa
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button>Créer une affiliation</Button></DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Créer une affiliation d’athlète</DialogTitle>
-          <DialogDescription>Les clubs et les dates demandés s’adaptent automatiquement au type d’affiliation.</DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild><Button>Créer une affiliation</Button></SheetTrigger>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+        <SheetHeader>
+          <SheetTitle>Créer une affiliation d’athlète</SheetTitle>
+          <SheetDescription>Les clubs et les dates demandés s’adaptent automatiquement au type d’affiliation.</SheetDescription>
+        </SheetHeader>
         <form onSubmit={submit} className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2"><Label>Type d’affiliation *</Label><Select required value={form.typeAffiliation} onValueChange={changeType} disabled={!types.length}><SelectTrigger><SelectValue placeholder={types.length ? "Sélectionner un type" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{types.map((type) => <SelectItem key={type.id} value={type.nom}>{type.nom}</SelectItem>)}</SelectContent></Select></div>
@@ -119,9 +119,9 @@ export function TransfertFormDialog({ athletes, clubs, types, affiliations, onSa
             <div className="space-y-2 md:col-span-2"><Label>Observation</Label><Input value={form.observation} onChange={(e) => setForm({ ...form, observation: e.target.value })} /></div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending || !types.length}>{pending ? "Enregistrement..." : "Créer l’affiliation"}</Button></DialogFooter>
+          <SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending || !types.length}>{pending ? "Enregistrement..." : "Créer l’affiliation"}</Button></SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

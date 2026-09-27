@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import type { BaseActorLicence, Officiel, OfficielAffiliation } from "@/lib/types"
-import { OfficielsStats } from "@/components/officiels/officiels-stats"
 import { OfficielsFilters } from "@/components/officiels/officiels-filters"
 import { OfficielsTable } from "@/components/officiels/officiels-table"
 import { OfficielDetail } from "@/components/officiels/officiel-detail"
@@ -12,21 +11,22 @@ import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-reference
 import { compareLabels } from "@/lib/sort-utils"
 import type { OfficielStructureOption } from "@/components/officiels/officiel-affiliation-form-dialog"
 
-export function OfficielsClient({ officiels, affiliations, licences, sexes, structures, functions }: {
+export function OfficielsClient({ officiels, affiliations, licences, sexes, structures, functions, structureTypes, seasons }: {
   officiels: Officiel[]
   affiliations: OfficielAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
   structures: OfficielStructureOption[]
   functions: CoachReferenceOption[]
+  structureTypes: CoachReferenceOption[]
+  seasons: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(officiels)
   const [affiliationRows, setAffiliationRows] = useState(affiliations)
   const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedOfficiel, setSelectedOfficiel] = useState<Officiel | null>(null)
   const [search, setSearch] = useState("")
-  const [entite, setEntite] = useState("all")
-  const [fonction, setFonction] = useState("all")
+  const [sexe, setSexe] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(officiels), [officiels])
   useEffect(() => setAffiliationRows(affiliations), [affiliations])
@@ -36,8 +36,9 @@ export function OfficielsClient({ officiels, affiliations, licences, sexes, stru
     setRows((current) => {
       const existing = current.find((officiel) => officiel.idOfficiel === saved.idOfficiel)
       const merged: Officiel = {
+        ...existing, ...saved,
         avatarDriveId: "", avatarDriveUrl: "", fonction: "", entite: "", rattachement: "",
-        dateNomination: "", dateFinMandat: "", equipeFederal: "",
+        dateNomination: "", dateFinMandat: "", equipeFederal: "", passeportDriveId: "", passeportDriveUrl: "",
         ...existing, ...saved, id: saved.idOfficiel, dateNaissance: saved.dateDeNaissance, genre: saved.sexe,
       }
       return existing
@@ -62,8 +63,7 @@ export function OfficielsClient({ officiels, affiliations, licences, sexes, stru
     const term = search.trim().toLowerCase()
 
     return rows.filter((officiel) => {
-      if (entite !== "all" && officiel.entite !== entite) return false
-      if (fonction !== "all" && officiel.fonction !== fonction) return false
+      if (sexe !== "all" && officiel.sexe !== sexe) return false
       if (statut !== "all" && officiel.statut !== statut) return false
 
       if (term) {
@@ -71,32 +71,30 @@ export function OfficielsClient({ officiels, affiliations, licences, sexes, stru
           .filter((licence) => licence.actorId === officiel.idOfficiel)
           .map((licence) => licence.numeroLicence)
           .join(" ")
-        const haystack = `${officiel.nomComplet} ${licenceNumbers}`.toLowerCase()
+        const mandat = affiliationRows.find((item) => item.actorId === officiel.idOfficiel)
+        const haystack = `${officiel.nomComplet} ${officiel.idOfficiel} ${officiel.idNational} ${licenceNumbers} ${mandat?.fonction ?? ""} ${mandat?.nomStructure ?? ""}`.toLowerCase()
 
         if (!haystack.includes(term)) return false
       }
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [entite, fonction, licenceRows, rows, search, statut])
+  }, [affiliationRows, licenceRows, rows, search, sexe, statut])
 
   return (
     <div className="space-y-6">
       {selectedOfficiel ? (
-        <OfficielDetail officiel={selectedOfficiel} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} structures={structures} functions={functions} onAffiliationCreated={applyCreatedAffiliation} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedOfficiel} onBack={() => setSelectedOfficiel(null)} />
+        <OfficielDetail officiel={selectedOfficiel} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} structures={structures} functions={functions} structureTypes={structureTypes} seasons={seasons} onAffiliationCreated={applyCreatedAffiliation} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedOfficiel} onBack={() => setSelectedOfficiel(null)} />
       ) : (
         <>
           <div className="flex justify-end"><OfficielFormDialog sexes={sexes} onSaved={applySavedOfficiel} /></div>
-          <OfficielsStats officiels={rows} />
           <OfficielsFilters
             officiels={rows}
             search={search}
-            entite={entite}
-            fonction={fonction}
+            sexe={sexe}
             statut={statut}
             onSearchChange={setSearch}
-            onEntiteChange={setEntite}
-            onFonctionChange={setFonction}
+            onSexeChange={setSexe}
             onStatutChange={setStatut}
           />
           <OfficielsTable officiels={filteredOfficiels} licences={licenceRows} onViewOfficiel={setSelectedOfficiel} />

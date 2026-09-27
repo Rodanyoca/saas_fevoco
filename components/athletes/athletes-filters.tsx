@@ -1,6 +1,5 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -36,13 +35,12 @@ export function AthletesFilters({
   const clubsOptions = Array.from(new Set(athletes.map((athlete) => athlete.clubNom).filter(Boolean)))
 
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-3 lg:flex-row">
+    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap">
+        <div className="contents">
           <div className="relative min-w-[220px] flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Rechercher par nom ou numéro de licence..."
+              placeholder="Rechercher un athlète..."
               className="pl-9"
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
@@ -86,7 +84,6 @@ export function AthletesFilters({
             </SelectContent>
           </Select>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   )
 }

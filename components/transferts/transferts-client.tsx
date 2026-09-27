@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { TransfertDetail } from "@/components/transferts/transfert-detail"
 import { TransfertsFilters } from "@/components/transferts/transferts-filters"
-import { TransfertsStats } from "@/components/transferts/transferts-stats"
 import { TransfertsTable } from "@/components/transferts/transferts-table"
 import type { Athlete, Club, Transfert } from "@/lib/types"
 import type { TransferTypeOption } from "@/lib/actor-references"
@@ -46,7 +45,6 @@ export function TransfertsClient({ transferts, athletes, clubs, transferTypes }:
   return (
     <div className="space-y-6">
       <div className="flex justify-end"><TransfertFormDialog athletes={athletes} clubs={clubs} types={transferTypes} affiliations={rows} onSaved={(transfert, deactivatedId) => setRows((current) => [transfert, ...current.map((item) => item.id === deactivatedId ? { ...item, statut: "inactif" } : item)])} /></div>
-      <TransfertsStats transferts={rows} />
       <TransfertsFilters
         transferts={rows}
         search={search}

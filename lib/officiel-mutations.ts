@@ -1,81 +1,17 @@
 import "server-only"
-
-import { env } from "@/lib/env"
 import { getActorSexes } from "@/lib/actor-references"
 import { nextActorId } from "@/lib/actor-id"
+import { compareDateValues, formatDateForSheet, validateBirthDate } from "@/lib/compact-date"
 import { getOfficiels } from "@/lib/data"
-import { appendSheetRecord, updateSheetRecordById } from "@/lib/google-sheets"
-import { assertValidDate } from "@/lib/date-validation"
+import { env } from "@/lib/env"
+import { appendSheetRecord, formatSheetDateColumn, updateSheetRecordById } from "@/lib/google-sheets"
 
-const text = (value: unknown) => String(value ?? "").trim()
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const statuses = new Set(["actif", "inactif", "active", "inactive"])
-
-type OfficielInput = {
-  idNational: string; idFivb: string; nomComplet: string; sexe: string
-  dateDeNaissance: string; nationalite: string; telephone: string
-  email: string; adresse: string; statut: string
-}
-
-function normalizeInput(payload: Record<string, unknown>): OfficielInput {
-  return {
-    idNational: text(payload.idNational), idFivb: text(payload.idFivb),
-    nomComplet: text(payload.nomComplet), sexe: text(payload.sexe),
-    dateDeNaissance: text(payload.dateDeNaissance), nationalite: text(payload.nationalite),
-    telephone: text(payload.telephone), email: text(payload.email),
-    adresse: text(payload.adresse), statut: text(payload.statut).toLowerCase() || "actif",
-  }
-}
-
-async function validateInput(input: OfficielInput) {
-  if (!input.nomComplet) throw new Error("Le nom complet est obligatoire.")
-  if (!input.sexe) throw new Error("Le sexe est obligatoire.")
-  assertValidDate(input.dateDeNaissance, "La date de naissance")
-  if (input.email && !emailPattern.test(input.email)) throw new Error("L’adresse e-mail est invalide.")
-  if (!statuses.has(input.statut)) throw new Error("Le statut est invalide.")
-  const sexes = await getActorSexes()
-  if (sexes.length && !sexes.some((option) => option.nom === input.sexe)) throw new Error("Le sexe sélectionné est invalide.")
-}
-
-export async function createOfficiel(payload: Record<string, unknown>) {
-  const input = normalizeInput(payload)
-  await validateInput(input)
-  const officiels = await getOfficiels()
-  const idOfficiel = nextActorId(officiels.map((item) => item.idOfficiel), "OFF")
-  if (officiels.some((item) => item.idOfficiel === idOfficiel)) throw new Error("Cet identifiant d’officiel existe déjà.")
-  await appendSheetRecord(env.googleSheets.acteursSpreadsheetId, "OFFICIELS", {
-    id_officiel: idOfficiel, id_national: input.idNational, id_fivb: input.idFivb,
-    nom_complet: input.nomComplet, sexe: input.sexe, date_de_naissance: input.dateDeNaissance,
-    nationalite: input.nationalite, telephone: input.telephone, email: input.email,
-    adresse: input.adresse, statut: input.statut,
-  })
-  return (await getOfficiels()).find((item) => item.idOfficiel === idOfficiel)
-    ?? { idOfficiel, ...input, avatarDriveId: "", avatarDriveUrl: "" }
-}
-
-export async function updateOfficiel(idOfficiel: string, payload: Record<string, unknown>) {
-  const input = normalizeInput(payload)
-  await validateInput(input)
-  const officiels = await getOfficiels()
-  const current = officiels.find((item) => item.idOfficiel === idOfficiel)
-  if (!current) throw new Error("Officiel introuvable.")
-  await updateSheetRecordById(env.googleSheets.acteursSpreadsheetId, "OFFICIELS", "id_officiel", idOfficiel, {
-    id_national: input.idNational, id_fivb: input.idFivb, nom_complet: input.nomComplet,
-    sexe: input.sexe, date_de_naissance: input.dateDeNaissance,
-    nationalite: input.nationalite, telephone: input.telephone,
-    email: input.email, adresse: input.adresse, statut: input.statut,
-  })
-  return (await getOfficiels()).find((item) => item.idOfficiel === idOfficiel)
-    ?? { idOfficiel, ...input, avatarDriveId: current.avatarDriveId, avatarDriveUrl: current.avatarDriveUrl }
-}
-
-export async function updateOfficielAvatar(idOfficiel: string, avatarDriveId: string, avatarDriveUrl: string) {
-  const current = (await getOfficiels()).find((item) => item.idOfficiel === idOfficiel)
-  if (!current) throw new Error("Officiel introuvable.")
-  await updateSheetRecordById(env.googleSheets.acteursSpreadsheetId, "OFFICIELS", "id_officiel", idOfficiel, {
-    avatar_drive_id: avatarDriveId,
-    avatar_drive_url: avatarDriveUrl,
-  })
-  return (await getOfficiels()).find((item) => item.idOfficiel === idOfficiel)
-    ?? { ...current, avatarDriveId, avatarDriveUrl }
-}
+const text=(v:unknown)=>String(v??"").trim(), emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+type Input={idNational:string;idFivb:string;nomComplet:string;idSexe:string;dateNaissance:string;lieuNaissance:string;nationalite:string;telephone:string;email:string;adresse:string;numeroPasseport:string;dateDelivrancePasseport:string;dateExpirationPasseport:string;statut:string;observations:string}
+const normalizeInput=(p:Record<string,unknown>):Input=>({idNational:text(p.idNational),idFivb:text(p.idFivb),nomComplet:text(p.nomComplet),idSexe:text(p.idSexe),dateNaissance:text(p.dateNaissance??p.dateDeNaissance),lieuNaissance:text(p.lieuNaissance),nationalite:text(p.nationalite),telephone:text(p.telephone),email:text(p.email),adresse:text(p.adresse),numeroPasseport:text(p.numeroPasseport),dateDelivrancePasseport:text(p.dateDelivrancePasseport),dateExpirationPasseport:text(p.dateExpirationPasseport),statut:text(p.statut).toUpperCase()||"ACTIF",observations:text(p.observations)})
+async function validate(x:Input){if(!x.nomComplet)throw new Error("Le nom complet est obligatoire.");if(!x.idSexe)throw new Error("Le sexe est obligatoire.");const e=validateBirthDate(x.dateNaissance);if(e)throw new Error(e);for(const [v,l] of [[x.dateDelivrancePasseport,"La date de délivrance"],[x.dateExpirationPasseport,"La date d’expiration"]] as const)if(v){try{formatDateForSheet(v)}catch{throw new Error(`${l} est invalide.`)}}if(x.dateDelivrancePasseport&&x.dateExpirationPasseport&&compareDateValues(x.dateDelivrancePasseport,x.dateExpirationPasseport)!>0)throw new Error("La date d’expiration ne peut pas précéder la délivrance.");if(x.email&&!emailPattern.test(x.email))throw new Error("L’adresse e-mail est invalide.");if(!new Set(["ACTIF","INACTIF"]).has(x.statut))throw new Error("Le statut est invalide.");const sexe=(await getActorSexes()).find(o=>o.id===x.idSexe);if(!sexe)throw new Error("Le sexe sélectionné est invalide.");return sexe}
+const record=(x:Input)=>({id_national:x.idNational,id_fivb:x.idFivb,nom_complet:x.nomComplet,id_sexe:x.idSexe,date_naissance:x.dateNaissance?formatDateForSheet(x.dateNaissance):"",lieu_de_naissance:x.lieuNaissance,nationalite:x.nationalite,telephone:x.telephone,email:x.email,adresse:x.adresse,"numéro_passeport":x.numeroPasseport,date_de_delivrance_passeport:x.dateDelivrancePasseport?formatDateForSheet(x.dateDelivrancePasseport):"",date_expiration_passeport:x.dateExpirationPasseport?formatDateForSheet(x.dateExpirationPasseport):"",statut:x.statut,observations:x.observations})
+async function formatDates(){await Promise.all([formatSheetDateColumn(env.googleSheets.acteursSpreadsheetId,"OFFICIELS","date_de_naissance","yyyy-mm-dd"),formatSheetDateColumn(env.googleSheets.acteursSpreadsheetId,"OFFICIELS","date_de_delivrance_passeport","yyyy-mm-dd"),formatSheetDateColumn(env.googleSheets.acteursSpreadsheetId,"OFFICIELS","date_expiration_passeport","yyyy-mm-dd")])}
+export async function createOfficiel(p:Record<string,unknown>){const x=normalizeInput(p),sexe=await validate(x),all=await getOfficiels(),idOfficiel=nextActorId(all.map(o=>o.idOfficiel),"OFF");await formatDates();await appendSheetRecord(env.googleSheets.acteursSpreadsheetId,"OFFICIELS",{id_officiel:idOfficiel,...record(x)},"OVERWRITE");return (await getOfficiels()).find(o=>o.idOfficiel===idOfficiel)??{...x,idOfficiel,id:idOfficiel,idSexe:x.idSexe,sexe:sexe.nom,dateDeNaissance:x.dateNaissance?formatDateForSheet(x.dateNaissance):"",dateNaissance:x.dateNaissance?formatDateForSheet(x.dateNaissance):"",genre:sexe.nom,avatarDriveId:"",avatarDriveUrl:"",passeportDriveId:"",passeportDriveUrl:"",fonction:"",entite:"",rattachement:"",dateNomination:"",dateFinMandat:"",equipeFederal:""}}
+export async function updateOfficiel(id:string,p:Record<string,unknown>){const current=(await getOfficiels()).find(o=>o.idOfficiel===id);if(!current)throw new Error("Officiel introuvable.");const x=normalizeInput({idNational:current.idNational,idFivb:current.idFivb,nomComplet:current.nomComplet,idSexe:current.idSexe,dateNaissance:current.dateDeNaissance,lieuNaissance:current.lieuNaissance,nationalite:current.nationalite,telephone:current.telephone,email:current.email,adresse:current.adresse,numeroPasseport:current.numeroPasseport,dateDelivrancePasseport:current.dateDelivrancePasseport,dateExpirationPasseport:current.dateExpirationPasseport,statut:current.statut,observations:current.observations,...p});await validate(x);await formatDates();await updateSheetRecordById(env.googleSheets.acteursSpreadsheetId,"OFFICIELS","id_officiel",id,record(x));return (await getOfficiels()).find(o=>o.idOfficiel===id)??{...current,...x,dateDeNaissance:x.dateNaissance?formatDateForSheet(x.dateNaissance):""}}
+export async function updateOfficielAvatar(id:string,avatarDriveId:string,avatarDriveUrl:string){const current=(await getOfficiels()).find(o=>o.idOfficiel===id);if(!current)throw new Error("Officiel introuvable.");await updateSheetRecordById(env.googleSheets.acteursSpreadsheetId,"OFFICIELS","id_officiel",id,{avatar_drive_id:avatarDriveId,avatar_drive_url:avatarDriveUrl});return (await getOfficiels()).find(o=>o.idOfficiel===id)??{...current,avatarDriveId,avatarDriveUrl}}

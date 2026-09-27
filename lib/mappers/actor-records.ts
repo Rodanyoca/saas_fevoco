@@ -72,7 +72,15 @@ export const mapMedecinAffiliation = (row: Row): MedecinAffiliation => ({
 
 export const mapOfficielAffiliation = (row: Row): OfficielAffiliation => ({
   ...baseAffiliation(row, "officiel"),
-  fonction: first(row, "fonction", "role"),
+  idAffiliation: normalizeId(first(row, "id_mandat")),
+  idTypeActeur: normalizeId(first(row, "id_type_acteur")),
+  idFonction: normalizeId(first(row, "id_fonction")),
+  idTypeStructure: normalizeId(first(row, "id_type_structure")),
+  idSaison: normalizeId(first(row, "id_saison")),
+  typeStructure: first(row, "nom_type_structure"),
+  saison: first(row, "nom_saison"),
+  fonction: first(row, "nom_fonction", "fonction", "role"),
+  statutAffiliation: first(row, "statut_mandat", "statut"),
 })
 
 export function mapLicence(row: Row, kind: ActorKind): BaseActorLicence {

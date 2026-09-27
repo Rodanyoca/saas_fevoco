@@ -1,145 +1,99 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, CalendarDays, Layers, Pencil, Shield, Users } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AthletesTable } from "@/components/athletes/athletes-table"
-import { formatSheetDate } from "@/lib/date-utils"
-import { normalize } from "@/lib/sheet-values"
-import type { Athlete, Club } from "@/lib/types"
-import type { Entente } from "@/lib/types"
-import { ClubFormDialog } from "@/components/clubs/club-form-dialog"
-import type { SavedClub } from "@/components/clubs/club-form-dialog"
+import { DataTable, type Column } from "@/components/dashboard/data-table"
+import { DetailCard } from "@/components/dashboard/detail-card"
+import { StatusBadge } from "@/components/dashboard/status-badge"
+import { ClubFormDialog, type SavedClub } from "@/components/clubs/club-form-dialog"
 import type { ClubReferenceOption } from "@/lib/club-references"
-import { ArrowLeft, Calendar, Shield } from "lucide-react"
+import type { Athlete, Club, Entente } from "@/lib/types"
 
 interface ClubDetailProps {
   club: Club
   athletes: Athlete[]
   ententes: Entente[]
   categories: ClubReferenceOption[]
-  versions: ClubReferenceOption[]
+  sexes: ClubReferenceOption[]
   onBack: () => void
   onUpdated: (club: SavedClub) => void
 }
 
-function shown(value: unknown, fallback = "Non renseigné") {
+function initials(value: string) {
+  return value.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "CL"
+}
+
+function shown(value: unknown, fallback = "-") {
   const text = value === null || value === undefined ? "" : String(value).trim()
   return text || fallback
 }
 
-export function ClubDetail({ club, athletes, ententes, categories, versions, onBack, onUpdated }: ClubDetailProps) {
-  const formattedDate = formatSheetDate(club.dateAffiliationClub)
-  const active = ["ACTIF", "ACTIVE"].includes(normalize(club.statut))
-  const sections = [
-    {
-      title: "Identité du club",
-      fields: [
-        ["Identifiant", club.idClub],
-        ["Nom du club", club.nomClub],
-        ["Catégorie", club.categorie],
-        ["Version", club.version],
-      ],
-    },
-    {
-      title: "Rattachement territorial",
-      fields: [
-        ["Identifiant de l’entente", club.idEntente],
-        ["Nom de l’entente", club.nomEntente],
-        ["Pseudo de l’entente", club.pseudoEntente],
-        ["Identifiant de la ligue", club.idLigue],
-        ["Nom de la ligue", club.nomLigue],
-      ],
-    },
-    {
-      title: "Affiliation et suivi",
-      fields: [
-        ["Date d’affiliation", formattedDate === "-" ? "Non renseignée" : formattedDate],
-        ["Statut", club.statut],
-        ["Observations", club.observations],
-      ],
-    },
+function SummaryTile({ icon: Icon, label, value }: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: number | string
+}) {
+  return <Card>
+    <CardContent className="flex items-center justify-between gap-3 p-5">
+      <div className="min-w-0">
+        <p className="truncate text-sm text-muted-foreground">{label}</p>
+        <p className="mt-1 truncate text-2xl font-bold">{shown(value)}</p>
+      </div>
+      <Icon className="h-6 w-6 shrink-0 text-brand-gold" />
+    </CardContent>
+  </Card>
+}
+
+export function ClubDetail({ club, athletes, ententes, categories, sexes, onBack, onUpdated }: ClubDetailProps) {
+  const athleteColumns: Column<Athlete>[] = [
+    { key: "idAthlete", header: "ID athlète", className: "font-mono text-sm" },
+    { key: "nomComplet", header: "Nom complet", className: "font-medium" },
+    { key: "sexe", header: "Sexe" },
+    { key: "statut", header: "Statut", render: (athlete) => <StatusBadge status={athlete.statut} /> },
   ]
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <Button variant="outline" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" />
-            <span className="sr-only">Retour à la liste</span>
-          </Button>
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold">{shown(club.nomClub, "Club")}</h1>
-            <p className="font-mono text-sm text-muted-foreground">{shown(club.idClub)}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <ClubFormDialog
-            club={club}
-            ententes={ententes}
-            categories={categories}
-            versions={versions}
-            onSaved={onUpdated}
-          />
-          <Badge variant={active ? "default" : "secondary"}>{shown(club.statut)}</Badge>
-        </div>
-      </div>
-
-      <Tabs defaultValue="informations" className="w-full">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl p-1.5">
-          <TabsTrigger className="min-h-11 w-full text-center" value="informations">
-            Informations générales
-          </TabsTrigger>
-          <TabsTrigger className="min-h-11 w-full text-center" value="athletes">
-            Athlètes ({athletes.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="informations">
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                Informations générales
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid auto-rows-fr gap-4 lg:grid-cols-3">
-              {sections.map((section) => (
-                <div key={section.title} className="flex h-full min-h-[330px] flex-col overflow-hidden rounded-xl border border-border/60 bg-muted/20">
-                  <div className="border-b border-border/60 bg-muted/40 px-4 py-3">
-                    <h3 className="text-sm font-semibold">{section.title}</h3>
-                  </div>
-                  <div className="flex flex-1 flex-col divide-y divide-border/60 px-4">
-                    {section.fields.map(([label, value]) => (
-                      <div key={label} className="flex flex-1 flex-col justify-center py-3">
-                        <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {label === "Date d’affiliation" && <Calendar className="h-3.5 w-3.5" />}
-                          {label}
-                        </p>
-                        <p className="mt-1 break-words font-medium">{shown(value)}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="athletes">
-          {athletes.length > 0 ? (
-            <AthletesTable athletes={athletes} title={`Athlètes du club (${athletes.length})`} />
-          ) : (
-            <Card>
-              <CardContent className="flex min-h-32 items-center justify-center p-6 text-center text-muted-foreground">
-                Aucun athlète enregistré pour ce club.
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+  return <div className="space-y-6">
+    <div className="flex items-center justify-between gap-3">
+      <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" />Retour à la liste</Button>
+      <ClubFormDialog club={club} ententes={ententes} categories={categories} sexes={sexes} onSaved={onUpdated}
+        trigger={<Button className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90"><Pencil className="h-4 w-4" />Modifier</Button>} />
     </div>
-  )
+
+    <Card>
+      <CardContent className="flex items-center gap-4 p-5">
+        <Avatar className="size-20 shrink-0 rounded-xl border bg-background shadow-sm">
+          <AvatarImage src={club.logoDriveUrl || undefined} alt={`Logo de ${club.nomClub}`} className="object-contain p-2" />
+          <AvatarFallback className="rounded-xl text-lg font-semibold">{initials(club.nomClub)}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0"><h2 className="truncate text-xl font-semibold">{shown(club.nomClub, "Club")}</h2><p className="mt-1 font-mono text-sm text-muted-foreground">{shown(club.idClub)}</p></div>
+      </CardContent>
+    </Card>
+
+    <div className="grid gap-6 lg:grid-cols-2">
+      <DetailCard title="Informations générales" icon={Shield} iconClassName="text-brand-gold" fields={[
+        { label: "ID Club", value: club.idClub }, { label: "Nom du club", value: club.nomClub },
+        { label: "Ligue", value: club.nomLigue }, { label: "Entente", value: club.pseudoEntente },
+        { label: "Ville", value: club.idVille }, { label: "Statut", value: club.statut },
+        { label: "Observation", value: club.observations },
+      ]} />
+      <DetailCard title="Affiliation" icon={CalendarDays} iconClassName="text-brand-gold" fields={[
+        { label: "Catégorie", value: club.categorie }, { label: "Sexe", value: club.version },
+        { label: "Date de création", value: club.dateCreation }, { label: "Date d’affiliation", value: club.dateAffiliationClub },
+      ]} />
+    </div>
+
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <SummaryTile icon={Users} label="Athlètes" value={athletes.length} />
+      <SummaryTile icon={Layers} label="Catégorie" value={club.categorie} />
+      <SummaryTile icon={Shield} label="Sexe" value={club.version} />
+      <SummaryTile icon={CalendarDays} label="Statut" value={club.statut} />
+    </div>
+
+    <Card>
+      <CardHeader><CardTitle>Athlètes du club</CardTitle></CardHeader>
+      <CardContent><DataTable data={athletes} columns={athleteColumns} searchPlaceholder="Rechercher un athlète..." idKey="idAthlete" /></CardContent>
+    </Card>
+  </div>
 }

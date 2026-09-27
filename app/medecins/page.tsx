@@ -6,18 +6,20 @@ import { isActeursGoogleSheetsConfigured } from "@/lib/env"
 import { ActorsConfigNotice } from "@/components/actors/actors-config-notice"
 import { getMedecinAffiliations, getMedecinLicences } from "@/lib/actor-records"
 import { getActorAffiliationTypes, getActorSexes, getMedecinSpecialties } from "@/lib/actor-references"
+import { ActorsLoadNotice } from "@/components/actors/actors-load-notice"
+import { safeDataLoad } from "@/lib/safe-data-load"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export default async function MedecinsPage() {
   const [medecins, affiliations, licences, sexes, clubs, equipes, affiliationTypes, specialties] = await Promise.all([
-    getMedecins(), getMedecinAffiliations(), getMedecinLicences(), getActorSexes(),
-    getClubs(), getEquipeNationale(), getActorAffiliationTypes(), getMedecinSpecialties(),
+    safeDataLoad(getMedecins, []), safeDataLoad(getMedecinAffiliations, []), safeDataLoad(getMedecinLicences, []), safeDataLoad(getActorSexes, []),
+    safeDataLoad(getClubs, []), safeDataLoad(getEquipeNationale, []), safeDataLoad(getActorAffiliationTypes, []), safeDataLoad(getMedecinSpecialties, []),
   ])
   const structures = [
-    ...clubs.map((item) => ({ key: `club:${item.idClub}`, id: item.idClub, nom: item.nomClub, type: "Club" })),
-    ...equipes.map((item) => ({ key: `equipe:${item.idEquipeNationale}`, id: item.idEquipeNationale, nom: item.nomEquipeNationale, type: "Equipe nationale" })),
+    ...clubs.data.map((item) => ({ key: `club:${item.idClub}`, id: item.idClub, nom: item.nomClub, type: "Club" })),
+    ...equipes.data.map((item) => ({ key: `equipe:${item.idEquipeNationale}`, id: item.idEquipeNationale, nom: item.nomEquipeNationale, type: "Equipe nationale" })),
   ].filter((item, index, all) => item.id && item.nom && all.findIndex((candidate) => candidate.key === item.key) === index)
 
   return (
@@ -25,7 +27,8 @@ export default async function MedecinsPage() {
       <Header title="Médecins" subtitle="Gérez les médecins affiliés à la FEVOCO" />
       <div className="space-y-6 p-6">
         {!isActeursGoogleSheetsConfigured() && <ActorsConfigNotice />}
-        <MedecinsClient medecins={medecins} affiliations={affiliations} licences={licences} sexes={sexes} structures={structures} affiliationTypes={affiliationTypes} specialties={specialties} />
+        <ActorsLoadNotice errors={[medecins.error, affiliations.error, licences.error, sexes.error, clubs.error, equipes.error, affiliationTypes.error, specialties.error]} />
+        <MedecinsClient medecins={medecins.data} affiliations={affiliations.data} licences={licences.data} sexes={sexes.data} structures={structures} affiliationTypes={affiliationTypes.data} specialties={specialties.data} />
       </div>
     </DashboardLayout>
   )

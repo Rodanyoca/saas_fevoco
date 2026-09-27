@@ -1,24 +1,14 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatusBadge } from "@/components/dashboard/status-badge"
 import type { Transfert } from "@/lib/types"
 import { ArrowLeft, ArrowRight, ArrowRightLeft, CalendarDays, FileText, User } from "lucide-react"
 import { formatSheetDate } from "@/lib/date-utils"
 
 function formatDate(value: string) {
   return formatSheetDate(value)
-}
-
-function getStatusClass(statut: string) {
-  const value = statut.trim().toLowerCase()
-  if (value === "valide" || value === "validee" || value === "active" || value === "actif") {
-    return "bg-success/10 text-success hover:bg-success/15"
-  }
-  if (value === "en attente") return "bg-warning/15 text-warning-foreground hover:bg-warning/20"
-  if (value === "rejete" || value === "refuse") return "bg-destructive/10 text-destructive hover:bg-destructive/15"
-  return "bg-muted text-muted-foreground hover:bg-muted"
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -41,15 +31,15 @@ export function TransfertDetail({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="size-4" /> Retour aux mouvements
           </Button>
           <div className="min-w-0">
             <h1 className="truncate text-2xl font-bold text-foreground">{transfert.athleteNom || "Transfert"}</h1>
             <p className="font-mono text-sm text-muted-foreground">{transfert.id || "-"}</p>
           </div>
         </div>
-        <Badge className={getStatusClass(transfert.statut)}>{transfert.statut || "-"}</Badge>
+        <StatusBadge status={transfert.statut} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
@@ -83,12 +73,12 @@ export function TransfertDetail({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <User className="h-5 w-5 text-primary" />
-              Athlete
+              Athlète
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <InfoRow label="Nom" value={transfert.athleteNom} />
-            <InfoRow label="ID athlete" value={transfert.athleteId} />
+            <InfoRow label="ID athlète" value={transfert.athleteId} />
             <InfoRow label="Matricule transfert" value={transfert.id} />
           </CardContent>
         </Card>

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import type { BaseActorLicence, Medecin, MedecinAffiliation } from "@/lib/types"
-import { MedecinsStats } from "@/components/medecins/medecins-stats"
 import { MedecinsFilters } from "@/components/medecins/medecins-filters"
 import { MedecinsTable } from "@/components/medecins/medecins-table"
 import { MedecinDetail } from "@/components/medecins/medecin-detail"
@@ -29,7 +28,7 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes, struct
   const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedMedecin, setSelectedMedecin] = useState<Medecin | null>(null)
   const [search, setSearch] = useState("")
-  const [niveau, setNiveau] = useState("all")
+  const [sexe, setSexe] = useState("all")
   const [specialite, setSpecialite] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(medecins), [medecins])
@@ -40,7 +39,7 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes, struct
     setRows((current) => {
       const existing = current.find((medecin) => medecin.idMedecin === saved.idMedecin)
       const merged: Medecin = {
-        avatarDriveId: "", avatarDriveUrl: "", niveau: "", numeroOrdre: "", equipeNationale: "",
+        avatarDriveId: "", avatarDriveUrl: "", passeportDriveId: "", passeportDriveUrl: "", niveau: "", numeroOrdre: "", equipeNationale: "",
         provinceId: "", provinceNom: "", ligueId: "", ligueNom: "", ententeId: "", ententeNom: "",
         pseudoEntente: "", clubId: "", clubNom: "", equipeId: "", equipeNom: "",
         dateAffiliation: "", affiliations: [],
@@ -73,23 +72,19 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes, struct
     const term = search.trim().toLowerCase()
 
     return rows.filter((medecin) => {
-      if (niveau !== "all" && medecin.niveau !== niveau) return false
+      if (sexe !== "all" && medecin.sexe !== sexe) return false
       if (specialite !== "all" && medecin.specialite !== specialite) return false
       if (statut !== "all" && medecin.statut !== statut) return false
 
       if (term) {
-        const licenceNumbers = licenceRows
-          .filter((licence) => licence.actorId === medecin.idMedecin)
-          .map((licence) => licence.numeroLicence)
-          .join(" ")
-        const haystack = `${medecin.nomComplet} ${licenceNumbers}`.toLowerCase()
+        const haystack = `${medecin.nomComplet} ${medecin.idMedecin} ${medecin.specialite}`.toLowerCase()
 
         if (!haystack.includes(term)) return false
       }
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, licenceRows, niveau, search, specialite, statut])
+  }, [rows, search, sexe, specialite, statut])
 
   return (
     <div className="space-y-6">
@@ -98,19 +93,18 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes, struct
       ) : (
         <>
           <div className="flex justify-end"><MedecinFormDialog sexes={sexes} specialties={specialties} onSaved={applySavedMedecin} /></div>
-          <MedecinsStats medecins={rows} />
           <MedecinsFilters
             medecins={rows}
             search={search}
-            niveau={niveau}
+            sexe={sexe}
             specialite={specialite}
             statut={statut}
             onSearchChange={setSearch}
-            onNiveauChange={setNiveau}
+            onSexeChange={setSexe}
             onSpecialiteChange={setSpecialite}
             onStatutChange={setStatut}
           />
-          <MedecinsTable medecins={filteredMedecins} licences={licenceRows} onViewMedecin={setSelectedMedecin} />
+          <MedecinsTable medecins={filteredMedecins} onViewMedecin={setSelectedMedecin} />
         </>
       )}
     </div>

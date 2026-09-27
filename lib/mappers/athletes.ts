@@ -29,8 +29,9 @@ export function mapAthleteRow(row: SheetRow): Athlete {
     idAthlete: str(row, "id_athlete"),
     idNational: str(row, "id_national"),
     idFivb: str(row, "id_fivb"),
+    idSexe: str(row, "id_sexe"),
     dateDeNaissance: str(row, "date_de_naissance"),
-    sexe: str(row, "sexe"),
+    sexe: str(row, "nom_sexe") || str(row, "sexe") || str(row, "id_sexe"),
     avatarDriveId: str(row, "avatar_drive_id"),
     avatarDriveUrl: str(row, "avatar_drive_url"),
     id: str(row, "id_athlete"),
@@ -38,7 +39,7 @@ export function mapAthleteRow(row: SheetRow): Athlete {
     nomComplet: str(row, "nom_complet"),
     dateNaissance: str(row, "date_de_naissance"),
     lieuNaissance: str(row, "lieu_de_naissance"),
-    genre: str(row, "sexe") || str(row, "genre"),
+    genre: str(row, "nom_sexe") || str(row, "sexe") || str(row, "genre") || str(row, "id_sexe"),
     nationalite: str(row, "nationalite"),
     adresse: str(row, "adresse") || str(row, "adresse_athlete"),
     provinceId: str(row, "id_province"),
@@ -57,6 +58,7 @@ export function mapAthleteRow(row: SheetRow): Athlete {
     poids: num(row, "poids"),
     telephone: str(row, "telephone"),
     email: str(row, "email"),
+    observations: str(row, "observations"),
     statut: normalizeStatut(statutRaw),
   }
 }

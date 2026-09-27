@@ -1,32 +1,43 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, ContactRound, Pencil, Shield, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DataTable, type Column } from "@/components/dashboard/data-table"
+import { DetailCard } from "@/components/dashboard/detail-card"
+import { StatCard } from "@/components/dashboard/stat-card"
+import { StatusBadge } from "@/components/dashboard/status-badge"
 import { EditEntenteDialog, type SavedEntente } from "@/components/ententes/entente-form-dialog"
-import { normalize } from "@/lib/sheet-values"
 import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
-import { ArrowLeft, Shield, Users } from "lucide-react"
-
-const shown = (value: unknown, fallback = "Non renseigné") => String(value ?? "").trim() || fallback
-const active = (value: string) => ["ACTIF", "ACTIVE"].includes(normalize(value))
 
 export function EntenteDetail({ entente, ligues, clubs, athletes, onBack, onUpdated }: { entente: Entente; ligues: Ligue[]; clubs: Club[]; athletes: Athlete[]; onBack: () => void; onUpdated: (entente: SavedEntente) => void }) {
-  const relatedClubs = clubs.filter((club) => club.idEntente === entente.idEntente)
+  const relatedClubs = clubs.filter((club) => club.idEntente === entente.idEntente || club.ententeId === entente.idEntente)
   const clubIds = new Set(relatedClubs.map((club) => club.idClub))
   const relatedAthletes = athletes.filter((athlete) => clubIds.has(athlete.clubId))
+  const columns: Column<Club>[] = [
+    { key: "idClub", header: "ID", className: "font-mono text-sm" },
+    { key: "nomClub", header: "Club", className: "font-medium" },
+    { key: "categorie", header: "Catégorie" },
+    { key: "athletes", header: "Athlètes", render: (club) => relatedAthletes.filter((athlete) => athlete.clubId === club.idClub).length },
+    { key: "statut", header: "Statut", render: (club) => <StatusBadge status={club.statut} /> },
+  ]
 
   return <div className="space-y-6">
-    <section className="flex flex-wrap items-start justify-between gap-4 border-b pb-5">
-      <div className="flex items-start gap-3"><Button variant="outline" size="icon" onClick={onBack}><ArrowLeft /><span className="sr-only">Retour à la liste des ententes</span></Button><div><p className="font-mono text-xs text-muted-foreground">{shown(entente.idEntente)}</p><h2 className="text-2xl font-bold tracking-tight">{shown(entente.nomEntente, "Entente")}</h2><p className="mt-1 text-sm text-muted-foreground">{shown(entente.pseudoEntente, "Sans pseudo")}</p></div></div>
-      <div className="flex items-center gap-2"><Badge variant={active(entente.statut) ? "default" : "secondary"}>{shown(entente.statut)}</Badge><EditEntenteDialog entente={entente} ligues={ligues} onSaved={onUpdated} /></div>
-    </section>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button>
+      <EditEntenteDialog entente={entente} ligues={ligues} onSaved={onUpdated} trigger={<Button className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" aria-label={`Modifier ${entente.nomEntente}`} title="Modifier"><Pencil className="size-4" />Modifier</Button>} />
+    </div>
 
-    <Card><CardHeader><CardTitle>Informations générales</CardTitle></CardHeader><CardContent className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">{[["Identifiant", entente.idEntente], ["Nom", entente.nomEntente], ["Pseudo", entente.pseudoEntente], ["Ligue", entente.nomLigue], ["Adresse e-mail", entente.emailEntente], ["Statut", entente.statut], ["Observations", entente.observations]].map(([label, value]) => <div key={label} className="border-b pb-3"><p className="text-xs font-medium text-muted-foreground">{label}</p><p className="mt-1 break-words font-medium">{shown(value)}</p></div>)}</CardContent></Card>
+    <div className="grid gap-6 lg:grid-cols-2">
+      <DetailCard title="Informations générales" icon={Shield} iconClassName="text-brand-gold" fields={[{ label: "ID Entente", value: entente.idEntente }, { label: "Nom", value: entente.nomEntente }, { label: "Pseudo", value: entente.pseudoEntente }, { label: "Ligue", value: entente.nomLigue }, { label: "Statut", value: entente.statut }, { label: "Date de création", value: entente.dateCreation }, { label: "Date de reconnaissance", value: entente.dateReconnaissance }]} />
+      <DetailCard title="Coordonnées et suivi" icon={ContactRound} iconClassName="text-brand-gold" fields={[{ label: "Téléphone", value: entente.telephone }, { label: "E-mail", value: entente.emailEntente }, { label: "Identifiant COC", value: entente.idEntenteCoc }, { label: "Observations", value: entente.observations }]} />
+    </div>
 
-    <section className="grid gap-4 sm:grid-cols-2" aria-label="Résumé"><Card><CardContent className="flex items-center gap-3 p-4"><Shield className="size-5 text-primary" /><div><p className="text-2xl font-bold">{relatedClubs.length}</p><p className="text-xs text-muted-foreground">Clubs</p></div></CardContent></Card><Card><CardContent className="flex items-center gap-3 p-4"><Users className="size-5 text-primary" /><div><p className="text-2xl font-bold">{relatedAthletes.length}</p><p className="text-xs text-muted-foreground">Athlètes</p></div></CardContent></Card></section>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <StatCard className="[&_svg]:text-brand-gold" title="Clubs liés" value={relatedClubs.length} icon={Shield} />
+      <StatCard className="[&_svg]:text-brand-gold" title="Athlètes liés" value={relatedAthletes.length} icon={Users} />
+    </div>
 
-    <Card><CardHeader><CardTitle>Clubs ({relatedClubs.length})</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Club</TableHead><TableHead>Catégorie</TableHead><TableHead className="text-center">Athlètes</TableHead><TableHead>Statut</TableHead></TableRow></TableHeader><TableBody>{relatedClubs.map((club) => <TableRow key={club.idClub}><TableCell className="font-mono text-xs">{shown(club.idClub)}</TableCell><TableCell className="font-semibold">{shown(club.nomClub)}</TableCell><TableCell>{shown(club.categorie)}</TableCell><TableCell className="text-center">{relatedAthletes.filter((athlete) => athlete.clubId === club.idClub).length}</TableCell><TableCell><Badge variant={active(club.statut) ? "default" : "secondary"}>{shown(club.statut)}</Badge></TableCell></TableRow>)}{!relatedClubs.length && <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Aucun club rattaché à cette entente.</TableCell></TableRow>}</TableBody></Table></CardContent></Card>
+    <Card><CardHeader><CardTitle>Clubs liés</CardTitle></CardHeader><CardContent><DataTable data={relatedClubs} columns={columns} searchPlaceholder="Rechercher un club..." idKey="idClub" /></CardContent></Card>
   </div>
 }

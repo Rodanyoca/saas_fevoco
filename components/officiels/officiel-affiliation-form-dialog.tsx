@@ -1,71 +1,7 @@
 "use client"
-
-import { useState } from "react"
-import { toast } from "sonner"
-import { Check, ChevronsUpDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { CoachReferenceOption } from "@/lib/actor-references"
-import type { Officiel, OfficielAffiliation } from "@/lib/types"
-import { cn } from "@/lib/utils"
-
-export type OfficielStructureOption = { key: string; id: string; nom: string; type: "LIGUE" | "ENTENTE" | "CLUB" | "EQUIPE" }
-
-export function OfficielAffiliationFormDialog({ officiel, structures, functions, onSaved }: {
-  officiel: Officiel
-  structures: OfficielStructureOption[]
-  functions: CoachReferenceOption[]
-  onSaved: (affiliation: OfficielAffiliation, deactivatedAffiliationId: string) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [structureOpen, setStructureOpen] = useState(false)
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState("")
-  const [form, setForm] = useState({ structureType: "", structureKey: "", fonction: "", dateDebut: "", dateFin: "", statutAffiliation: "actif", observation: "" })
-  const matchingStructures = structures.filter((item) => item.type === form.structureType)
-  const selectedStructure = matchingStructures.find((item) => item.key === form.structureKey)
-
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault(); setPending(true); setError("")
-    try {
-      const response = await fetch(`/api/officiels/${encodeURIComponent(officiel.idOfficiel)}/affiliations`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
-      })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.message || "Création impossible.")
-      onSaved(result.affiliation, result.deactivatedAffiliationId || "")
-      toast.success(result.message); setOpen(false)
-      setForm({ structureType: "", structureKey: "", fonction: "", dateDebut: "", dateFin: "", statutAffiliation: "actif", observation: "" })
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Création impossible."
-      setError(message); toast.error(message)
-    } finally { setPending(false) }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline">Ajouter une affiliation</Button></DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader><DialogTitle>Affilier {officiel.nomComplet}</DialogTitle><DialogDescription>La dernière affiliation existante sera rendue inactive.</DialogDescription></DialogHeader>
-        <form onSubmit={submit} className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2"><Label>Type de structure *</Label><Select required value={form.structureType} onValueChange={(value) => setForm({ ...form, structureType: value, structureKey: "" })}><SelectTrigger><SelectValue placeholder="Sélectionner le type" /></SelectTrigger><SelectContent><SelectItem value="LIGUE">Ligue</SelectItem><SelectItem value="ENTENTE">Entente</SelectItem><SelectItem value="CLUB">Club</SelectItem><SelectItem value="EQUIPE">Équipe nationale</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label>Structure *</Label><Popover open={structureOpen} onOpenChange={setStructureOpen}><PopoverTrigger asChild><Button type="button" variant="outline" role="combobox" disabled={!matchingStructures.length} className="w-full justify-between font-normal"><span className="truncate">{selectedStructure ? `${selectedStructure.id} — ${selectedStructure.nom}` : form.structureType ? "Rechercher par ID ou nom" : "Sélectionnez d’abord le type"}</span><ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" /></Button></PopoverTrigger><PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start"><Command><CommandInput placeholder="Rechercher un ID ou un nom..." /><CommandList><CommandEmpty>Aucune structure trouvée.</CommandEmpty><CommandGroup>{matchingStructures.map((item) => <CommandItem key={item.key} value={`${item.id} ${item.nom}`} onSelect={() => { setForm({ ...form, structureKey: item.key }); setStructureOpen(false) }}><Check className={cn("mr-2 h-4 w-4", form.structureKey === item.key ? "opacity-100" : "opacity-0")} /><span className="font-mono text-xs">{item.id}</span><span className="ml-2">{item.nom}</span></CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent></Popover></div>
-            <div className="space-y-2"><Label>Fonction *</Label><Select required value={form.fonction} onValueChange={(value) => setForm({ ...form, fonction: value })} disabled={!functions.length}><SelectTrigger><SelectValue placeholder={functions.length ? "Sélectionner la fonction" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{functions.map((item) => <SelectItem key={`${item.id}:${item.nom}`} value={item.nom}>{item.nom}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label>Date de début *</Label><Input required type="date" value={form.dateDebut} onChange={(event) => setForm({ ...form, dateDebut: event.target.value })} /></div>
-            <div className="space-y-2"><Label>Date de fin</Label><Input type="date" min={form.dateDebut || undefined} value={form.dateFin} onChange={(event) => setForm({ ...form, dateFin: event.target.value })} /></div>
-            <div className="space-y-2"><Label>Statut</Label><Select value={form.statutAffiliation} onValueChange={(value) => setForm({ ...form, statutAffiliation: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="inactif">Inactif</SelectItem><SelectItem value="en attente">En attente</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2 sm:col-span-2"><Label>Observation</Label><Input value={form.observation} onChange={(event) => setForm({ ...form, observation: event.target.value })} /></div>
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending || !matchingStructures.length || !functions.length}>{pending ? "Enregistrement..." : "Créer l’affiliation"}</Button></DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
+import { useState } from "react";import { toast } from "sonner";import { Button } from "@/components/ui/button";import { Input } from "@/components/ui/input";import { Label } from "@/components/ui/label";import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/ui/select";import { Sheet,SheetContent,SheetDescription,SheetFooter,SheetHeader,SheetTitle,SheetTrigger } from "@/components/ui/sheet";import type { CoachReferenceOption } from "@/lib/actor-references";import { compareDateValues,formatCompactDateInput,formatDateForSheet } from "@/lib/compact-date";import type { Officiel,OfficielAffiliation } from "@/lib/types"
+export type OfficielStructureOption={key:string;id:string;nom:string;type:"LIGUE"|"ENTENTE"|"CLUB"}
+export function OfficielAffiliationFormDialog({officiel,structures,functions,structureTypes,seasons,onSaved}:{officiel:Officiel;structures:OfficielStructureOption[];functions:CoachReferenceOption[];structureTypes:CoachReferenceOption[];seasons:CoachReferenceOption[];onSaved:(a:OfficielAffiliation,d:string)=>void}){const[open,setOpen]=useState(false),[pending,setPending]=useState(false),[error,setError]=useState(""),[form,setForm]=useState({idFonction:"",idTypeStructure:"",idStructure:"",idSaison:"",dateDebut:"",dateFin:"",statutMandat:"ACTIF",observations:""});const type=structureTypes.find(x=>x.id===form.idTypeStructure)?.nom??"",available=structures.filter(x=>x.type===type)
+const submit=async(e:React.FormEvent)=>{e.preventDefault();try{formatDateForSheet(form.dateDebut);if(form.dateFin)formatDateForSheet(form.dateFin)}catch{setError("Les dates du mandat sont invalides.");return}if(form.dateFin&&compareDateValues(form.dateDebut,form.dateFin)!>0){setError("La date de fin doit être postérieure à la date de début.");return}setPending(true);setError("");try{const r=await fetch(`/api/officiels/${encodeURIComponent(officiel.idOfficiel)}/affiliations`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)}),j=await r.json();if(!r.ok)throw new Error(j.message);onSaved(j.affiliation,"");toast.success(j.message);setOpen(false)}catch(c){const m=c instanceof Error?c.message:"Création impossible.";setError(m);toast.error(m)}finally{setPending(false)}}
+const date=(k:"dateDebut"|"dateFin",l:string,required=false)=><div className="space-y-2"><Label>{l}{required&&" *"}</Label><Input type="text" required={required} inputMode="numeric" autoComplete="off" maxLength={10} pattern="(?:[0-9]{2}/[0-9]{2}/[0-9]{4})?" title="Saisissez 8 chiffres ; la date est affichée au format JJ/MM/AAAA" placeholder="JJMMAAAA" value={form[k]} onChange={e=>setForm({...form,[k]:formatCompactDateInput(e.target.value)})}/></div>
+return <Sheet open={open} onOpenChange={setOpen}><SheetTrigger asChild><Button variant="outline">Ajouter un mandat</Button></SheetTrigger><SheetContent className="w-full overflow-y-auto sm:max-w-2xl"><SheetHeader><SheetTitle>Nouveau mandat</SheetTitle><SheetDescription>Attribuer une fonction à {officiel.nomComplet} sans modifier son identité.</SheetDescription></SheetHeader><form onSubmit={submit} className="space-y-6 px-4 pb-6"><div className="grid gap-4 md:grid-cols-2"><div className="space-y-2"><Label>Fonction *</Label><Select required value={form.idFonction} onValueChange={v=>setForm({...form,idFonction:v})}><SelectTrigger><SelectValue placeholder="Sélectionner"/></SelectTrigger><SelectContent>{functions.map(x=><SelectItem key={x.id} value={x.id}>{x.nom}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label>Type de structure *</Label><Select required value={form.idTypeStructure} onValueChange={v=>setForm({...form,idTypeStructure:v,idStructure:""})}><SelectTrigger><SelectValue placeholder="Sélectionner"/></SelectTrigger><SelectContent>{structureTypes.filter(x=>["LIGUE","ENTENTE","CLUB"].includes(x.nom)).map(x=><SelectItem key={x.id} value={x.id}>{x.nom}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label>Structure *</Label><Select required value={form.idStructure} onValueChange={v=>setForm({...form,idStructure:v})} disabled={!available.length}><SelectTrigger><SelectValue placeholder="Sélectionner"/></SelectTrigger><SelectContent>{available.map(x=><SelectItem key={x.key} value={x.id}>{x.nom}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label>Saison *</Label><Select required value={form.idSaison} onValueChange={v=>setForm({...form,idSaison:v})}><SelectTrigger><SelectValue placeholder="Sélectionner"/></SelectTrigger><SelectContent>{seasons.map(x=><SelectItem key={x.id} value={x.id}>{x.nom}</SelectItem>)}</SelectContent></Select></div>{date("dateDebut","Date de début",true)}{date("dateFin","Date de fin")}<div className="space-y-2"><Label>Statut</Label><Select value={form.statutMandat} onValueChange={v=>setForm({...form,statutMandat:v})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="ACTIF">Actif</SelectItem><SelectItem value="INACTIF">Inactif</SelectItem><SelectItem value="EN ATTENTE">En attente</SelectItem></SelectContent></Select></div><div className="space-y-2"><Label>Observations</Label><Input value={form.observations} onChange={e=>setForm({...form,observations:e.target.value})}/></div></div>{error&&<p className="text-sm text-destructive">{error}</p>}<SheetFooter><Button type="button" variant="outline" onClick={()=>setOpen(false)}>Annuler</Button><Button disabled={pending} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending?"Enregistrement…":"Créer le mandat"}</Button></SheetFooter></form></SheetContent></Sheet>}

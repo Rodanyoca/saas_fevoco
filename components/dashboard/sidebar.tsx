@@ -1,223 +1,92 @@
 "use client"
 
-import Link from "next/link"
 import Image from "next/image"
+import Link from "next/link"
 import { usePathname } from "next/navigation"
-import type { ElementType } from "react"
+import type { ComponentType } from "react"
+import { useEffect, useState } from "react"
+import { Activity, ArrowRightLeft, BadgeCheck, Building2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CreditCard, FileText, Flag, LayoutDashboard, MapPin, Shield, Stethoscope, Trophy, UserCog, Users } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { dashboardNavigation, isNavigationItemActive, type NavigationIcon, type NavigationItem } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
-import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  UserCheck,
-  Flag,
-  Shield,
-  Stethoscope,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Network,
-  Target,
-  Trophy,
-  UserCog,
-  ArrowRightLeft,
-} from "lucide-react"
-import { useState } from "react"
 
-const mainNavigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-]
+const SIDEBAR_STORAGE_KEY = "fevoco:sidebar-collapsed"
 
-const groupedNavigation = [
-  {
-    name: "Structure territoriale",
-    icon: Building2,
-    items: [
-      { name: "Ligues", href: "/ligues", icon: Building2 },
-      { name: "Ententes", href: "/ententes", icon: Network },
-      { name: "Clubs", href: "/clubs", icon: Shield },
-    ],
-  },
-  {
-    name: "Acteurs",
-    icon: Users,
-    items: [
-      { name: "Athletes", href: "/athletes", icon: Users },
-      { name: "Coachs", href: "/coachs", icon: UserCheck },
-      { name: "Medecins", href: "/medecins", icon: Stethoscope },
-      { name: "Arbitres", href: "/arbitres", icon: Flag },
-      { name: "Officiels", href: "/officiels", icon: UserCog },
-    ],
-  },
-  {
-    name: "Equipe nationale",
-    icon: Target,
-    items: [
-      { name: "Leopards RDC", href: "/equipe-nationale", icon: Target },
-      { name: "Performance", href: "/suivi-equipe-nationale", icon: Trophy },
-    ],
-  },
-  {
-    name: "Compétitions",
-    icon: Trophy,
-    items: [
-      { name: "Compétitions", href: "/competitions", icon: Trophy },
-      { name: "Transferts", href: "/transferts", icon: ArrowRightLeft },
-    ],
-  },
-]
+const icons: Record<NavigationIcon, ComponentType<{ className?: string }>> = {
+  dashboard: LayoutDashboard, territory: Building2, league: MapPin, entente: Building2, club: Shield,
+  actors: Users, athlete: Users, coach: UserCog, doctor: Stethoscope, referee: Flag, official: BadgeCheck,
+  movement: ArrowRightLeft, competition: Trophy, "national-team": Flag, activity: Activity, document: FileText,
+  license: CreditCard,
+}
 
-export function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
+type SidebarProps = { onNavigate?: () => void; collapsible?: boolean }
+
+function NavLink({ item, collapsed, pathname, onNavigate }: { item: NavigationItem; collapsed: boolean; pathname: string; onNavigate?: () => void }) {
+  if (!item.icon) return null
+  const Icon = icons[item.icon]
+  if (item.disabled) {
+    const unavailable = <div role="link" tabIndex={0} aria-disabled="true" aria-label={collapsed ? `${item.name} — ${item.badge ?? "Bientôt"}` : undefined} className={cn("flex min-h-10 cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-muted opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring", collapsed && "justify-center px-2")}><Icon className="size-5 shrink-0" aria-hidden="true" />{!collapsed && <><span className="truncate">{item.name}</span><span className="ml-auto text-[10px] uppercase tracking-wide">{item.badge ?? "Bientôt"}</span></>}</div>
+    if (!collapsed) return unavailable
+    return <Tooltip><TooltipTrigger asChild>{unavailable}</TooltipTrigger><TooltipContent side="right" sideOffset={10}>{item.name} — {item.badge ?? "Bientôt"}</TooltipContent></Tooltip>
+  }
+  if (!item.href) return null
+  const active = isNavigationItemActive(item, pathname)
+  const link = (
+    <Link href={item.href} onClick={() => { onNavigate?.(); window.dispatchEvent(new CustomEvent("fevoco:navigate", { detail: item.href })) }} aria-current={active ? "page" : undefined} aria-label={collapsed ? item.name : undefined} className={cn("flex min-h-10 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar", active ? "bg-brand-gold text-[#071525]" : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground", collapsed && "justify-center px-2")}>
+      <Icon className="size-5 shrink-0" aria-hidden="true" />
+      {!collapsed && <span className="truncate">{item.name}</span>}
+    </Link>
+  )
+  if (!collapsed) return link
+  return <Tooltip><TooltipTrigger asChild>{link}</TooltipTrigger><TooltipContent side="right" sideOffset={10}>{item.name}</TooltipContent></Tooltip>
+}
+
+function NavGroup({ item, collapsed, pathname, open, setOpen, onNavigate }: { item: NavigationItem; collapsed: boolean; pathname: string; open: boolean; setOpen: (open: boolean) => void; onNavigate?: () => void }) {
+  if (!item.children) return null
+  if (collapsed) return <>{item.children.map((child) => <NavLink key={child.name} item={child} collapsed pathname={pathname} onNavigate={onNavigate} />)}</>
+  const groupId = `navigation-group-${item.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-").toLowerCase()}`
+  return <div className="space-y-1">
+    <button type="button" onClick={() => setOpen(!open)} className="flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wide text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring" aria-expanded={open} aria-controls={groupId}>
+      <span className="truncate">{item.name}</span>{open ? <ChevronUp className="size-4 shrink-0" aria-hidden="true" /> : <ChevronDown className="size-4 shrink-0" aria-hidden="true" />}
+    </button>
+    <div id={groupId} hidden={!open} className="space-y-1 pl-2">
+      {item.children.map((child) => <NavLink key={child.name} item={child} collapsed={false} pathname={pathname} onNavigate={onNavigate} />)}
+    </div>
+  </div>
+}
+
+export function Sidebar({ onNavigate, collapsible = true }: SidebarProps = {}) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    "Structure territoriale": true,
-    Acteurs: true,
-    "Equipe nationale": true,
-    Compétitions: true,
+  const [openGroups, setOpenGroups] = useState<string[]>(() => dashboardNavigation.filter((item) => item.children).map((item) => item.name))
+  const compact = collapsible && collapsed
+
+  useEffect(() => {
+    if (collapsible) setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true")
+  }, [collapsible])
+
+  useEffect(() => {
+    const activeGroups = dashboardNavigation.filter((item) => item.children && isNavigationItemActive(item, pathname)).map((item) => item.name)
+    if (activeGroups.length) setOpenGroups((current) => [...new Set([...current, ...activeGroups])])
+  }, [pathname])
+
+  const toggleCollapsed = () => setCollapsed((current) => {
+    const next = !current
+    window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next))
+    return next
   })
+  const setGroup = (name: string, open: boolean) => setOpenGroups((current) => open ? [...new Set([...current, name])] : current.filter((item) => item !== name))
 
-  const renderLink = (item: { name: string; href: string; icon: ElementType }, nested = false) => {
-    const isActive = pathname === item.href
-
-    return (
-      <Link
-        key={item.name}
-        href={item.href}
-        className={cn(
-          "flex items-center gap-3 rounded-md text-sm font-medium transition-colors",
-          nested && !collapsed ? "px-3 py-2 pl-9" : "px-3 py-2.5",
-          isActive
-            ? "border-l-4 border-brand-gold bg-sidebar-primary pl-2 text-sidebar-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]"
-            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        )}
-        title={collapsed ? item.name : undefined}
-        aria-current={isActive ? "page" : undefined}
-        onClick={onNavigate}
-      >
-        <item.icon className="h-5 w-5 flex-shrink-0" />
-        {!collapsed && <span>{item.name}</span>}
+  return <aside className={cn("relative z-40 flex h-full min-h-0 flex-col border-r border-sidebar-border bg-sidebar font-sans text-sidebar-foreground shadow-[16px_0_40px_rgba(1,10,20,0.22)] transition-[width] duration-300", compact ? "w-16" : "w-64")}>
+    <div className="relative flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-4 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-[#1188c7] after:via-[#f6c515] after:to-[#e23b52]">
+      <Link href="/" onClick={onNavigate} aria-label="FEVOCO — Tableau de bord" className={cn("flex min-w-0 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring", compact && "mx-auto")}>
+        <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white"><Image src="/logo-fevoco.png" alt="Logo FEVOCO" width={40} height={40} className="size-full object-contain" priority /></span>
+        {!compact && <span className="truncate text-lg font-black tracking-[0.12em]">FEVOCO</span>}
       </Link>
-    )
-  }
-
-  return (
-    <aside
-      className={cn(
-        "relative flex h-screen flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      {/* Header avec logo */}
-      <div className="relative flex shrink-0 items-center gap-3 border-b border-sidebar-border px-4 py-5">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-md bg-white p-1 shadow-sm ring-1 ring-white/20">
-          <Image
-            src="/logo-fevoco.png"
-            alt="Logo officiel FEVOCO"
-            width={40}
-            height={40}
-            className="size-full object-contain"
-          />
-        </div>
-        {!collapsed && (
-          <div className="flex flex-col min-w-0">
-            <span className="text-sm font-bold tracking-[0.12em] text-sidebar-foreground">FEVOCO</span>
-            <span className="mt-0.5 truncate text-[10px] leading-tight text-sidebar-foreground/65">
-              Federation de Volleyball du Congo
-            </span>
-          </div>
-        )}
-        <span className="fevoco-brand-line absolute inset-x-0 bottom-0 h-0.5" aria-hidden="true" />
-      </div>
-
-      {/* Navigation principale */}
-      <nav className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="space-y-1">
-          {mainNavigation.map((item) => renderLink(item))}
-        </div>
-
-        <div className="mt-3 space-y-1 border-t border-sidebar-border/60 pt-3">
-          {groupedNavigation.map((group) => {
-            const isGroupActive = group.items.some((item) => pathname === item.href)
-            const isOpen = openGroups[group.name] || isGroupActive
-
-            if (collapsed) {
-              return (
-                <div key={group.name} className="space-y-1">
-                  {group.items.map((item) => renderLink(item))}
-                </div>
-              )
-            }
-
-            return (
-              <div key={group.name} className="space-y-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!collapsed) {
-                      setOpenGroups((current) => ({
-                        ...current,
-                        [group.name]: !current[group.name],
-                      }))
-                    }
-                  }}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                    isGroupActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
-                  title={collapsed ? group.name : undefined}
-                  aria-expanded={isOpen}
-                >
-                  <group.icon className="h-5 w-5 flex-shrink-0" />
-                  {!collapsed && (
-                    <>
-                      <span className="flex-1 text-left">{group.name}</span>
-                      <ChevronDown
-                        className={cn(
-                          "h-4 w-4 flex-shrink-0 transition-transform",
-                          isOpen ? "rotate-180" : "rotate-0"
-                        )}
-                      />
-                    </>
-                  )}
-                </button>
-
-                {!collapsed && isOpen && (
-                  <div className="space-y-1 border-l border-sidebar-border/60 ml-4 pl-2">
-                    {group.items.map((item) => renderLink(item, true))}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </nav>
-
-      {/* Footer - Signature DS Concept */}
-      <div className="shrink-0 border-t border-sidebar-border bg-sidebar p-3">
-        {!collapsed ? (
-          <p className="text-[10px] text-sidebar-foreground/50 text-center">
-            Propulse par <span className="font-semibold">DS Concept</span>
-          </p>
-        ) : (
-          <p className="text-[8px] text-sidebar-foreground/50 text-center">DS</p>
-        )}
-      </div>
-
-      {/* Toggle collapse */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute top-20 -right-3 bg-sidebar border border-sidebar-border rounded-full p-1 hover:bg-sidebar-accent transition-colors"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        {collapsed ? (
-          <ChevronRight className="h-4 w-4 text-sidebar-foreground" />
-        ) : (
-          <ChevronLeft className="h-4 w-4 text-sidebar-foreground" />
-        )}
-      </button>
-    </aside>
-  )
+    </div>
+    {collapsible && <button type="button" onClick={toggleCollapsed} className="absolute -right-3 top-20 z-50 flex size-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-muted shadow-md transition-colors hover:border-sidebar-primary/60 hover:bg-sidebar-accent hover:text-sidebar-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring" aria-label={compact ? "Déployer la navigation" : "Réduire la navigation"} aria-expanded={!compact}>{compact ? <ChevronRight className="size-4" aria-hidden="true" /> : <ChevronLeft className="size-4" aria-hidden="true" />}</button>}
+    <nav aria-label="Navigation principale" className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-2 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {dashboardNavigation.map((item) => item.children ? <NavGroup key={item.name} item={item} collapsed={compact} pathname={pathname} open={openGroups.includes(item.name)} setOpen={(open) => setGroup(item.name, open)} onNavigate={onNavigate} /> : <NavLink key={item.name} item={item} collapsed={compact} pathname={pathname} onNavigate={onNavigate} />)}
+    </nav>
+  </aside>
 }

@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { getCompetitionClassements, getCompetitionParticipants, getCompetitionResults, getCompetitionUnites, getCompetitions } from "@/lib/data"
 import { isCompetitionsGoogleSheetsConfigured } from "@/lib/env"
+import { DataLoadNotice } from "@/components/dashboard/data-load-notice"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -25,17 +26,15 @@ export default async function CompetitionsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 p-6">
-        <Header
-          title="Gestion des Competitions"
-          subtitle="Vue liste et details des competitions FEVOCO"
-        />
+      <Header title="Compétitions" subtitle="Compétitions, participants, résultats et classements FEVOCO" />
+      <main className="space-y-6 p-4 sm:p-6">
         {!isCompetitionsGoogleSheetsConfigured() && (
           <div className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm text-warning-foreground" role="status">
             Le classeur Compétitions n’est pas configuré. Ajoutez
             {" "}<code>FEVOCO_COMPETITIONS_SPREADSHEET_ID</code> dans votre environnement.
           </div>
         )}
+        <DataLoadNotice visible={loaded.some((result) => result.status === "rejected")} description="Une partie des données Compétitions n’a pas pu être chargée. Les données disponibles restent affichées sans contenu fictif." />
 
         <CompetitionsClient
           competitions={competitions}
@@ -44,7 +43,7 @@ export default async function CompetitionsPage() {
           results={results}
           classements={classements}
         />
-      </div>
+      </main>
     </DashboardLayout>
   )
 }

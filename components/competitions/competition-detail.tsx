@@ -420,12 +420,12 @@ export function CompetitionDetail({
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" />
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="size-4" /> Retour aux compétitions
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{competition.nomCompetition}</h1>
-            <p className="text-muted-foreground">Details de la competition</p>
+            <p className="text-muted-foreground">Détails de la compétition</p>
           </div>
         </div>
         <Badge variant="outline">{competition.nomDiscipline}</Badge>
@@ -490,7 +490,7 @@ export function CompetitionDetail({
       </Card>
 
       <Tabs defaultValue="participation" className="gap-4">
-        <TabsList className="grid h-auto w-full grid-cols-4">
+        <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="participation" className="justify-center text-center">
             Participants
           </TabsTrigger>
@@ -498,7 +498,7 @@ export function CompetitionDetail({
             Unités
           </TabsTrigger>
           <TabsTrigger value="resultats" className="justify-center text-center">
-            Resultats
+            Résultats
           </TabsTrigger>
           <TabsTrigger value="classement" className="justify-center text-center">
             Classement
@@ -618,7 +618,7 @@ export function CompetitionDetail({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ClipboardList className="h-5 w-5 text-primary" />
-                Resultats
+                Résultats
               </CardTitle>
             </CardHeader>
             <CardContent>

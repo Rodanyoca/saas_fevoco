@@ -2,19 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react"
 import type { Arbitre, BaseActorLicence } from "@/lib/types"
-import { ArbitresStats } from "@/components/arbitres/arbitres-stats"
 import { ArbitresFilters } from "@/components/arbitres/arbitres-filters"
 import { ArbitresTable } from "@/components/arbitres/arbitres-table"
 import { ArbitreDetail } from "@/components/arbitres/arbitre-detail"
 import { ArbitreFormDialog } from "@/components/arbitres/arbitre-form-dialog"
 import type { SavedArbitre } from "@/components/arbitres/arbitre-form-dialog"
-import type { ActorSexOption } from "@/lib/actor-references"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
 import { compareLabels } from "@/lib/sort-utils"
 
-export function ArbitresClient({ arbitres, licences, sexes }: {
+export function ArbitresClient({ arbitres, licences, sexes, grades }: {
   arbitres: Arbitre[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
+  grades: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(arbitres)
   const [licenceRows, setLicenceRows] = useState(licences)
@@ -34,14 +34,14 @@ export function ArbitresClient({ arbitres, licences, sexes }: {
         ligueId: "", ligueNom: "", ententeId: "", ententeNom: "",
         dateHomologation: "", equipeNational: "", experience: "",
         ...existing, ...saved, id: saved.idArbitre, dateNaissance: saved.dateDeNaissance,
-        genre: saved.sexe, grade: saved.niveau,
+        genre: saved.sexe, grade: saved.grade, dateAffiliation: existing?.dateAffiliation ?? "",
       }
       return existing
         ? current.map((arbitre) => arbitre.idArbitre === saved.idArbitre ? merged : arbitre)
         : [merged, ...current]
     })
     setSelectedArbitre((current) => current?.idArbitre === saved.idArbitre
-      ? { ...current, ...saved, id: saved.idArbitre, dateNaissance: saved.dateDeNaissance, genre: saved.sexe, grade: saved.niveau }
+      ? { ...current, ...saved, id: saved.idArbitre, dateNaissance: saved.dateDeNaissance, genre: saved.sexe, grade: saved.grade }
       : current)
   }
 
@@ -70,11 +70,10 @@ export function ArbitresClient({ arbitres, licences, sexes }: {
   return (
     <div className="space-y-6">
       {selectedArbitre ? (
-        <ArbitreDetail arbitre={selectedArbitre} licences={licenceRows} sexes={sexes} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedArbitre} onBack={() => setSelectedArbitre(null)} />
+        <ArbitreDetail arbitre={selectedArbitre} licences={licenceRows} sexes={sexes} grades={grades} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedArbitre} onBack={() => setSelectedArbitre(null)} />
       ) : (
         <>
-          <div className="flex justify-end"><ArbitreFormDialog sexes={sexes} onSaved={applySavedArbitre} /></div>
-          <ArbitresStats arbitres={rows} />
+          <div className="flex justify-end"><ArbitreFormDialog sexes={sexes} grades={grades} onSaved={applySavedArbitre} /></div>
           <ArbitresFilters
             arbitres={rows}
             search={search}
@@ -86,7 +85,7 @@ export function ArbitresClient({ arbitres, licences, sexes }: {
             onGradeChange={setGrade}
             onStatutChange={setStatut}
           />
-          <ArbitresTable arbitres={filteredArbitres} licences={licenceRows} onViewArbitre={setSelectedArbitre} />
+          <ArbitresTable arbitres={filteredArbitres} onViewArbitre={setSelectedArbitre} />
         </>
       )}
     </div>

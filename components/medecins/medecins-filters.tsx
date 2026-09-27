@@ -8,18 +8,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
 import { Search } from "lucide-react"
 import type { Medecin } from "@/lib/types"
 
 interface MedecinsFiltersProps {
   medecins: Medecin[]
   search: string
-  niveau: string
+  sexe: string
   specialite: string
   statut: string
   onSearchChange: (value: string) => void
-  onNiveauChange: (value: string) => void
+  onSexeChange: (value: string) => void
   onSpecialiteChange: (value: string) => void
   onStatutChange: (value: string) => void
 }
@@ -27,56 +26,50 @@ interface MedecinsFiltersProps {
 export function MedecinsFilters({
   medecins,
   search,
-  niveau,
+  sexe,
   specialite,
   statut,
   onSearchChange,
-  onNiveauChange,
+  onSexeChange,
   onSpecialiteChange,
   onStatutChange,
 }: MedecinsFiltersProps) {
-  const niveauOptions = Array.from(
-    new Set(medecins.map((medecin) => medecin.niveau).filter(Boolean))
-  ).sort((a, b) => a.localeCompare(b))
-
   const specialiteOptions = Array.from(
     new Set(medecins.map((medecin) => medecin.specialite).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b))
+  const sexeOptions = Array.from(
+    new Set(medecins.map((medecin) => medecin.sexe).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b))
 
   return (
-    <Card className="border-border/50">
-      <CardContent className="p-4">
-        <div className="grid gap-3 md:grid-cols-[1fr_180px_180px_132px]">
+    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap">
+        <div className="grid w-full gap-3 md:grid-cols-[minmax(240px,1fr)_150px_180px_132px]">
           <div className="relative min-w-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Rechercher par nom ou numéro de licence..."
+              placeholder="Rechercher un médecin..."
               className="pl-9"
             />
           </div>
 
-          {niveauOptions.length > 0 && <Select value={niveau} onValueChange={onNiveauChange}>
+          <Select value={sexe} onValueChange={onSexeChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Niveau" />
+              <SelectValue placeholder="Sexe" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les niveaux</SelectItem>
-              {niveauOptions.map((niveauNom) => (
-                <SelectItem key={niveauNom} value={niveauNom}>
-                  {niveauNom}
-                </SelectItem>
-              ))}
+              <SelectItem value="all">Tous les sexes</SelectItem>
+              {sexeOptions.map((sexeNom) => <SelectItem key={sexeNom} value={sexeNom}>{sexeNom}</SelectItem>)}
             </SelectContent>
-          </Select>}
+          </Select>
 
           <Select value={specialite} onValueChange={onSpecialiteChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Specialite" />
+              <SelectValue placeholder="Spécialité" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les specialites</SelectItem>
+              <SelectItem value="all">Toutes les spécialités</SelectItem>
               {specialiteOptions.map((specialiteNom) => (
                 <SelectItem key={specialiteNom} value={specialiteNom}>
                   {specialiteNom}
@@ -96,7 +89,6 @@ export function MedecinsFilters({
             </SelectContent>
           </Select>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   )
 }

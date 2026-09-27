@@ -32,6 +32,11 @@ export interface Ligue {
   provinceId: string
   provinceNom: string
   emailLigue: string
+  sigleLigue?: string
+  telephone?: string
+  idLigueCoc?: string
+  anneeCreation?: string
+  dateAffiliation?: string
   presidentId: string
   presidentNom: string
   presidentTelephone: string
@@ -56,6 +61,13 @@ export interface Entente {
   idLigue: string
   nomLigue: string
   emailEntente: string
+  sigleEntente?: string
+  idVille?: string
+  ville?: string
+  telephone?: string
+  idEntenteCoc?: string
+  dateCreation?: string
+  dateReconnaissance?: string
   observations: string
   id: string
   numeroOrdre: string
@@ -86,6 +98,19 @@ export interface Club {
   numeroOrdre: string
   nom: string
   categorie: string
+  idCategorieClub?: string
+  idSexe?: string
+  idVille?: string
+  ville?: string
+  idLigueHistorique?: string
+  idNiveauCompetitifClub?: string
+  idClubCoc?: string
+  sigleClub?: string
+  dateCreation?: string
+  telephone?: string
+  email?: string
+  logoDriveId?: string
+  logoDriveUrl?: string
   provinceId: string
   provinceNom: string
   ligueId: string
@@ -112,6 +137,7 @@ export interface Athlete {
   idAthlete: string
   idNational: string
   idFivb: string
+  idSexe: string
   dateDeNaissance: string
   sexe: string
   avatarDriveId: string
@@ -140,6 +166,7 @@ export interface Athlete {
   poids: number | null
   telephone: string
   email: string
+  observations: string
   statut: Statut
 }
 
@@ -147,6 +174,7 @@ export interface Coach {
   idCoach: string
   idNational: string
   idFivb: string
+  idSexe: string
   sexe: string
   avatarDriveId: string
   avatarDriveUrl: string
@@ -159,6 +187,7 @@ export interface Coach {
   telephone: string
   email: string
   adresse: string
+  idNiveau: string
   niveau: string
   specialisation: string
   dateAffiliation: string
@@ -199,6 +228,12 @@ export interface MedecinAffiliation extends BaseActorAffiliation {
 }
 
 export interface OfficielAffiliation extends BaseActorAffiliation {
+  idTypeActeur: string
+  idFonction: string
+  idTypeStructure: string
+  idSaison: string
+  typeStructure: string
+  saison: string
   fonction: string
 }
 
@@ -223,6 +258,7 @@ export interface AthleteLicence extends BaseActorLicence {
 
 export interface Officiel {
   idOfficiel: string
+  idSexe: string
   idNational: string
   idFivb: string
   sexe: string
@@ -237,6 +273,13 @@ export interface Officiel {
   telephone: string
   email: string
   adresse: string
+  lieuNaissance: string
+  numeroPasseport: string
+  dateDelivrancePasseport: string
+  dateExpirationPasseport: string
+  observations: string
+  passeportDriveId: string
+  passeportDriveUrl: string
   fonction: string
   entite: string
   rattachement: string
@@ -248,6 +291,8 @@ export interface Officiel {
 
 export interface Medecin {
   idMedecin: string
+  idSexe: string
+  idSpecialite: string
   idNational: string
   idFivb: string
   sexe: string
@@ -264,6 +309,13 @@ export interface Medecin {
   telephone: string
   email: string
   adresse: string
+  lieuNaissance?: string
+  numeroPasseport: string
+  dateDelivrancePasseport: string
+  dateExpirationPasseport: string
+  observations?: string
+  passeportDriveId: string
+  passeportDriveUrl: string
   numeroOrdre: string
   equipeNationale: string
   provinceId: string
@@ -284,6 +336,8 @@ export interface Medecin {
 
 export interface Arbitre {
   idArbitre: string
+  idSexe: string
+  idGrade: string
   idNational: string
   idFivb: string
   sexe: string

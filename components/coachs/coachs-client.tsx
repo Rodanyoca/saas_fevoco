@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import type { BaseActorLicence, Coach, CoachAffiliation } from "@/lib/types"
-import { CoachsStats } from "@/components/coachs/coachs-stats"
 import { CoachsFilters } from "@/components/coachs/coachs-filters"
 import { CoachsTable } from "@/components/coachs/coachs-table"
 import { CoachDetail } from "@/components/coachs/coach-detail"
@@ -20,6 +19,7 @@ export function CoachsClient({
   affiliations,
   licences,
   sexes,
+  levels,
   structures,
   affiliationTypes,
   coachFunctions,
@@ -28,6 +28,7 @@ export function CoachsClient({
   affiliations: CoachAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
+  levels: CoachReferenceOption[]
   structures: CoachStructureOption[]
   affiliationTypes: CoachReferenceOption[]
   coachFunctions: CoachReferenceOption[]
@@ -94,11 +95,10 @@ export function CoachsClient({
   return (
     <div className="space-y-6">
       {selectedCoach ? (
-        <CoachDetail coach={selectedCoach} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} structures={structures} affiliationTypes={affiliationTypes} coachFunctions={coachFunctions} onAffiliationCreated={applyCreatedAffiliation} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedCoach} onBack={() => setSelectedCoach(null)} />
+        <CoachDetail coach={selectedCoach} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} levels={levels} structures={structures} affiliationTypes={affiliationTypes} coachFunctions={coachFunctions} onAffiliationCreated={applyCreatedAffiliation} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedCoach} onBack={() => setSelectedCoach(null)} />
       ) : (
         <>
-          <div className="flex justify-end"><CoachFormDialog sexes={sexes} onSaved={applySavedCoach} /></div>
-          <CoachsStats coachs={rows} />
+          <div className="flex justify-end"><CoachFormDialog sexes={sexes} levels={levels} onSaved={applySavedCoach} /></div>
           <CoachsFilters
             coachs={rows}
             search={search}
@@ -108,7 +108,7 @@ export function CoachsClient({
             onNiveauChange={setNiveau}
             onStatutChange={setStatut}
           />
-          <CoachsTable coachs={filtered} licences={licenceRows} onViewCoach={setSelectedCoach} />
+          <CoachsTable coachs={filtered} onViewCoach={setSelectedCoach} />
         </>
       )}
     </div>

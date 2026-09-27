@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -20,11 +20,13 @@ function EntenteFormDialog({
   ligues,
   lockedLigue,
   onSaved,
+  trigger,
 }: {
   entente?: Entente
   ligues: Ligue[]
   lockedLigue?: Ligue
   onSaved: (entente: SavedEntente) => void
+  trigger?: ReactNode
 }) {
   const editing = Boolean(entente)
   const [open, setOpen] = useState(false)
@@ -68,24 +70,24 @@ function EntenteFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {editing ? (
-          <Button type="button" size="icon" variant="ghost" className="h-8 w-8" aria-label={`Modifier ${entente!.nomEntente}`} title="Modifier">
+    <Sheet open={open} onOpenChange={(value) => { if (!pending) setOpen(value) }}>
+      <SheetTrigger asChild>
+        {trigger ?? (editing ? (
+          <Button type="button" size="icon" variant="ghost" className="h-8 w-8 hover:bg-brand-gold/10 hover:text-brand-gold" aria-label={`Modifier ${entente!.nomEntente}`} title="Modifier">
             <Pencil className="h-4 w-4" />
           </Button>
         ) : (
-          <Button type="button">Créer une entente</Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{editing ? "Modifier l’entente" : "Créer une entente"}</DialogTitle>
-          <DialogDescription>
+          <Button type="button" className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">Ajouter une entente</Button>
+        ))}
+      </SheetTrigger>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetHeader>
+          <SheetTitle>{editing ? "Modifier l’entente" : "Ajouter une entente"}</SheetTitle>
+          <SheetDescription>
             {editing ? "Modifiez les informations de l’entente." : "L’identifiant sera généré avec l’identifiant de la ligue et le code de l’entente."}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={submit} className="space-y-6">
+          </SheetDescription>
+        </SheetHeader>
+        <form onSubmit={submit} className="space-y-6 px-4 pb-24">
           <div className="grid gap-4 sm:grid-cols-2">
             {editing && <div className="space-y-2"><Label>Identifiant</Label><Input value={entente!.idEntente} disabled /></div>}
             <div className="space-y-2">
@@ -112,13 +114,13 @@ function EntenteFormDialog({
             <div className="space-y-2 sm:col-span-2"><Label>Observations</Label><Textarea value={form.observations} onChange={(event) => setForm({ ...form, observations: event.target.value })} /></div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter>
+          <SheetFooter className="px-0">
             <Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button>
-            <Button type="submit" disabled={pending}>{pending ? "Enregistrement..." : editing ? "Enregistrer" : "Créer l’entente"}</Button>
-          </DialogFooter>
+            <Button type="submit" disabled={pending} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement..." : editing ? "Enregistrer" : "Ajouter l’entente"}</Button>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -126,8 +128,8 @@ export function CreateEntenteDialog({ ligues, lockedLigue, onSaved }: { ligues: 
   return <EntenteFormDialog ligues={ligues} lockedLigue={lockedLigue} onSaved={onSaved} />
 }
 
-export function EditEntenteDialog({ entente, ligues, lockedLigue, onSaved }: { entente: Entente; ligues: Ligue[]; lockedLigue?: Ligue; onSaved: (entente: SavedEntente) => void }) {
-  return <EntenteFormDialog entente={entente} ligues={ligues} lockedLigue={lockedLigue} onSaved={onSaved} />
+export function EditEntenteDialog({ entente, ligues, lockedLigue, onSaved, trigger }: { entente: Entente; ligues: Ligue[]; lockedLigue?: Ligue; onSaved: (entente: SavedEntente) => void; trigger?: ReactNode }) {
+  return <EntenteFormDialog entente={entente} ligues={ligues} lockedLigue={lockedLigue} onSaved={onSaved} trigger={trigger} />
 }
 
 export type { SavedEntente }

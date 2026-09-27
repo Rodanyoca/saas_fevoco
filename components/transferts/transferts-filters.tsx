@@ -1,6 +1,5 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -33,9 +32,7 @@ export function TransfertsFilters({
   const saisons = Array.from(new Set(transferts.map((transfert) => transfert.saison).filter(Boolean))).sort()
 
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-3 lg:flex-row">
+    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap">
           <div className="relative min-w-[220px] flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -73,8 +70,6 @@ export function TransfertsFilters({
               ))}
             </SelectContent>
           </Select>
-        </div>
-      </CardContent>
-    </Card>
+    </div>
   )
 }

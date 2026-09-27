@@ -1,7 +1,6 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -18,6 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Eye, Medal, Search, Target, Trophy, Users } from "lucide-react"
+import { StatusBadge } from "@/components/dashboard/status-badge"
+import { StatCard } from "@/components/dashboard/stat-card"
 
 function normalize(value: string) {
   return value
@@ -81,17 +82,17 @@ export function EquipeNationaleClient({
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setSelectedEquipe(null)}>
-              <ArrowLeft className="h-5 w-5" />
+            <Button variant="outline" onClick={() => setSelectedEquipe(null)}>
+              <ArrowLeft className="size-4" /> Retour aux équipes
             </Button>
             <div className="min-w-0">
               <h1 className="truncate text-2xl font-bold text-foreground">
-                {selectedEquipe.nomEquipeNationale || "Equipe nationale"}
+                {selectedEquipe.nomEquipeNationale || "Équipe nationale"}
               </h1>
               <p className="font-mono text-sm text-muted-foreground">{selectedEquipe.idEquipeNationale || "-"}</p>
             </div>
           </div>
-          <Badge variant="outline">{selectedEquipe.statutEquipe || "-"}</Badge>
+          <StatusBadge status={selectedEquipe.statutEquipe} />
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
@@ -103,7 +104,7 @@ export function EquipeNationaleClient({
           </Card>
           <Card className="border-border/50">
             <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Categorie</p>
+              <p className="text-xs text-muted-foreground">Catégorie</p>
               <p className="font-semibold">{selectedEquipe.categorie || "-"}</p>
             </CardContent>
           </Card>
@@ -122,7 +123,7 @@ export function EquipeNationaleClient({
         </div>
 
         <Tabs defaultValue="selections" className="gap-4">
-          <TabsList className="grid h-auto w-full grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="selections">Athlètes</TabsTrigger>
             <TabsTrigger value="staff">Staff</TabsTrigger>
             <TabsTrigger value="competitions">Compétitions</TabsTrigger>
@@ -133,7 +134,7 @@ export function EquipeNationaleClient({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              Membres selectionnes
+              Membres sélectionnés
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -141,18 +142,18 @@ export function EquipeNationaleClient({
               <Table className="min-w-[820px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Athlete</TableHead>
+                    <TableHead>Athlète</TableHead>
                     <TableHead>Poste</TableHead>
                     <TableHead>Club</TableHead>
                     <TableHead>Maillot</TableHead>
                     <TableHead>Capitaine</TableHead>
-                    <TableHead>Periode</TableHead>
+                    <TableHead>Période</TableHead>
                     <TableHead>Statut</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {selectedSelections.length === 0 ? (
-                    <EmptyRow colSpan={7} label="Aucun membre selectionne pour cette equipe." />
+                    <EmptyRow colSpan={7} label="Aucun membre sélectionné pour cette équipe." />
                   ) : (
                     selectedSelections.map((selection, index) => (
                       <TableRow key={`${selection.idSelection || "selection"}-${index}`}>
@@ -165,7 +166,7 @@ export function EquipeNationaleClient({
                           {formatSheetDate(selection.dateDebutSelection)} - {formatSheetDate(selection.dateFinSelection)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{selection.statutSelection || "-"}</Badge>
+                          <StatusBadge status={selection.statutSelection} />
                         </TableCell>
                       </TableRow>
                     ))
@@ -182,7 +183,7 @@ export function EquipeNationaleClient({
                 <TableHead>Nom</TableHead><TableHead>Type</TableHead><TableHead>Fonction</TableHead><TableHead>Période</TableHead><TableHead>Statut</TableHead>
               </TableRow></TableHeader><TableBody>
                 {selectedStaff.length === 0 ? <EmptyRow colSpan={5} label="Aucun membre du staff." /> : selectedStaff.map((item) => (
-                  <TableRow key={item.idStaffSelection}><TableCell className="font-medium">{item.nomActeur || "-"}</TableCell><TableCell>{item.typeActeur || "-"}</TableCell><TableCell>{item.fonction || "-"}</TableCell><TableCell>{formatSheetDate(item.dateDebut)} - {formatSheetDate(item.dateFin)}</TableCell><TableCell><Badge variant="outline">{item.statutStaff || "-"}</Badge></TableCell></TableRow>
+                  <TableRow key={item.idStaffSelection}><TableCell className="font-medium">{item.nomActeur || "-"}</TableCell><TableCell>{item.typeActeur || "-"}</TableCell><TableCell>{item.fonction || "-"}</TableCell><TableCell>{formatSheetDate(item.dateDebut)} - {formatSheetDate(item.dateFin)}</TableCell><TableCell><StatusBadge status={item.statutStaff} /></TableCell></TableRow>
                 ))}
               </TableBody></Table></div>
             </CardContent></Card>
@@ -193,7 +194,7 @@ export function EquipeNationaleClient({
                 <TableHead>Compétition</TableHead><TableHead>Niveau</TableHead><TableHead>Saison</TableHead><TableHead>Période</TableHead><TableHead>Lieu</TableHead><TableHead>Statut</TableHead>
               </TableRow></TableHeader><TableBody>
                 {selectedCompetitions.length === 0 ? <EmptyRow colSpan={6} label="Aucune compétition." /> : selectedCompetitions.map((item) => (
-                  <TableRow key={item.idParticipationEquipeNationale}><TableCell className="font-medium">{item.nomCompetition || "-"}</TableCell><TableCell>{item.niveauCompetition || "-"}</TableCell><TableCell>{item.saison || "-"}</TableCell><TableCell>{formatSheetDate(item.dateDebut)} - {formatSheetDate(item.dateFin)}</TableCell><TableCell>{item.lieu || "-"}</TableCell><TableCell><Badge variant="outline">{item.statutParticipation || "-"}</Badge></TableCell></TableRow>
+                  <TableRow key={item.idParticipationEquipeNationale}><TableCell className="font-medium">{item.nomCompetition || "-"}</TableCell><TableCell>{item.niveauCompetition || "-"}</TableCell><TableCell>{item.saison || "-"}</TableCell><TableCell>{formatSheetDate(item.dateDebut)} - {formatSheetDate(item.dateFin)}</TableCell><TableCell>{item.lieu || "-"}</TableCell><TableCell><StatusBadge status={item.statutParticipation} /></TableCell></TableRow>
                 ))}
               </TableBody></Table></div>
             </CardContent></Card>
@@ -204,7 +205,7 @@ export function EquipeNationaleClient({
                 <div key={item.idResultatEquipeNationale} className="grid gap-3 rounded-lg border p-4 md:grid-cols-[1fr_auto_auto] md:items-center">
                   <div><p className="font-medium">{item.nomCompetition || "-"}</p><p className="text-sm text-muted-foreground">{formatSheetDate(item.dateMatch)} · {item.phase || "-"}</p></div>
                   <p className="font-mono text-lg font-semibold">RDC {item.scoreGlobal || "—"} {item.adversaire || "-"}</p>
-                  <Badge variant="outline">{item.resultatMatch || item.statutMatch || "-"}</Badge>
+                  <StatusBadge status={item.resultatMatch || item.statutMatch} />
                 </div>
               ))}
             </CardContent></Card>
@@ -215,33 +216,21 @@ export function EquipeNationaleClient({
   }
 
   const cards = [
-    { label: "Equipes", value: equipes.length, icon: Target, color: "bg-primary/10 text-primary" },
-    { label: "Equipes actives", value: equipesActives, icon: Trophy, color: "bg-success/10 text-success" },
-    { label: "Membres", value: selections.length, icon: Users, color: "bg-info/10 text-info" },
-    { label: "Membres actifs", value: selectionsActives, icon: Medal, color: "bg-warning/15 text-warning-foreground" },
+    { label: "Équipes", value: equipes.length, icon: Target },
+    { label: "Équipes actives", value: equipesActives, icon: Trophy },
+    { label: "Membres", value: selections.length, icon: Users },
+    { label: "Membres actifs", value: selectionsActives, icon: Medal },
   ]
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <Card key={card.label} className="border-border/50">
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className={`rounded-lg p-3 ${card.color}`}>
-                <card.icon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{card.label}</p>
-                <p className="text-2xl font-bold">{card.value}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((card) => <StatCard key={card.label} title={card.label} value={card.value} icon={card.icon} />)}
       </div>
 
-      <Card className="border-border/50">
+      <Card>
         <CardHeader>
-          <CardTitle>Equipes nationales</CardTitle>
+          <CardTitle>Équipes nationales</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -262,14 +251,23 @@ export function EquipeNationaleClient({
               </Select>
             ))}
           </div>
-          <div className="overflow-x-auto">
+          <div className="grid gap-3 md:hidden">
+            {filteredEquipes.map((equipe, index) => (
+              <article key={`${equipe.idEquipeNationale || "equipe"}-mobile-${index}`} className="rounded-xl border border-border/80 bg-card/95 p-4">
+                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-medium">{equipe.nomEquipeNationale || "-"}</p><p className="mt-1 text-xs text-muted-foreground">{equipe.discipline || "-"} · {equipe.categorie || "-"} · {equipe.genre || "-"}</p></div><StatusBadge status={equipe.statutEquipe} /></div>
+                <div className="mt-3 flex items-center justify-between"><span className="text-sm text-muted-foreground">Saison {equipe.saison || "-"}</span><Button variant="ghost" size="icon" onClick={() => setSelectedEquipe(equipe)} aria-label={`Voir ${equipe.nomEquipeNationale}`}><Eye className="size-4" /></Button></div>
+              </article>
+            ))}
+            {!filteredEquipes.length && <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">Aucune équipe nationale disponible.</p>}
+          </div>
+          <div className="hidden overflow-x-auto rounded-xl border border-border/80 md:block">
             <Table className="min-w-[960px]">
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-muted/70 hover:bg-muted/70">
                   <TableHead>ID</TableHead>
-                  <TableHead>Equipe</TableHead>
+                  <TableHead>Équipe</TableHead>
                   <TableHead>Discipline</TableHead>
-                  <TableHead>Categorie</TableHead>
+                  <TableHead>Catégorie</TableHead>
                   <TableHead>Genre</TableHead>
                   <TableHead>Saison</TableHead>
                   <TableHead>Statut</TableHead>
@@ -291,12 +289,12 @@ export function EquipeNationaleClient({
                       <TableCell>{equipe.genre || "-"}</TableCell>
                       <TableCell>{equipe.saison || "-"}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{equipe.statutEquipe || "-"}</Badge>
+                        <StatusBadge status={equipe.statutEquipe} />
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedEquipe(equipe)}>
+                        <Button variant="ghost" size="icon" onClick={() => setSelectedEquipe(equipe)} aria-label={`Voir ${equipe.nomEquipeNationale}`}>
                           <Eye className="h-4 w-4" />
-                          <span className="sr-only">Voir les details</span>
+                          <span className="sr-only">Voir les détails</span>
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -1,156 +1,61 @@
 "use client"
 
+import { useState } from "react"
+import { Activity, ArrowLeft, Contact, FileKey, Stethoscope } from "lucide-react"
+import { AffiliationSection, LicenceSection } from "@/components/actors/record-sections"
+import { MedecinAffiliationFormDialog, type MedecinStructureOption } from "@/components/medecins/medecin-affiliation-form-dialog"
+import { MedecinFormDialog, type SavedMedecin } from "@/components/medecins/medecin-form-dialog"
+import { MedecinLicenceFormDialog } from "@/components/medecins/medecin-licence-form-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DetailCard } from "@/components/dashboard/detail-card"
+import { StatusBadge } from "@/components/dashboard/status-badge"
 import { getActorAvatarUrl } from "@/lib/actor-avatar"
-import { calculateAge, formatSheetDate } from "@/lib/date-utils"
+import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
+import { formatDateForDisplay } from "@/lib/compact-date"
+import { calculateAge } from "@/lib/date-utils"
 import { normalize } from "@/lib/sheet-values"
 import type { BaseActorLicence, Medecin, MedecinAffiliation } from "@/lib/types"
-import { AffiliationSection, LicenceSection } from "@/components/actors/record-sections"
-import { ArrowLeft } from "lucide-react"
-import { MedecinFormDialog } from "@/components/medecins/medecin-form-dialog"
-import type { SavedMedecin } from "@/components/medecins/medecin-form-dialog"
-import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
-import { MedecinAffiliationFormDialog } from "@/components/medecins/medecin-affiliation-form-dialog"
-import type { MedecinStructureOption } from "@/components/medecins/medecin-affiliation-form-dialog"
-import { MedecinLicenceFormDialog } from "@/components/medecins/medecin-licence-form-dialog"
 
-function shown(value: unknown, fallback = "Non renseigné") {
-  const text = value === null || value === undefined ? "" : String(value).trim()
-  return text || fallback
-}
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return "?"
-  return `${parts[0]?.[0] ?? ""}${parts.at(-1)?.[0] ?? ""}`.toUpperCase()
-}
-
-function sexeLabel(value: string) {
-  const sexe = normalize(value)
-  if (sexe === "M" || sexe === "MASCULIN") return "Masculin"
-  if (sexe === "F" || sexe === "FEMININ") return "Féminin"
-  return shown(value)
-}
+function shown(value: unknown) { return String(value ?? "").trim() || "Non renseigné" }
+function initials(name: string) { const parts = name.trim().split(/\s+/).filter(Boolean); return parts.length ? `${parts[0]?.[0] ?? ""}${parts.at(-1)?.[0] ?? ""}`.toUpperCase() : "MD" }
+function sexeLabel(value: string) { const sexe = normalize(value); return sexe === "M" || sexe === "MASCULIN" ? "Masculin" : sexe === "F" || sexe === "FEMININ" ? "Féminin" : shown(value) }
+const affiliationKind = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
 
 export function MedecinDetail({ medecin, affiliations, licences, sexes, specialties, structures, affiliationTypes, onAffiliationCreated, onLicenceCreated, onUpdated, onBack }: {
-  medecin: Medecin
-  affiliations: MedecinAffiliation[]
-  licences: BaseActorLicence[]
-  sexes: ActorSexOption[]
-  specialties: CoachReferenceOption[]
-  structures: MedecinStructureOption[]
-  affiliationTypes: CoachReferenceOption[]
+  medecin: Medecin; affiliations: MedecinAffiliation[]; licences: BaseActorLicence[]; sexes: ActorSexOption[]
+  specialties: CoachReferenceOption[]; structures: MedecinStructureOption[]; affiliationTypes: CoachReferenceOption[]
   onAffiliationCreated: (affiliation: MedecinAffiliation, deactivatedAffiliationId: string) => void
   onLicenceCreated: (licence: BaseActorLicence, deactivatedLicenceId: string) => void
-  onUpdated: (medecin: SavedMedecin) => void
-  onBack: () => void
+  onUpdated: (medecin: SavedMedecin) => void; onBack: () => void
 }) {
+  const [activeTab, setActiveTab] = useState("general")
   const avatarUrl = getActorAvatarUrl(medecin.avatarDriveUrl, medecin.avatarDriveId)
   const age = calculateAge(medecin.dateDeNaissance)
-  const formattedDate = formatSheetDate(medecin.dateDeNaissance)
-  const active = ["ACTIF", "ACTIVE"].includes(normalize(medecin.statut))
-  const affiliationKind = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
   const clubAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "CLUB")
-  const nationalTeamAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "EQUIPE_NATIONALE")
-  const generalSections = [
-    {
-      title: "Identifiants",
-      fields: [
-        ["ID médecin", medecin.idMedecin],
-        ["ID national", medecin.idNational],
-        ["ID FIVB", medecin.idFivb],
-      ],
-    },
-    {
-      title: "État civil et profil",
-      fields: [
-        ["Date de naissance", formattedDate === "-" ? "Non renseignée" : formattedDate],
-        ["Âge", age === null ? "Non renseigné" : `${age} ans`],
-        ["Sexe", sexeLabel(medecin.sexe)],
-        ["Nationalité", medecin.nationalite],
-        ["Spécialité", medecin.specialite],
-      ],
-    },
-    {
-      title: "Contact",
-      fields: [
-        ["Téléphone", medecin.telephone],
-        ["Adresse e-mail", medecin.email],
-        ["Adresse", medecin.adresse],
-      ],
-    },
-  ]
+  const nationalAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "EQUIPE_NATIONALE")
+  const hasContact = Boolean(medecin.telephone || medecin.email || medecin.adresse)
+  const hasPassport = Boolean(medecin.numeroPasseport || medecin.dateDelivrancePasseport || medecin.dateExpirationPasseport)
 
-  return (
-    <div className="w-full">
-      <Button variant="ghost" className="mb-4" onClick={onBack}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Retour aux médecins
-      </Button>
+  return <div className="w-full space-y-6">
+    <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button>{activeTab === "general" && <MedecinFormDialog medecin={medecin} sexes={sexes} specialties={specialties} onSaved={onUpdated} />}</div>
+    <Card><CardContent className="p-6"><div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-4"><Avatar className="size-20 shrink-0">{avatarUrl && <AvatarImage src={avatarUrl} alt={medecin.nomComplet} />}<AvatarFallback className="text-lg">{initials(medecin.nomComplet)}</AvatarFallback></Avatar><div className="min-w-0"><h2 className="break-words text-2xl font-bold">{shown(medecin.nomComplet)}</h2><p className="mt-1 text-sm text-muted-foreground">{shown(medecin.specialite)}</p></div></div>
+      <div className="flex flex-col items-end gap-2"><StatusBadge status={medecin.statut} /><p className="font-mono text-sm text-muted-foreground">{shown(medecin.idMedecin)}</p></div>
+    </div></CardContent></Card>
 
-      <Card className="overflow-hidden border-border/60 shadow-sm">
-        <div className="h-2 bg-primary" />
-        <CardContent className="p-0">
-          <header className="grid gap-6 border-b bg-muted/20 p-6 md:grid-cols-[auto_1fr_auto] md:items-center md:p-8">
-            <Avatar className="h-24 w-24 border-4 border-background shadow-sm">
-              {avatarUrl && <AvatarImage src={avatarUrl} alt={medecin.nomComplet} />}
-              <AvatarFallback className="text-2xl font-semibold">{initials(medecin.nomComplet)}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Profil médecin</p>
-              <h1 className="break-words text-2xl font-bold md:text-3xl">{shown(medecin.nomComplet)}</h1>
-              <p className="mt-2 font-mono text-sm text-muted-foreground">{shown(medecin.idMedecin)}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <MedecinFormDialog medecin={medecin} sexes={sexes} specialties={specialties} onSaved={onUpdated} />
-              <Badge variant={active ? "default" : "secondary"} className="w-fit">{shown(medecin.statut)}</Badge>
-            </div>
-          </header>
-
-          <div className="space-y-10 p-6 md:p-8">
-            <section>
-              <div className="mb-5">
-                <h2 className="text-lg font-semibold">Général</h2>
-                <p className="text-sm text-muted-foreground">Identité et informations administratives</p>
-              </div>
-
-              <div className="grid auto-rows-fr gap-4 lg:grid-cols-3">
-                {generalSections.map((section) => (
-                  <div key={section.title} className="flex h-full min-h-72 flex-col overflow-hidden rounded-xl border bg-muted/10">
-                    <div className="border-b bg-muted/30 px-5 py-3">
-                      <h3 className="text-sm font-semibold">{section.title}</h3>
-                    </div>
-                    <div className="flex flex-1 flex-col divide-y px-5">
-                      {section.fields.map(([label, value]) => (
-                        <div key={label} className="flex flex-1 flex-col justify-center py-3">
-                          <span className="text-xs text-muted-foreground">{label}</span>
-                          <span className="mt-1 break-words font-medium">{shown(value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <div>
-              <div className="mb-5 flex justify-end"><MedecinAffiliationFormDialog medecin={medecin} structures={structures} affiliationTypes={affiliationTypes} specialties={specialties} onSaved={onAffiliationCreated} /></div>
-              <div className="space-y-8">
-                <AffiliationSection affiliations={clubAffiliations} actorId={medecin.idMedecin} title="Affiliation club" description="Club actuel et historique des affiliations en club" currentDetail={(item) => ["Spécialité", item.fonction]} />
-                <AffiliationSection affiliations={nationalTeamAffiliations} actorId={medecin.idMedecin} title="Affiliation équipe nationale" description="Équipe nationale actuelle et historique" currentDetail={(item) => ["Spécialité", item.fonction]} />
-              </div>
-            </div>
-            <LicenceSection
-              licences={licences}
-              actorId={medecin.idMedecin}
-              showId={false}
-              action={<MedecinLicenceFormDialog medecin={medecin} hasAffiliation={affiliations.some((item) => item.actorId === medecin.idMedecin)} onSaved={onLicenceCreated} />}
-            />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
+      <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="general">Général</TabsTrigger><TabsTrigger value="affiliations">Affiliations</TabsTrigger><TabsTrigger value="licences">Licences</TabsTrigger></TabsList>
+      <TabsContent value="general"><div className="grid w-full grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6">
+        <DetailCard title="Identité" icon={Stethoscope} fields={[{ label: "ID médecin", value: medecin.idMedecin }, { label: "Nom complet", value: medecin.nomComplet }, { label: "Sexe", value: sexeLabel(medecin.sexe) }, { label: "Date de naissance", value: formatDateForDisplay(medecin.dateDeNaissance) || "Non renseignée" }, { label: "Âge", value: age === null ? "Non renseigné" : `${age} ans` }, { label: "Nationalité", value: medecin.nationalite }]} />
+        <DetailCard title="Profil" icon={Activity} fields={[{ label: "Spécialité", value: medecin.specialite }, { label: "ID national", value: medecin.idNational }, { label: "ID FIVB", value: medecin.idFivb }, { label: "Statut", value: medecin.statut }]} />
+        {hasContact && <DetailCard title="Contact" icon={Contact} fields={[{ label: "Téléphone", value: medecin.telephone }, { label: "E-mail", value: medecin.email }, { label: "Adresse", value: medecin.adresse }]} />}
+        {hasPassport && <DetailCard title="Passeport" icon={FileKey} fields={[{ label: "Numéro", value: medecin.numeroPasseport }, { label: "Délivré le", value: formatDateForDisplay(medecin.dateDelivrancePasseport) || "Non renseignée" }, { label: "Expire le", value: formatDateForDisplay(medecin.dateExpirationPasseport) || "Non renseignée" }]} />}
+      </div></TabsContent>
+      <TabsContent value="affiliations" className="space-y-8 [&_section:first-of-type]:border-t-0 [&_section:first-of-type]:pt-0"><div className="flex justify-end"><MedecinAffiliationFormDialog medecin={medecin} structures={structures} affiliationTypes={affiliationTypes} specialties={specialties} onSaved={onAffiliationCreated} /></div><AffiliationSection affiliations={clubAffiliations} actorId={medecin.idMedecin} title="Affiliation club" description="Club actuel et historique" currentDetail={(item) => ["Spécialité", item.fonction]} /><AffiliationSection affiliations={nationalAffiliations} actorId={medecin.idMedecin} title="Affiliation équipe nationale" description="Équipe nationale actuelle et historique" currentDetail={(item) => ["Spécialité", item.fonction]} /></TabsContent>
+      <TabsContent value="licences" className="[&>section]:border-t-0 [&>section]:pt-0"><LicenceSection licences={licences} actorId={medecin.idMedecin} showId={false} action={<MedecinLicenceFormDialog medecin={medecin} hasAffiliation={affiliations.some((item) => item.actorId === medecin.idMedecin)} onSaved={onLicenceCreated} />} /></TabsContent>
+    </Tabs>
+  </div>
 }
