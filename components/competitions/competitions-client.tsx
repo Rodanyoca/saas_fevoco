@@ -1,111 +1,34 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { CompetitionDetail } from "@/components/competitions/competition-detail"
-import { CompetitionsFilters } from "@/components/competitions/competitions-filters"
-import { CompetitionsTable } from "@/components/competitions/competitions-table"
-import { parseSheetDate } from "@/lib/date-utils"
-import type { Competition, CompetitionClassement, CompetitionParticipant, CompetitionResult, CompetitionUnite } from "@/lib/types"
+import { Plus } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { DataTable, type Column, type Filter } from "@/components/dashboard/data-table"
+import { StatusBadge } from "@/components/dashboard/status-badge"
+import { CompetitionForm } from "@/components/competitions/competition-form"
+import { formatDateForDisplay } from "@/lib/compact-date"
+import type { CompetitionView, Option } from "@/lib/competitions-v2"
 
-export function CompetitionsClient({
-  competitions,
-  participants,
-  unites,
-  results,
-  classements,
-}: {
-  competitions: Competition[]
-  participants: CompetitionParticipant[]
-  unites: CompetitionUnite[]
-  results: CompetitionResult[]
-  classements: CompetitionClassement[]
-}) {
-  const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null)
-  const [search, setSearch] = useState("")
-  const [discipline, setDiscipline] = useState("all")
-  const [statut, setStatut] = useState("all")
-  const [saison, setSaison] = useState("all")
-  const [type, setType] = useState("all")
-  const [format, setFormat] = useState("all")
-  const [niveau, setNiveau] = useState("all")
+const columns: Column<CompetitionView>[] = [
+  { key: "saison", header: "Saison" },
+  { key: "nom", header: "Nom de la compétition", className: "font-medium" },
+  { key: "dateDebut", header: "Début", render: (item) => formatDateForDisplay(item.dateDebut) || "—" },
+  { key: "dateFin", header: "Fin", render: (item) => formatDateForDisplay(item.dateFin) || "—" },
+  { key: "pays", header: "Pays", render: (item) => item.pays || "—" },
+  { key: "statut", header: "Statut", render: (item) => <StatusBadge status={item.statut} /> },
+]
 
-  const statuts = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          competitions
-            .map((competition) => competition.statutCompetition)
-            .filter((value) => value.trim().length > 0),
-        ),
-      ).sort((a, b) => a.localeCompare(b)),
-    [competitions],
-  )
-
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase()
-
-    return competitions
-      .filter((competition) => {
-        if (discipline !== "all" && competition.nomDiscipline !== discipline) return false
-        if (statut !== "all" && competition.statutCompetition !== statut) return false
-        if (saison !== "all" && competition.saison !== saison) return false
-        if (type !== "all" && competition.typeCompetition !== type) return false
-        if (format !== "all" && competition.formatCompetition !== format) return false
-        if (niveau !== "all" && competition.niveau !== niveau) return false
-
-        if (s) {
-          const haystack =
-            `${competition.idCompetition} ${competition.nomCompetition} ${competition.nomDiscipline} ${competition.lieu} ${competition.nomStructureOrganisatrice}`.toLowerCase()
-          if (!haystack.includes(s)) return false
-        }
-
-        return true
-      })
-      .sort((a, b) => {
-        const dateA = parseSheetDate(a.dateDebut)?.getTime() ?? 0
-        const dateB = parseSheetDate(b.dateDebut)?.getTime() ?? 0
-        return dateB - dateA
-      })
-  }, [competitions, discipline, format, niveau, saison, search, statut, type])
-
-  if (selectedCompetition) {
-    return (
-      <CompetitionDetail
-        competition={selectedCompetition}
-        participants={participants}
-        unites={unites}
-        results={results}
-        classements={classements}
-        onBack={() => setSelectedCompetition(null)}
-      />
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-      <CompetitionsFilters
-        search={search}
-        discipline={discipline}
-        statut={statut}
-        statuts={statuts}
-        competitions={competitions}
-        saison={saison}
-        type={type}
-        format={format}
-        niveau={niveau}
-        onSearchChange={setSearch}
-        onDisciplineChange={setDiscipline}
-        onStatutChange={setStatut}
-        onSaisonChange={setSaison}
-        onTypeChange={setType}
-        onFormatChange={setFormat}
-        onNiveauChange={setNiveau}
-      />
-      <CompetitionsTable
-        competitions={filtered}
-        totalCount={filtered.length}
-        onViewCompetition={setSelectedCompetition}
-      />
-    </div>
-  )
+export function CompetitionsClient({ competitions, references, initialError }: { competitions: CompetitionView[]; references: Record<string, Option[]>; initialError: string }) {
+  const [createOpen, setCreateOpen] = useState(false)
+  const filters: Filter[] = useMemo(() => [
+    { key: "saison", label: "Saison", options: [...new Map(competitions.map((item) => [item.saison, { value: item.saison, label: item.saison }])).values()] },
+    { key: "pays", label: "Pays", options: [...new Map(competitions.filter((item) => item.pays).map((item) => [item.pays, { value: item.pays, label: item.pays }])).values()] },
+    { key: "statut", label: "Statut", options: [...new Map(competitions.filter((item) => item.statut).map((item) => [item.statut, { value: item.statut, label: item.statut }])).values()] },
+  ], [competitions])
+  return <div className="space-y-4">
+    {initialError ? <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{initialError}</p> : null}
+    <div className="flex justify-end"><Button onClick={() => setCreateOpen(true)} className="bg-brand-gold text-slate-950 hover:bg-brand-gold/90"><Plus className="size-4" />Créer une compétition</Button></div>
+    <DataTable data={competitions} columns={columns} filters={filters} searchPlaceholder="Rechercher une compétition..." detailHref={(item) => `/competitions/${encodeURIComponent(item.id)}?tab=general`} idKey="id" />
+    <CompetitionForm open={createOpen} onOpenChange={setCreateOpen} references={references} />
+  </div>
 }

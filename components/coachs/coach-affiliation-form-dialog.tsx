@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { CompactDateInput } from "@/components/ui/compact-date-input"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -81,8 +82,8 @@ export function CoachAffiliationFormDialog({ coach, structures, affiliationTypes
               </Popover>
             </div>
             <div className="space-y-2"><Label>Fonction *</Label><Select required value={form.fonction} onValueChange={(value) => setForm({ ...form, fonction: value })} disabled={!coachFunctions.length}><SelectTrigger><SelectValue placeholder={coachFunctions.length ? "Sélectionner la fonction" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{coachFunctions.map((item) => <SelectItem key={`${item.id}:${item.nom}`} value={item.nom}>{item.nom}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label>Date de début *</Label><Input required type="date" value={form.dateDebut} onChange={(event) => setForm({ ...form, dateDebut: event.target.value })} /></div>
-            <div className="space-y-2"><Label>Date de fin</Label><Input type="date" min={form.dateDebut || undefined} value={form.dateFin} onChange={(event) => setForm({ ...form, dateFin: event.target.value })} /></div>
+            <div className="space-y-2"><Label>Date de début *</Label><CompactDateInput required value={form.dateDebut} onValueChange={(dateDebut) => setForm({ ...form, dateDebut })} /></div>
+            <div className="space-y-2"><Label>Date de fin</Label><CompactDateInput optional value={form.dateFin} onValueChange={(dateFin) => setForm({ ...form, dateFin })} /></div>
             <div className="space-y-2"><Label>Statut</Label><Select value={form.statutAffiliation} onValueChange={(value) => setForm({ ...form, statutAffiliation: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="inactif">Inactif</SelectItem><SelectItem value="en attente">En attente</SelectItem></SelectContent></Select></div>
             <div className="space-y-2 sm:col-span-2"><Label>Observation</Label><Input value={form.observation} onChange={(event) => setForm({ ...form, observation: event.target.value })} /></div>
           </div>

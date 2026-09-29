@@ -1,8 +1,9 @@
 import "server-only"
 
 import { env } from "@/lib/env"
-import { appendSheetRecord, updateSheetRecordById } from "@/lib/google-sheets"
+import { appendSheetRecord, formatSheetDateColumn, updateSheetRecordById } from "@/lib/google-sheets"
 import { getEntentes, getLigues, getProvinceOptions } from "@/lib/data"
+import { formatDateForSheet } from "@/lib/compact-date"
 
 const statuses = new Set(["ACTIF", "INACTIF"])
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -32,6 +33,9 @@ function validateLigue(input: LigueInput) {
   if (!input.nomLigue) throw new Error("Le nom de la ligue est obligatoire.")
   if (!input.idProvince) throw new Error("La province est obligatoire.")
   if (input.emailLigue && !emailPattern.test(input.emailLigue)) throw new Error("L’adresse e-mail est invalide.")
+  if (input.dateAffiliation) {
+    try { formatDateForSheet(input.dateAffiliation) } catch { throw new Error("La date d’affiliation est invalide.") }
+  }
   if (!statuses.has(input.statut)) throw new Error("Le statut doit être ACTIF ou INACTIF.")
 }
 
@@ -66,6 +70,7 @@ export async function createLigue(payload: Record<string, unknown>) {
     observations: text(payload.observations),
   }
   validateLigue(input)
+  input.dateAffiliation = input.dateAffiliation ? formatDateForSheet(input.dateAffiliation) : ""
   const [ligues, provinces] = await Promise.all([getLigues(), getProvinceOptions()])
   const province = provinces.find((item) => item.idProvince === input.idProvince)
   if (!province) throw new Error("La province sélectionnée est introuvable.")
@@ -77,6 +82,7 @@ export async function createLigue(payload: Record<string, unknown>) {
     return Math.max(max, numeric)
   }, 0)
   const idLigue = String(maxId + 1).padStart(2, "0")
+  await formatSheetDateColumn(env.googleSheets.territorialSpreadsheetId, "LIGUES", "date_affiliation_ligue", "yyyy-mm-dd")
   await appendSheetRecord(env.googleSheets.territorialSpreadsheetId, "LIGUES", {
     id_ligue: idLigue,
     nom_ligue: input.nomLigue,
@@ -108,12 +114,14 @@ export async function updateLigue(idLigue: string, payload: Record<string, unkno
     observations: text(payload.observations),
   }
   validateLigue(input)
+  input.dateAffiliation = input.dateAffiliation ? formatDateForSheet(input.dateAffiliation) : ""
   const [ligues, provinces] = await Promise.all([getLigues(), getProvinceOptions()])
   const province = provinces.find((item) => item.idProvince === input.idProvince)
   if (!province) throw new Error("La province sélectionnée est introuvable.")
   if (ligues.some((item) => item.idLigue !== idLigue && item.idProvince === input.idProvince && item.nomLigue.toLowerCase() === input.nomLigue.toLowerCase())) {
     throw new Error("Une ligue portant ce nom existe déjà dans cette province.")
   }
+  await formatSheetDateColumn(env.googleSheets.territorialSpreadsheetId, "LIGUES", "date_affiliation_ligue", "yyyy-mm-dd")
   await updateSheetRecordById(env.googleSheets.territorialSpreadsheetId, "LIGUES", "id_ligue", idLigue, {
     nom_ligue: input.nomLigue, sigle_ligue: input.sigleLigue,
     telephone: input.telephone, email: input.emailLigue,
@@ -135,6 +143,10 @@ function ententeResult(input: {
   pseudoEntente: string
   ligue: { idLigue: string; nomLigue: string; idProvince: string; nomProvince: string }
   emailEntente: string
+  telephone: string
+  dateCreation: string
+  dateReconnaissance: string
+  idEntenteCoc: string
   statut: string
   observations: string
 }) {
@@ -149,6 +161,10 @@ function ententeResult(input: {
     provinceId: input.ligue.idProvince,
     provinceNom: input.ligue.nomProvince,
     emailEntente: input.emailEntente,
+    telephone: input.telephone,
+    dateCreation: input.dateCreation,
+    dateReconnaissance: input.dateReconnaissance,
+    idEntenteCoc: input.idEntenteCoc,
     statut: input.statut,
     observations: input.observations,
   }
@@ -160,12 +176,21 @@ export async function createEntente(payload: Record<string, unknown>) {
   const nomEntente = text(payload.nomEntente)
   const pseudoEntente = text(payload.pseudoEntente)
   const emailEntente = text(payload.emailEntente)
+  const telephone = text(payload.telephone)
+  let dateCreation = text(payload.dateCreation)
+  let dateReconnaissance = text(payload.dateReconnaissance)
+  const idEntenteCoc = text(payload.idEntenteCoc)
   const statut = normalizeStatus(payload.statut)
   const observations = text(payload.observations)
   if (!codeEntente) throw new Error("Le code de l’entente est obligatoire.")
   if (!idLigue) throw new Error("La ligue est obligatoire.")
   if (!nomEntente) throw new Error("Le nom de l’entente est obligatoire.")
   if (emailEntente && !emailPattern.test(emailEntente)) throw new Error("L’adresse e-mail est invalide.")
+  try {
+    dateCreation = dateCreation ? formatDateForSheet(dateCreation) : ""
+    dateReconnaissance = dateReconnaissance ? formatDateForSheet(dateReconnaissance) : ""
+  } catch { throw new Error("Les dates de l’entente sont invalides.") }
+  if (dateCreation && dateReconnaissance && dateReconnaissance < dateCreation) throw new Error("La date de reconnaissance ne peut pas précéder la date de création.")
   if (!statuses.has(statut)) throw new Error("Le statut doit être ACTIF ou INACTIF.")
 
   const [ententes, ligues] = await Promise.all([getEntentes(), getLigues()])
@@ -178,14 +203,20 @@ export async function createEntente(payload: Record<string, unknown>) {
     throw new Error("Une entente portant ce nom existe déjà dans cette ligue.")
   }
 
+  await Promise.all([
+    formatSheetDateColumn(env.googleSheets.territorialSpreadsheetId, "ENTENTES", "date_creation", "yyyy-mm-dd"),
+    formatSheetDateColumn(env.googleSheets.territorialSpreadsheetId, "ENTENTES", "date_reconnaissance", "yyyy-mm-dd"),
+  ])
   await appendSheetRecord(env.googleSheets.territorialSpreadsheetId, "ENTENTES", {
     id_entente: idEntente, code_entente: codeEntente,
     nom_entente: nomEntente, sigle_entente: pseudoEntente,
     id_ligue: ligue.idLigue,
-    email: emailEntente, statut, observations,
+    telephone, email: emailEntente, date_creation: dateCreation,
+    date_reconnaissance: dateReconnaissance, id_entente_coc: idEntenteCoc,
+    statut, observations,
   })
   return (await getEntentes()).find((item) => item.idEntente === idEntente)
-    ?? ententeResult({ idEntente, codeEntente, nomEntente, pseudoEntente, ligue, emailEntente, statut, observations })
+    ?? ententeResult({ idEntente, codeEntente, nomEntente, pseudoEntente, ligue, telephone, emailEntente, dateCreation, dateReconnaissance, idEntenteCoc, statut, observations })
 }
 
 export async function updateEntente(idEntente: string, payload: Record<string, unknown>) {
@@ -209,15 +240,32 @@ export async function updateEntente(idEntente: string, payload: Record<string, u
     throw new Error("Une entente portant ce nom existe déjà dans cette ligue.")
   }
   const emailEntente = text(payload.emailEntente)
+  const telephone = text(payload.telephone)
+  let dateCreation = text(payload.dateCreation)
+  let dateReconnaissance = text(payload.dateReconnaissance)
+  const idEntenteCoc = text(payload.idEntenteCoc)
   if (emailEntente && !emailPattern.test(emailEntente)) throw new Error("L’adresse e-mail est invalide.")
+  try {
+    dateCreation = dateCreation ? formatDateForSheet(dateCreation) : ""
+    dateReconnaissance = dateReconnaissance ? formatDateForSheet(dateReconnaissance) : ""
+  } catch { throw new Error("Les dates de l’entente sont invalides.") }
+  if (dateCreation && dateReconnaissance && dateReconnaissance < dateCreation) throw new Error("La date de reconnaissance ne peut pas précéder la date de création.")
   const statut = normalizeStatus(payload.statut)
   if (!statuses.has(statut)) throw new Error("Le statut doit être ACTIF ou INACTIF.")
   const observations = text(payload.observations)
+  await Promise.all([
+    formatSheetDateColumn(env.googleSheets.territorialSpreadsheetId, "ENTENTES", "date_creation", "yyyy-mm-dd"),
+    formatSheetDateColumn(env.googleSheets.territorialSpreadsheetId, "ENTENTES", "date_reconnaissance", "yyyy-mm-dd"),
+  ])
   await updateSheetRecordById(env.googleSheets.territorialSpreadsheetId, "ENTENTES", "id_entente", idEntente, {
     nom_entente: nomEntente,
     sigle_entente: pseudoEntente,
     id_ligue: ligue.idLigue,
+    telephone,
     email: emailEntente,
+    date_creation: dateCreation,
+    date_reconnaissance: dateReconnaissance,
+    id_entente_coc: idEntenteCoc,
     statut,
     observations,
   })
@@ -228,7 +276,11 @@ export async function updateEntente(idEntente: string, payload: Record<string, u
     nomEntente,
     pseudoEntente,
     ligue,
+    telephone,
     emailEntente,
+    dateCreation,
+    dateReconnaissance,
+    idEntenteCoc,
     statut,
     observations,
   })

@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
+import { CompactDateInput } from "@/components/ui/compact-date-input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { TransferTypeOption } from "@/lib/actor-references"
@@ -113,8 +114,8 @@ export function TransfertFormDialog({ athletes, clubs, types, affiliations, onSa
             <div className="space-y-2"><Label>Athlète *</Label><Select required value={form.idAthlete} onValueChange={changeAthlete}><SelectTrigger><SelectValue placeholder="Sélectionner l’athlète" /></SelectTrigger><SelectContent>{uniqueAthletes.map((athlete) => <SelectItem key={athlete.idAthlete} value={athlete.idAthlete}>{athlete.nomComplet}</SelectItem>)}</SelectContent></Select></div>
             {!firstAffiliation && <div className="space-y-2"><Label>Club d’origine *</Label><Select required disabled value={form.idClubOrigine}><SelectTrigger><SelectValue placeholder={form.idAthlete ? "Aucune affiliation précédente" : "Sélectionnez d’abord l’athlète"} /></SelectTrigger><SelectContent>{uniqueClubs.map((club) => <SelectItem key={club.idClub} value={club.idClub}>{club.nomClub}</SelectItem>)}</SelectContent></Select></div>}
             <div className="space-y-2"><Label>Club bénéficiaire *</Label><Select required value={form.idClubBeneficiaire} onValueChange={(value) => setForm({ ...form, idClubBeneficiaire: value })}><SelectTrigger><SelectValue placeholder="Sélectionner le club bénéficiaire" /></SelectTrigger><SelectContent>{availableBeneficiaries.map((club) => <SelectItem key={club.idClub} value={club.idClub}>{club.nomClub}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label>Date de début *</Label><Input required type="date" value={form.dateDebut} onChange={(e) => setForm({ ...form, dateDebut: e.target.value })} /></div>
-            {temporary && <div className="space-y-2"><Label>Date de fin *</Label><Input required type="date" min={form.dateDebut || undefined} value={form.dateFin} onChange={(e) => setForm({ ...form, dateFin: e.target.value })} /></div>}
+            <div className="space-y-2"><Label>Date de début *</Label><CompactDateInput required value={form.dateDebut} onValueChange={(dateDebut) => setForm({ ...form, dateDebut })} /></div>
+            {temporary && <div className="space-y-2"><Label>Date de fin *</Label><CompactDateInput required value={form.dateFin} onValueChange={(dateFin) => setForm({ ...form, dateFin })} /></div>}
             <div className="space-y-2"><Label>Statut</Label><Select value={form.statutAffiliation} onValueChange={(value) => setForm({ ...form, statutAffiliation: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="inactif">Inactif</SelectItem><SelectItem value="en attente">En attente</SelectItem></SelectContent></Select></div>
             <div className="space-y-2 md:col-span-2"><Label>Observation</Label><Input value={form.observation} onChange={(e) => setForm({ ...form, observation: e.target.value })} /></div>
           </div>

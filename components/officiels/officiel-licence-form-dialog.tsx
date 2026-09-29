@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
+import { CompactDateInput } from "@/components/ui/compact-date-input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { BaseActorLicence, Officiel } from "@/lib/types"
@@ -50,8 +51,8 @@ export function OfficielLicenceFormDialog({ officiel, hasAffiliation, onSaved }:
         <form onSubmit={submit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2"><Label>Numéro de licence *</Label><Input required value={form.numeroLicence} onChange={(event) => setForm({ ...form, numeroLicence: event.target.value })} /></div>
-            <div className="space-y-2"><Label>Date de délivrance *</Label><Input required type="date" value={form.dateDelivrance} onChange={(event) => setForm({ ...form, dateDelivrance: event.target.value })} /></div>
-            <div className="space-y-2"><Label>Fin de validité *</Label><Input required type="date" min={form.dateDelivrance || undefined} value={form.dateFinValidite} onChange={(event) => setForm({ ...form, dateFinValidite: event.target.value })} /></div>
+            <div className="space-y-2"><Label>Date de délivrance *</Label><CompactDateInput required value={form.dateDelivrance} onValueChange={(dateDelivrance) => setForm({ ...form, dateDelivrance })} /></div>
+            <div className="space-y-2"><Label>Fin de validité *</Label><CompactDateInput required value={form.dateFinValidite} onValueChange={(dateFinValidite) => setForm({ ...form, dateFinValidite })} /></div>
             <div className="space-y-2 sm:col-span-2"><Label>Statut</Label><Select value={form.statutLicence} onValueChange={(value) => setForm({ ...form, statutLicence: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="en attente">En attente</SelectItem><SelectItem value="inactif">Inactif</SelectItem><SelectItem value="expiré">Expiré</SelectItem></SelectContent></Select></div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}

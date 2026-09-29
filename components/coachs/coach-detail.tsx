@@ -57,8 +57,7 @@ export function CoachDetail({ coach, affiliations, licences, sexes, levels, stru
   const age = calculateAge(coach.dateNaissance)
   const formattedDate = formatSheetDate(coach.dateNaissance)
   const affiliationKind = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
-  const clubAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "CLUB")
-  const nationalTeamAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "EQUIPE_NATIONALE")
+  const clubAffiliations = affiliations.filter((item) => !item.typeAffiliation || affiliationKind(item.typeAffiliation) === "CLUB")
 
   return (
     <div className="w-full space-y-6">
@@ -134,8 +133,7 @@ export function CoachDetail({ coach, affiliations, licences, sexes, levels, stru
 
         <TabsContent value="affiliation" className="space-y-8 [&_section:first-of-type]:border-t-0 [&_section:first-of-type]:pt-0">
           <div className="flex justify-end"><CoachAffiliationFormDialog coach={coach} structures={structures} affiliationTypes={affiliationTypes} coachFunctions={coachFunctions} onSaved={onAffiliationCreated} /></div>
-          <AffiliationSection affiliations={clubAffiliations} actorId={coach.idCoach} title="Affiliation club" description="Club actuel et historique des affiliations en club" currentDetail={(item) => ["Fonction", item.fonction]} />
-          <AffiliationSection affiliations={nationalTeamAffiliations} actorId={coach.idCoach} title="Affiliation équipe nationale" description="Équipe nationale actuelle et historique" currentDetail={(item) => ["Fonction", item.fonction]} />
+          <AffiliationSection affiliations={clubAffiliations} actorId={coach.idCoach} title="Affiliations" description="Club actuel et historique des affiliations" />
         </TabsContent>
 
         <TabsContent value="licence" className="[&>section]:border-t-0 [&>section]:pt-0">

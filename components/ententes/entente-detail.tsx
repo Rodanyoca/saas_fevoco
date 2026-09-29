@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, ContactRound, Pencil, Shield, Users } from "lucide-react"
+import { ArrowLeft, Pencil, Shield, ShieldCheck, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable, type Column } from "@/components/dashboard/data-table"
@@ -9,6 +9,7 @@ import { StatCard } from "@/components/dashboard/stat-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { EditEntenteDialog, type SavedEntente } from "@/components/ententes/entente-form-dialog"
 import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
+import { formatDateForDisplay } from "@/lib/compact-date"
 
 export function EntenteDetail({ entente, ligues, clubs, athletes, onBack, onUpdated }: { entente: Entente; ligues: Ligue[]; clubs: Club[]; athletes: Athlete[]; onBack: () => void; onUpdated: (entente: SavedEntente) => void }) {
   const relatedClubs = clubs.filter((club) => club.idEntente === entente.idEntente || club.ententeId === entente.idEntente)
@@ -29,8 +30,8 @@ export function EntenteDetail({ entente, ligues, clubs, athletes, onBack, onUpda
     </div>
 
     <div className="grid gap-6 lg:grid-cols-2">
-      <DetailCard title="Informations générales" icon={Shield} iconClassName="text-brand-gold" fields={[{ label: "ID Entente", value: entente.idEntente }, { label: "Nom", value: entente.nomEntente }, { label: "Pseudo", value: entente.pseudoEntente }, { label: "Ligue", value: entente.nomLigue }, { label: "Statut", value: entente.statut }, { label: "Date de création", value: entente.dateCreation }, { label: "Date de reconnaissance", value: entente.dateReconnaissance }]} />
-      <DetailCard title="Coordonnées et suivi" icon={ContactRound} iconClassName="text-brand-gold" fields={[{ label: "Téléphone", value: entente.telephone }, { label: "E-mail", value: entente.emailEntente }, { label: "Identifiant COC", value: entente.idEntenteCoc }, { label: "Observations", value: entente.observations }]} />
+      <DetailCard title="Informations générales" icon={Shield} iconClassName="text-brand-gold" fields={[{ label: "ID Entente", value: entente.idEntente }, { label: "Nom", value: entente.nomEntente }, { label: "Pseudo", value: entente.pseudoEntente }, { label: "Ligue", value: entente.nomLigue }, { label: "Statut", value: entente.statut }]} />
+      <DetailCard title="Coordonnées et reconnaissance" icon={ShieldCheck} iconClassName="text-brand-gold" fields={[{ label: "Téléphone", value: entente.telephone }, { label: "E-mail", value: entente.emailEntente }, { label: "Date de création", value: formatDateForDisplay(entente.dateCreation ?? "") }, { label: "Date de reconnaissance", value: formatDateForDisplay(entente.dateReconnaissance ?? "") }, { label: "Identifiant COC", value: entente.idEntenteCoc }, { label: "Observations", value: entente.observations }]} />
     </div>
 
     <div className="grid gap-4 sm:grid-cols-2">

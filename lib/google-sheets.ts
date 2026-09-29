@@ -1,5 +1,6 @@
 import { env, isGoogleSheetsConfigured } from "@/lib/env"
 import { revalidateTag, unstable_cache } from "next/cache"
+import { withBoundedRetry } from "@/lib/google-sheets-resilience"
 export { asText, normalize } from "@/lib/sheet-values"
 
 export type SheetRow = Record<string, string | number | boolean | null>
@@ -8,6 +9,8 @@ const READ_CACHE_TTL_SECONDS = 30
 
 type SheetsClient = Awaited<ReturnType<typeof createSheetsClient>>
 let sharedSheetsClient: Promise<SheetsClient> | undefined
+const inflightReads = new Map<string, Promise<SheetRow[]>>()
+const inflightBatchReads = new Map<string, Promise<Record<string, SheetRow[]>>>()
 
 async function createSheetsClient() {
   const { google } = await import("googleapis")
@@ -86,13 +89,13 @@ async function fetchSheetDataFrom(
   try {
     const sheets = await sheetsClient()
 
-    const res = await withTimeout(
+    const res = await withBoundedRetry(() => withTimeout(
       sheets.spreadsheets.values.get({
         spreadsheetId,
         range,
       }),
       20_000,
-    )
+    ))
 
     return valuesToRows((res.data.values ?? []) as unknown[][])
   } catch (error) {
@@ -106,10 +109,10 @@ async function fetchSheetsDataFrom(spreadsheetId: string, ranges: string[]) {
   if (!spreadsheetId.trim() || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) return {}
   try {
     const sheets = await sheetsClient()
-    const response = await withTimeout(
+    const response = await withBoundedRetry(() => withTimeout(
       sheets.spreadsheets.values.batchGet({ spreadsheetId, ranges }),
       20_000,
-    )
+    ))
     return Object.fromEntries(ranges.map((range, index) => [
       range.split("!", 1)[0],
       valuesToRows((response.data.valueRanges?.[index]?.values ?? []) as unknown[][]),
@@ -129,14 +132,19 @@ export async function getSheetDataFrom(
     return []
   }
   const sheetName = range.split("!", 1)[0]
-  return unstable_cache(
+  const key = `${spreadsheetId}:${range}`
+  const existing = inflightReads.get(key)
+  if (existing) return existing
+  const request = unstable_cache(
     () => fetchSheetDataFrom(spreadsheetId, range),
     ["google-sheet", spreadsheetId, range],
     {
       revalidate: READ_CACHE_TTL_SECONDS,
       tags: [sheetCacheTag(spreadsheetId, sheetName)],
     },
-  )()
+  )().finally(() => inflightReads.delete(key))
+  inflightReads.set(key, request)
+  return request
 }
 
 export async function getSheetsDataFrom(
@@ -145,14 +153,19 @@ export async function getSheetsDataFrom(
 ): Promise<Record<string, SheetRow[]>> {
   if (!spreadsheetId.trim() || !ranges.length || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) return {}
   const stableRanges = [...ranges]
-  return unstable_cache(
+  const key = `${spreadsheetId}:${stableRanges.join("|")}`
+  const existing = inflightBatchReads.get(key)
+  if (existing) return existing
+  const request = unstable_cache(
     () => fetchSheetsDataFrom(spreadsheetId, stableRanges),
     ["google-sheets-batch", spreadsheetId, ...stableRanges],
     {
       revalidate: READ_CACHE_TTL_SECONDS,
       tags: stableRanges.map((range) => sheetCacheTag(spreadsheetId, range.split("!", 1)[0])),
     },
-  )()
+  )().finally(() => inflightBatchReads.delete(key))
+  inflightBatchReads.set(key, request)
+  return request
 }
 
 function sheetCacheTag(spreadsheetId: string, sheetName: string) {
@@ -264,6 +277,64 @@ export async function updateSheetRecordById(
     requestBody: { values: [row] },
   })
   invalidateSheet(spreadsheetId, sheetName)
+}
+
+export async function deleteSheetRecordById(
+  spreadsheetId: string,
+  sheetName: string,
+  idHeader: string,
+  id: string,
+): Promise<void> {
+  const sheets = await writableSheets()
+  const [spreadsheet, result] = await Promise.all([
+    sheets.spreadsheets.get({ spreadsheetId, fields: "sheets.properties(sheetId,title)" }),
+    sheets.spreadsheets.values.get({ spreadsheetId, range: `${sheetName}!A:Z` }),
+  ])
+  const sheetId = spreadsheet.data.sheets?.find((sheet) => sheet.properties?.title === sheetName)?.properties?.sheetId
+  if (sheetId === null || sheetId === undefined) throw new Error(`Onglet ${sheetName} introuvable`)
+  const values = result.data.values ?? []
+  const headers = (values[0] ?? []).map(normalizeHeader)
+  const idIndex = headers.indexOf(normalizeHeader(idHeader))
+  if (idIndex < 0) throw new Error(`Colonne ${idHeader} absente dans ${sheetName}`)
+  const matchingRows = values.slice(1).map((row, index) => ({ row, index: index + 1 })).filter(({ row }) => String(row[idIndex] ?? "").trim() === id)
+  if (!matchingRows.length) throw new Error(`${sheetName}: identifiant ${id} introuvable`)
+  if (matchingRows.length > 1) throw new Error(`${sheetName}: identifiant ${id} dupliqué. Suppression refusée.`)
+  const rowIndex = matchingRows[0].index
+  await sheets.spreadsheets.batchUpdate({ spreadsheetId, requestBody: { requests: [{ deleteDimension: { range: { sheetId, dimension: "ROWS", startIndex: rowIndex, endIndex: rowIndex + 1 } } }] } })
+  invalidateSheet(spreadsheetId, sheetName)
+}
+
+export async function appendSheetRecordsBatch(
+  spreadsheetId: string,
+  records: Array<{ sheetName: string; record: Record<string, string> }>,
+): Promise<void> {
+  if (!records.length) return
+  const sheets = await writableSheets()
+  const uniqueSheets = [...new Set(records.map((item) => item.sheetName))]
+  const response = await sheets.spreadsheets.values.batchGet({
+    spreadsheetId,
+    ranges: uniqueSheets.map((sheetName) => `${sheetName}!A:ZZ`),
+  })
+  const metadata = new Map(uniqueSheets.map((sheetName, index) => {
+    const values = response.data.valueRanges?.[index]?.values ?? []
+    const headers = (values[0] ?? []).map(normalizeHeader)
+    if (!headers.length) throw new Error(`En-têtes absents dans ${sheetName}`)
+    return [sheetName, { headers, nextRow: values.length + 1 }]
+  }))
+  const offsets = new Map<string, number>()
+  const data = records.map(({ sheetName, record }) => {
+    const info = metadata.get(sheetName)
+    if (!info) throw new Error(`Onglet ${sheetName} introuvable`)
+    const offset = offsets.get(sheetName) ?? 0
+    offsets.set(sheetName, offset + 1)
+    const row = info.nextRow + offset
+    return {
+      range: `${sheetName}!A${row}:${columnLetter(info.headers.length - 1)}${row}`,
+      values: [info.headers.map((header) => record[header] ?? "")],
+    }
+  })
+  await sheets.spreadsheets.values.batchUpdate({ spreadsheetId, requestBody: { valueInputOption: "USER_ENTERED", data } })
+  uniqueSheets.forEach((sheetName) => invalidateSheet(spreadsheetId, sheetName))
 }
 
 export async function formatSheetDateColumn(

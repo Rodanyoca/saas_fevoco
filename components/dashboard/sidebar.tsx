@@ -5,18 +5,19 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { ComponentType } from "react"
 import { useEffect, useState } from "react"
-import { Activity, ArrowRightLeft, BadgeCheck, Building2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CreditCard, FileText, Flag, LayoutDashboard, MapPin, Shield, Stethoscope, Trophy, UserCog, Users } from "lucide-react"
+import { ArrowRightLeft, BadgeCheck, Building2, Calendar, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CreditCard, FileText, Flag, LayoutDashboard, MapPin, Settings, Shield, Stethoscope, Trophy, UserCog, Users } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { dashboardNavigation, isNavigationItemActive, type NavigationIcon, type NavigationItem } from "@/lib/navigation"
+import { dashboardNavigation, hydrationSafePathname, isNavigationItemActive, type NavigationIcon, type NavigationItem } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
 const SIDEBAR_STORAGE_KEY = "fevoco:sidebar-collapsed"
 
 const icons: Record<NavigationIcon, ComponentType<{ className?: string }>> = {
   dashboard: LayoutDashboard, territory: Building2, league: MapPin, entente: Building2, club: Shield,
-  actors: Users, athlete: Users, coach: UserCog, doctor: Stethoscope, referee: Flag, official: BadgeCheck,
-  movement: ArrowRightLeft, competition: Trophy, "national-team": Flag, activity: Activity, document: FileText,
+  actors: Users, athlete: Users, coach: UserCog, doctor: Stethoscope, referee: Flag, official: BadgeCheck, "other-actor": Users,
+  movement: ArrowRightLeft, competition: Trophy, "national-team": Flag, activity: Calendar, document: FileText,
   license: CreditCard,
+  settings: Settings,
 }
 
 type SidebarProps = { onNavigate?: () => void; collapsible?: boolean }
@@ -24,11 +25,6 @@ type SidebarProps = { onNavigate?: () => void; collapsible?: boolean }
 function NavLink({ item, collapsed, pathname, onNavigate }: { item: NavigationItem; collapsed: boolean; pathname: string; onNavigate?: () => void }) {
   if (!item.icon) return null
   const Icon = icons[item.icon]
-  if (item.disabled) {
-    const unavailable = <div role="link" tabIndex={0} aria-disabled="true" aria-label={collapsed ? `${item.name} — ${item.badge ?? "Bientôt"}` : undefined} className={cn("flex min-h-10 cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-muted opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring", collapsed && "justify-center px-2")}><Icon className="size-5 shrink-0" aria-hidden="true" />{!collapsed && <><span className="truncate">{item.name}</span><span className="ml-auto text-[10px] uppercase tracking-wide">{item.badge ?? "Bientôt"}</span></>}</div>
-    if (!collapsed) return unavailable
-    return <Tooltip><TooltipTrigger asChild>{unavailable}</TooltipTrigger><TooltipContent side="right" sideOffset={10}>{item.name} — {item.badge ?? "Bientôt"}</TooltipContent></Tooltip>
-  }
   if (!item.href) return null
   const active = isNavigationItemActive(item, pathname)
   const link = (
@@ -56,10 +52,16 @@ function NavGroup({ item, collapsed, pathname, open, setOpen, onNavigate }: { it
 }
 
 export function Sidebar({ onNavigate, collapsible = true }: SidebarProps = {}) {
-  const pathname = usePathname()
+  const routedPathname = usePathname()
+  const [hydrated, setHydrated] = useState(false)
+  const pathname = hydrationSafePathname(routedPathname, hydrated)
   const [collapsed, setCollapsed] = useState(false)
   const [openGroups, setOpenGroups] = useState<string[]>(() => dashboardNavigation.filter((item) => item.children).map((item) => item.name))
   const compact = collapsible && collapsed
+
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   useEffect(() => {
     if (collapsible) setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true")

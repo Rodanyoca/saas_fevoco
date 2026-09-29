@@ -34,8 +34,7 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, specialt
   const [activeTab, setActiveTab] = useState("general")
   const avatarUrl = getActorAvatarUrl(medecin.avatarDriveUrl, medecin.avatarDriveId)
   const age = calculateAge(medecin.dateDeNaissance)
-  const clubAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "CLUB")
-  const nationalAffiliations = affiliations.filter((item) => affiliationKind(item.typeAffiliation) === "EQUIPE_NATIONALE")
+  const clubAffiliations = affiliations.filter((item) => !item.typeAffiliation || affiliationKind(item.typeAffiliation) === "CLUB")
   const hasContact = Boolean(medecin.telephone || medecin.email || medecin.adresse)
   const hasPassport = Boolean(medecin.numeroPasseport || medecin.dateDelivrancePasseport || medecin.dateExpirationPasseport)
 
@@ -54,7 +53,7 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, specialt
         {hasContact && <DetailCard title="Contact" icon={Contact} fields={[{ label: "Téléphone", value: medecin.telephone }, { label: "E-mail", value: medecin.email }, { label: "Adresse", value: medecin.adresse }]} />}
         {hasPassport && <DetailCard title="Passeport" icon={FileKey} fields={[{ label: "Numéro", value: medecin.numeroPasseport }, { label: "Délivré le", value: formatDateForDisplay(medecin.dateDelivrancePasseport) || "Non renseignée" }, { label: "Expire le", value: formatDateForDisplay(medecin.dateExpirationPasseport) || "Non renseignée" }]} />}
       </div></TabsContent>
-      <TabsContent value="affiliations" className="space-y-8 [&_section:first-of-type]:border-t-0 [&_section:first-of-type]:pt-0"><div className="flex justify-end"><MedecinAffiliationFormDialog medecin={medecin} structures={structures} affiliationTypes={affiliationTypes} specialties={specialties} onSaved={onAffiliationCreated} /></div><AffiliationSection affiliations={clubAffiliations} actorId={medecin.idMedecin} title="Affiliation club" description="Club actuel et historique" currentDetail={(item) => ["Spécialité", item.fonction]} /><AffiliationSection affiliations={nationalAffiliations} actorId={medecin.idMedecin} title="Affiliation équipe nationale" description="Équipe nationale actuelle et historique" currentDetail={(item) => ["Spécialité", item.fonction]} /></TabsContent>
+      <TabsContent value="affiliations" className="space-y-8 [&_section:first-of-type]:border-t-0 [&_section:first-of-type]:pt-0"><div className="flex justify-end"><MedecinAffiliationFormDialog medecin={medecin} structures={structures} affiliationTypes={affiliationTypes} specialties={specialties} onSaved={onAffiliationCreated} /></div><AffiliationSection affiliations={clubAffiliations} actorId={medecin.idMedecin} title="Affiliations" description="Club actuel et historique des affiliations" /></TabsContent>
       <TabsContent value="licences" className="[&>section]:border-t-0 [&>section]:pt-0"><LicenceSection licences={licences} actorId={medecin.idMedecin} showId={false} action={<MedecinLicenceFormDialog medecin={medecin} hasAffiliation={affiliations.some((item) => item.actorId === medecin.idMedecin)} onSaved={onLicenceCreated} />} /></TabsContent>
     </Tabs>
   </div>

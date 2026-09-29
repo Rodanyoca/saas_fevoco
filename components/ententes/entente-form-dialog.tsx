@@ -6,12 +6,14 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
+import { CompactDateInput } from "@/components/ui/compact-date-input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { Entente, Ligue } from "@/lib/types"
+import { compactDateFromSheet } from "@/lib/compact-date"
 
-type SavedEntente = Pick<Entente, "idEntente" | "codeEntente" | "nomEntente" | "pseudoEntente" | "idLigue" | "nomLigue" | "provinceId" | "provinceNom" | "emailEntente" | "statut" | "observations"> & {
+type SavedEntente = Pick<Entente, "idEntente" | "codeEntente" | "nomEntente" | "pseudoEntente" | "idLigue" | "nomLigue" | "provinceId" | "provinceNom" | "telephone" | "emailEntente" | "dateCreation" | "dateReconnaissance" | "idEntenteCoc" | "statut" | "observations"> & {
   previousIdEntente?: string
 }
 
@@ -37,7 +39,11 @@ function EntenteFormDialog({
     nomEntente: entente?.nomEntente ?? "",
     pseudoEntente: entente?.pseudoEntente ?? "",
     idLigue: lockedLigue?.idLigue ?? entente?.idLigue ?? "",
+    telephone: entente?.telephone ?? "",
     emailEntente: entente?.emailEntente ?? "",
+    dateCreation: compactDateFromSheet(entente?.dateCreation ?? ""),
+    dateReconnaissance: compactDateFromSheet(entente?.dateReconnaissance ?? ""),
+    idEntenteCoc: entente?.idEntenteCoc ?? "",
     statut: entente?.statut || "active",
     observations: entente?.observations ?? "",
   })
@@ -103,7 +109,11 @@ function EntenteFormDialog({
             </div>
             <div className="space-y-2"><Label>Nom de l’entente *</Label><Input required value={form.nomEntente} onChange={(event) => setForm({ ...form, nomEntente: event.target.value })} /></div>
             <div className="space-y-2"><Label>Pseudo</Label><Input value={form.pseudoEntente} onChange={(event) => setForm({ ...form, pseudoEntente: event.target.value })} /></div>
+            <div className="space-y-2"><Label>Téléphone</Label><Input type="tel" value={form.telephone} onChange={(event) => setForm({ ...form, telephone: event.target.value })} /></div>
             <div className="space-y-2"><Label>Adresse e-mail</Label><Input type="email" value={form.emailEntente} onChange={(event) => setForm({ ...form, emailEntente: event.target.value })} /></div>
+            <div className="space-y-2"><Label>Date de création</Label><CompactDateInput optional value={form.dateCreation} onValueChange={(dateCreation) => setForm({ ...form, dateCreation })} /></div>
+            <div className="space-y-2"><Label>Date de reconnaissance</Label><CompactDateInput optional value={form.dateReconnaissance} onValueChange={(dateReconnaissance) => setForm({ ...form, dateReconnaissance })} /></div>
+            <div className="space-y-2 sm:col-span-2"><Label>Identifiant COC</Label><Input value={form.idEntenteCoc} onChange={(event) => setForm({ ...form, idEntenteCoc: event.target.value })} /></div>
             <div className="space-y-2">
               <Label>Statut</Label>
               <Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}>

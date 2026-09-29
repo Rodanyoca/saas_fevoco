@@ -45,5 +45,5 @@ export function getClubCategories() {
 }
 
 export function getClubSexes() {
-  return getReferenceOptions("ACTEURS_SEXE", "id_sexe", "nom_sexe")
+  return getReferenceOptions("SEXES", "id_sexe", "nom_sexe")
 }

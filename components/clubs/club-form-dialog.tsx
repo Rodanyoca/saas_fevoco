@@ -5,13 +5,15 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
+import { CompactDateInput } from "@/components/ui/compact-date-input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { Club, Entente } from "@/lib/types"
 import type { ClubReferenceOption } from "@/lib/club-references"
+import { compactDateFromSheet } from "@/lib/compact-date"
 
-export type SavedClub = Pick<Club, "idClub" | "codeClub" | "nomClub" | "categorie" | "idCategorieClub" | "version" | "idSexe" | "dateAffiliationClub" | "idEntente" | "nomEntente" | "pseudoEntente" | "idLigue" | "nomLigue" | "statut" | "observations" | "logoDriveId" | "logoDriveUrl"> & { previousIdClub?: string }
+export type SavedClub = Pick<Club, "idClub" | "codeClub" | "nomClub" | "categorie" | "idCategorieClub" | "version" | "idSexe" | "dateCreation" | "dateAffiliationClub" | "idEntente" | "nomEntente" | "pseudoEntente" | "idLigue" | "nomLigue" | "statut" | "observations" | "logoDriveId" | "logoDriveUrl"> & { previousIdClub?: string }
 
 export function ClubFormDialog({ club, ententes, categories, sexes, onSaved, trigger }: {
   club?: Club; ententes: Entente[]; categories: ClubReferenceOption[]; sexes: ClubReferenceOption[]
@@ -26,7 +28,8 @@ export function ClubFormDialog({ club, ententes, categories, sexes, onSaved, tri
     codeClub: club?.codeClub ?? "", nomClub: club?.nomClub ?? "",
     idCategorieClub: categories.some((option) => option.id === club?.idCategorieClub) ? club?.idCategorieClub ?? "" : "",
     idSexe: sexes.some((option) => option.id === club?.idSexe) ? club?.idSexe ?? "" : "",
-    dateAffiliationClub: club?.dateAffiliationClub ?? "", idEntente: club?.idEntente ?? "",
+    dateCreation: compactDateFromSheet(club?.dateCreation ?? ""),
+    dateAffiliationClub: compactDateFromSheet(club?.dateAffiliationClub ?? ""), idEntente: club?.idEntente ?? "",
     statut: club?.statut ? club.statut.toUpperCase().replace("ACTIVE", "ACTIF").replace("INACTIVE", "INACTIF") : "ACTIF",
     observations: club?.observations ?? "",
   })
@@ -68,7 +71,8 @@ export function ClubFormDialog({ club, ententes, categories, sexes, onSaved, tri
           <div className="space-y-2 sm:col-span-2"><Label>Nom du club *</Label><Input required value={form.nomClub} onChange={(event) => setForm({ ...form, nomClub: event.target.value })} /></div>
           <div className="space-y-2"><Label>Catégorie</Label><Select value={form.idCategorieClub} onValueChange={(value) => setForm({ ...form, idCategorieClub: value })} disabled={!categories.length}><SelectTrigger><SelectValue placeholder={categories.length ? "Sélectionner une catégorie" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{categories.map((option) => <SelectItem key={option.id} value={option.id}>{option.nom}</SelectItem>)}</SelectContent></Select></div>
           <div className="space-y-2"><Label>Sexe</Label><Select value={form.idSexe} onValueChange={(value) => setForm({ ...form, idSexe: value })} disabled={!sexes.length}><SelectTrigger><SelectValue placeholder={sexes.length ? "Sélectionner un sexe" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{sexes.map((option) => <SelectItem key={option.id} value={option.id}>{option.nom}</SelectItem>)}</SelectContent></Select></div>
-          <div className="space-y-2"><Label>Date d’affiliation</Label><Input value={form.dateAffiliationClub} onChange={(event) => setForm({ ...form, dateAffiliationClub: event.target.value })} placeholder="JJ/MM/AAAA" /></div>
+          <div className="space-y-2"><Label>Date de création</Label><CompactDateInput optional value={form.dateCreation} onValueChange={(dateCreation) => setForm({ ...form, dateCreation })} /></div>
+          <div className="space-y-2"><Label>Date d’affiliation</Label><CompactDateInput optional value={form.dateAffiliationClub} onValueChange={(dateAffiliationClub) => setForm({ ...form, dateAffiliationClub })} /></div>
           <div className="space-y-2"><Label>Statut</Label><Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ACTIF">Actif</SelectItem><SelectItem value="INACTIF">Inactif</SelectItem></SelectContent></Select></div>
           <div className="space-y-2 sm:col-span-2"><Label htmlFor={`club-logo-${club?.idClub ?? "new"}`}>Logo du club</Label>{club?.logoDriveUrl ? <img src={club.logoDriveUrl} alt={`Logo actuel de ${club.nomClub}`} className="h-20 w-20 rounded-lg border object-contain p-1" /> : null}<Input id={`club-logo-${club?.idClub ?? "new"}`} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setLogoFile(event.target.files?.[0] ?? null)} /><p className="text-xs text-muted-foreground">JPG, PNG ou WebP, 5 Mo maximum. Un nouveau fichier remplace le logo actuel.</p></div>
           <div className="space-y-2 sm:col-span-2"><Label>Observations</Label><Textarea value={form.observations} onChange={(event) => setForm({ ...form, observations: event.target.value })} /></div>

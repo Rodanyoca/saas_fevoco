@@ -113,7 +113,7 @@ export function AthleteFormDialog({ athlete, sexes, onSaved }: {
             </div>
             <div className="space-y-2"><Label>ID national</Label><Input value={form.idNational} onChange={(e) => setForm({ ...form, idNational: e.target.value })} /></div>
             <div className="space-y-2"><Label>ID FIVB</Label><Input value={form.idFivb} onChange={(e) => setForm({ ...form, idFivb: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Date de naissance</Label><Input inputMode="numeric" maxLength={10} value={form.dateDeNaissance} onChange={(e) => setForm({ ...form, dateDeNaissance: formatDateInput(e.target.value) })} placeholder="JJ/MM/AAAA" /></div>
+            <div className="space-y-2"><Label>Date de naissance</Label><Input type="text" inputMode="numeric" autoComplete="off" maxLength={10} pattern="(?:[0-9]{2}/[0-9]{2}/[0-9]{4})?" title="Saisissez uniquement 8 chiffres ; les séparateurs sont ajoutés automatiquement" value={form.dateDeNaissance} onChange={(e) => setForm({ ...form, dateDeNaissance: formatDateInput(e.target.value) })} placeholder="JJMMAAAA" /></div>
             <div className="space-y-2"><Label>Lieu de naissance</Label><Input value={form.lieuDeNaissance} onChange={(e) => setForm({ ...form, lieuDeNaissance: e.target.value })} /></div>
             <div className="space-y-2"><Label>Nationalité</Label><Input value={form.nationalite} onChange={(e) => setForm({ ...form, nationalite: e.target.value })} /></div>
             <div className="space-y-2"><Label>Téléphone</Label><Input type="tel" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} /></div>

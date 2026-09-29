@@ -19,6 +19,18 @@ Lire ce fichier avant chaque nouveau lot d’harmonisation.
 - Ne jamais importer les identifiants, catégories, règles ou données basketball.
 - Ne jamais utiliser de données fictives pour faire fonctionner une interface.
 
+## Compétitions FEVOCO
+
+- FEBACO est la référence visuelle et fonctionnelle du module, mais ses règles basketball ne doivent jamais être copiées.
+- Ne jamais créer d'entité permanente `EQUIPE` : l'unité engagée est un `CLUB` en indoor, une `PAIRE` en beach-volley ou une équipe nationale activée pour une saison.
+- Utiliser les identifiants `VOL-*` générés côté serveur et ne jamais les rendre modifiables.
+- Les résultats sont saisis et calculés par sets. Toute notion de quart-temps, `qt1`, panier ou score basketball est interdite.
+- Mapper Google Sheets exclusivement par noms d'en-têtes. Vérifier les en-têtes et le référentiel réels avant tout nouveau mapper ou formulaire.
+- Résoudre les libellés depuis les référentiels à la lecture ; ne jamais les dupliquer dans les feuilles métier lorsqu'un identifiant existe.
+- Écrire les nouvelles affectations de phase dans `COMPETITIONS_PHASES_UNITES`. `COMPETITIONS_GROUPES_UNITES` reste en lecture historique uniquement.
+- Une compétition `TERMINEE` est en lecture seule dans l'interface et dans chaque mutation serveur.
+- Charger les feuilles par lots, filtrer en mémoire et proscrire une requête Sheets par ligne, carte ou match.
+
 ## Limites fonctionnelles
 
 - Ne pas intervenir sur la connexion, l’authentification, les utilisateurs, les rôles, les permissions ou les sessions.

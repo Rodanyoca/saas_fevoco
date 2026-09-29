@@ -1,49 +1,16 @@
-import { CompetitionsClient } from "@/components/competitions/competitions-client"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
-import { getCompetitionClassements, getCompetitionParticipants, getCompetitionResults, getCompetitionUnites, getCompetitions } from "@/lib/data"
-import { isCompetitionsGoogleSheetsConfigured } from "@/lib/env"
-import { DataLoadNotice } from "@/components/dashboard/data-load-notice"
+import { CompetitionsClient } from "@/components/competitions/competitions-client"
+import { loadCompetitionBundle } from "@/lib/competitions-v2"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export default async function CompetitionsPage() {
-  const loaded = await Promise.allSettled([
-    getCompetitions(),
-    getCompetitionParticipants(),
-    getCompetitionUnites(),
-    getCompetitionResults(),
-    getCompetitionClassements(),
-  ])
-  const value = <T,>(index: number): T[] =>
-    loaded[index].status === "fulfilled" ? loaded[index].value as T[] : []
-  const competitions = value<Awaited<ReturnType<typeof getCompetitions>>[number]>(0)
-  const participants = value<Awaited<ReturnType<typeof getCompetitionParticipants>>[number]>(1)
-  const unites = value<Awaited<ReturnType<typeof getCompetitionUnites>>[number]>(2)
-  const results = value<Awaited<ReturnType<typeof getCompetitionResults>>[number]>(3)
-  const classements = value<Awaited<ReturnType<typeof getCompetitionClassements>>[number]>(4)
-
-  return (
-    <DashboardLayout>
-      <Header title="Compétitions" subtitle="Compétitions, participants, résultats et classements FEVOCO" />
-      <main className="space-y-6 p-4 sm:p-6">
-        {!isCompetitionsGoogleSheetsConfigured() && (
-          <div className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm text-warning-foreground" role="status">
-            Le classeur Compétitions n’est pas configuré. Ajoutez
-            {" "}<code>FEVOCO_COMPETITIONS_SPREADSHEET_ID</code> dans votre environnement.
-          </div>
-        )}
-        <DataLoadNotice visible={loaded.some((result) => result.status === "rejected")} description="Une partie des données Compétitions n’a pas pu être chargée. Les données disponibles restent affichées sans contenu fictif." />
-
-        <CompetitionsClient
-          competitions={competitions}
-          participants={participants}
-          unites={unites}
-          results={results}
-          classements={classements}
-        />
-      </main>
-    </DashboardLayout>
-  )
+  let bundle: Awaited<ReturnType<typeof loadCompetitionBundle>> = { competitions: [], references: {}, referenceData: {}, data: {} }
+  let error = ""
+  try { bundle = await loadCompetitionBundle() } catch (reason) { error = reason instanceof Error ? reason.message : "Lecture des compétitions impossible." }
+  return <>
+    <Header title="Compétitions" subtitle="Toutes les compétitions FEVOCO" />
+    <main className="space-y-6 p-4 sm:p-6"><CompetitionsClient competitions={bundle.competitions} references={bundle.references} initialError={error} /></main>
+  </>
 }

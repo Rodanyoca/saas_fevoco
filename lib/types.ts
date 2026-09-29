@@ -243,8 +243,12 @@ export interface BaseActorLicence {
   actorId: string
   actorName: string
   dateDelivrance: string
+  dateDebutValidite?: string
   dateFinValidite: string
   statutLicence: Statut
+  idStatutLicence?: string
+  idCycleLicence?: string
+  idAffiliationActeur?: string
   idLicencePrecedente: string
   numeroLicencePrecedente: string
 }
@@ -287,6 +291,38 @@ export interface Officiel {
   dateFinMandat: string
   equipeFederal: string
   statut: Statut
+}
+
+export interface TypeAutreActeur {
+  id: string
+  nom: string
+  observations: string
+  statut: Statut
+}
+
+export interface AutreActeur {
+  idAutreActeur: string
+  nomComplet: string
+  idSexe: string
+  sexe: string
+  dateNaissance: string
+  lieuNaissance: string
+  nationalite: string
+  idTypeAutreActeur: string
+  typeAutreActeur: string
+  telephone: string
+  email: string
+  adresse: string
+  numeroPasseport: string
+  dateDelivrancePasseport: string
+  dateExpirationPasseport: string
+  statut: Statut
+  observations: string
+  avatarDriveId: string
+  avatarDriveUrl: string
+  passeportDriveId: string
+  passeportDriveUrl: string
+  id: string
 }
 
 export interface Medecin {

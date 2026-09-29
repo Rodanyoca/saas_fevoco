@@ -14,7 +14,12 @@ const acteursSpreadsheetId = readEnv("FEVOCO_ACTEURS_SPREADSHEET_ID")
 const affiliationsSpreadsheetId =
   readEnv("FEVOCO_AFFILIATIONS_SPREADSHEET_ID") ||
   readEnv("FEVOCO_AFFILIATIONS_LICENCES_SPREADSHEET_ID")
+const licencesSpreadsheetId = readEnv("FEVOCO_LICENCES_SPREADSHEET_ID")
 const competitionsSpreadsheetId = readEnv("FEVOCO_COMPETITIONS_SPREADSHEET_ID")
+const activitiesSpreadsheetId = readEnv("FEVOCO_ACTIVITES_SPREADSHEET_ID")
+const documentsSpreadsheetId = readEnv("FEVOCO_DOCUMENTS_SPREADSHEET_ID")
+const documentsDriveFolderId = readEnv("GOOGLE_DRIVE_DOCUMENTS_FOLDER_ID")
+const clubLogosDriveFolderId = readEnv("GOOGLE_DRIVE_CLUB_LOGOS_FOLDER_ID") || readEnv("GOOGLE_DRIVE_CLUBS_FOLDER_ID")
 const equipeNationaleSpreadsheetId = readEnv("FEVOCO_EQUIPE_NATIONALE_SPREADSHEET_ID")
 const referentielsSpreadsheetId = readEnv("FEVOCO_REFERENTIELS_SPREADSHEET_ID")
 
@@ -34,7 +39,12 @@ export const env = {
     territorialSpreadsheetId,
     acteursSpreadsheetId,
     affiliationsSpreadsheetId,
+    licencesSpreadsheetId,
     competitionsSpreadsheetId,
+    activitiesSpreadsheetId,
+    documentsSpreadsheetId,
+    documentsDriveFolderId,
+    clubLogosDriveFolderId,
     equipeNationaleSpreadsheetId,
     referentielsSpreadsheetId,
     clientEmail,
@@ -74,12 +84,28 @@ export function isAffiliationsGoogleSheetsConfigured(): boolean {
   )
 }
 
+export function isLicencesGoogleSheetsConfigured(): boolean {
+  return Boolean(
+    env.googleSheets.licencesSpreadsheetId &&
+      env.googleSheets.clientEmail &&
+      env.googleSheets.privateKey,
+  )
+}
+
 export function isCompetitionsGoogleSheetsConfigured(): boolean {
   return Boolean(
     env.googleSheets.competitionsSpreadsheetId &&
       env.googleSheets.clientEmail &&
       env.googleSheets.privateKey,
   )
+}
+
+export function isActivitiesGoogleSheetsConfigured(): boolean {
+  return Boolean(env.googleSheets.activitiesSpreadsheetId && env.googleSheets.clientEmail && env.googleSheets.privateKey)
+}
+
+export function isDocumentsGoogleSheetsConfigured(): boolean {
+  return Boolean(env.googleSheets.documentsSpreadsheetId && env.googleSheets.clientEmail && env.googleSheets.privateKey)
 }
 
 export function isEquipeNationaleGoogleSheetsConfigured(): boolean {

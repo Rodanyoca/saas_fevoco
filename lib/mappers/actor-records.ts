@@ -32,14 +32,14 @@ const actorKeys: Record<ActorKind, string[]> = {
 
 function baseAffiliation(row: Row, kind: Exclude<ActorKind, "arbitre">): BaseActorAffiliation {
   return {
-    idAffiliation: normalizeId(first(row, "id_affiliation")),
+    idAffiliation: normalizeId(first(row, `id_affiliation_${kind}`, "id_affiliation")),
     actorId: normalizeId(first(row, ...actorKeys[kind])),
     actorName: first(row, `nom_${kind}`, "nom_complet", "nom_acteur"),
     idStructure: normalizeId(first(row, "id_structure", "id_club", "id_ligue", "id_entente")),
     nomStructure: first(row, "nom_structure", "nom_club", "nom_ligue", "nom_entente"),
     dateDebut: first(row, "date_debut"),
     dateFin: first(row, "date_fin"),
-    statutAffiliation: first(row, "statut_affiliation", "statut"),
+    statutAffiliation: first(row, "id_statut_affiliation", "statut_affiliation", "statut"),
     observation: first(row, "observation", "observations"),
   }
 }
@@ -72,15 +72,15 @@ export const mapMedecinAffiliation = (row: Row): MedecinAffiliation => ({
 
 export const mapOfficielAffiliation = (row: Row): OfficielAffiliation => ({
   ...baseAffiliation(row, "officiel"),
-  idAffiliation: normalizeId(first(row, "id_mandat")),
+  idAffiliation: normalizeId(first(row, "id_affiliation_officiel", "id_mandat")),
   idTypeActeur: normalizeId(first(row, "id_type_acteur")),
   idFonction: normalizeId(first(row, "id_fonction")),
-  idTypeStructure: normalizeId(first(row, "id_type_structure")),
+  idTypeStructure: normalizeId(first(row, "id_type_entite", "id_type_structure")),
   idSaison: normalizeId(first(row, "id_saison")),
   typeStructure: first(row, "nom_type_structure"),
   saison: first(row, "nom_saison"),
   fonction: first(row, "nom_fonction", "fonction", "role"),
-  statutAffiliation: first(row, "statut_mandat", "statut"),
+  statutAffiliation: first(row, "id_statut_affiliation", "statut_mandat", "statut"),
 })
 
 export function mapLicence(row: Row, kind: ActorKind): BaseActorLicence {
@@ -90,13 +90,17 @@ export function mapLicence(row: Row, kind: ActorKind): BaseActorLicence {
     actorId: normalizeId(first(row, ...actorKeys[kind])),
     actorName: first(row, `nom_${kind}`, "nom_complet", "nom_acteur"),
     dateDelivrance: first(row, "date_de_delivrance", "date_delivrance"),
+    dateDebutValidite: first(row, "date_debut_validite"),
     dateFinValidite: first(
       row,
       "date_de_fin_validite",
       "date_fin_validite",
       "date_expiration",
     ),
-    statutLicence: first(row, "statut_licence", "statut"),
+    statutLicence: first(row, "id_statut_licence", "statut_licence", "statut"),
+    idStatutLicence: normalizeId(first(row, "id_statut_licence")),
+    idCycleLicence: normalizeId(first(row, "id_cycle_licence")),
+    idAffiliationActeur: normalizeId(first(row, "id_affiliation_acteur")),
     idLicencePrecedente: normalizeId(first(row, "id_licence_precedente")),
     numeroLicencePrecedente: first(row, "numero_licence_precedente"),
   }
@@ -105,8 +109,8 @@ export function mapLicence(row: Row, kind: ActorKind): BaseActorLicence {
 export function mapAthleteLicence(row: Row): AthleteLicence {
   return {
     ...mapLicence(row, "athlete"),
-    saison: first(row, "saison"),
-    idAffiliation: normalizeId(first(row, "id_affiliation")),
+    saison: first(row, "id_saison", "saison"),
+    idAffiliation: normalizeId(first(row, "id_affiliation_athlete", "id_affiliation")),
     idClub: normalizeId(first(row, "id_club")),
     nomClub: first(row, "nom_club"),
   }
