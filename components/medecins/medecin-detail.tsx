@@ -1,9 +1,11 @@
 "use client"
 
+import { AffiliationsPanel } from "@/components/actors/affiliations-panel"
+
 import { useState } from "react"
 import { Activity, ArrowLeft, Contact, FileKey, Stethoscope } from "lucide-react"
-import { AffiliationSection, LicenceSection } from "@/components/actors/record-sections"
-import { MedecinAffiliationFormDialog, type MedecinStructureOption } from "@/components/medecins/medecin-affiliation-form-dialog"
+import { LicenceSection } from "@/components/actors/record-sections"
+import type { MedecinStructureOption } from "@/components/medecins/medecin-affiliation-form-dialog"
 import { MedecinFormDialog, type SavedMedecin } from "@/components/medecins/medecin-form-dialog"
 import { MedecinLicenceFormDialog } from "@/components/medecins/medecin-licence-form-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -22,9 +24,8 @@ import type { BaseActorLicence, Medecin, MedecinAffiliation } from "@/lib/types"
 function shown(value: unknown) { return String(value ?? "").trim() || "Non renseigné" }
 function initials(name: string) { const parts = name.trim().split(/\s+/).filter(Boolean); return parts.length ? `${parts[0]?.[0] ?? ""}${parts.at(-1)?.[0] ?? ""}`.toUpperCase() : "MD" }
 function sexeLabel(value: string) { const sexe = normalize(value); return sexe === "M" || sexe === "MASCULIN" ? "Masculin" : sexe === "F" || sexe === "FEMININ" ? "Féminin" : shown(value) }
-const affiliationKind = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
 
-export function MedecinDetail({ medecin, affiliations, licences, sexes, specialties, structures, affiliationTypes, onAffiliationCreated, onLicenceCreated, onUpdated, onBack }: {
+export function MedecinDetail({ medecin, affiliations, licences, sexes, specialties, onLicenceCreated, onUpdated, onBack }: {
   medecin: Medecin; affiliations: MedecinAffiliation[]; licences: BaseActorLicence[]; sexes: ActorSexOption[]
   specialties: CoachReferenceOption[]; structures: MedecinStructureOption[]; affiliationTypes: CoachReferenceOption[]
   onAffiliationCreated: (affiliation: MedecinAffiliation, deactivatedAffiliationId: string) => void
@@ -34,7 +35,6 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, specialt
   const [activeTab, setActiveTab] = useState("general")
   const avatarUrl = getActorAvatarUrl(medecin.avatarDriveUrl, medecin.avatarDriveId)
   const age = calculateAge(medecin.dateDeNaissance)
-  const clubAffiliations = affiliations.filter((item) => !item.typeAffiliation || affiliationKind(item.typeAffiliation) === "CLUB")
   const hasContact = Boolean(medecin.telephone || medecin.email || medecin.adresse)
   const hasPassport = Boolean(medecin.numeroPasseport || medecin.dateDelivrancePasseport || medecin.dateExpirationPasseport)
 
@@ -53,7 +53,7 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, specialt
         {hasContact && <DetailCard title="Contact" icon={Contact} fields={[{ label: "Téléphone", value: medecin.telephone }, { label: "E-mail", value: medecin.email }, { label: "Adresse", value: medecin.adresse }]} />}
         {hasPassport && <DetailCard title="Passeport" icon={FileKey} fields={[{ label: "Numéro", value: medecin.numeroPasseport }, { label: "Délivré le", value: formatDateForDisplay(medecin.dateDelivrancePasseport) || "Non renseignée" }, { label: "Expire le", value: formatDateForDisplay(medecin.dateExpirationPasseport) || "Non renseignée" }]} />}
       </div></TabsContent>
-      <TabsContent value="affiliations" className="space-y-8 [&_section:first-of-type]:border-t-0 [&_section:first-of-type]:pt-0"><div className="flex justify-end"><MedecinAffiliationFormDialog medecin={medecin} structures={structures} affiliationTypes={affiliationTypes} specialties={specialties} onSaved={onAffiliationCreated} /></div><AffiliationSection affiliations={clubAffiliations} actorId={medecin.idMedecin} title="Affiliations" description="Club actuel et historique des affiliations" /></TabsContent>
+      <TabsContent value="affiliations"><AffiliationsPanel kind="medecin" actorId={medecin.idMedecin} /></TabsContent>
       <TabsContent value="licences" className="[&>section]:border-t-0 [&>section]:pt-0"><LicenceSection licences={licences} actorId={medecin.idMedecin} showId={false} action={<MedecinLicenceFormDialog medecin={medecin} hasAffiliation={affiliations.some((item) => item.actorId === medecin.idMedecin)} onSaved={onLicenceCreated} />} /></TabsContent>
     </Tabs>
   </div>

@@ -9,16 +9,18 @@ export function ArbitresTable({ arbitres, onViewArbitre }: { arbitres: Arbitre[]
       title="Liste des arbitres"
       items={arbitres}
       onView={onViewArbitre}
-      showId
+      showId={false}
+      firstColumn={{ label: "Licence", value: () => "" }}
       showCount={false}
-      identityLayout="combined"
+      stackSexAge
       showGrade
+      showNationalite
       emptyMessage="Aucun arbitre enregistré."
       toRow={(item) => ({
         id: item.idArbitre, nomComplet: item.nomComplet, sexe: item.sexe,
         dateNaissance: item.dateDeNaissance, idNational: item.idNational, idFivb: item.idFivb,
         avatarDriveId: item.avatarDriveId, avatarDriveUrl: item.avatarDriveUrl, statut: item.statut,
-        grade: item.grade,
+        grade: item.grade, nationalite: item.nationalite,
       })}
     />
   )

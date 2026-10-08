@@ -19,7 +19,7 @@ export function MedecinsTable({ medecins, onViewMedecin }: { medecins: Medecin[]
       title="Liste des médecins"
       items={visible}
       onView={onViewMedecin}
-      showId
+      showId={false}
       showCount={false}
       identityLayout="avatar-in-name"
       stackSexAge

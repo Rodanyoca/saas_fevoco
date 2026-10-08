@@ -45,7 +45,7 @@ export function TransfertsTable({ transferts, totalCount, onViewTransfert }: {
           <TableHeader><TableRow className="bg-muted/70 hover:bg-muted/70"><TableHead>Athlète</TableHead><TableHead>Origine</TableHead><TableHead className="w-14" /><TableHead>Bénéficiaire</TableHead><TableHead>Type / saison</TableHead><TableHead>Début</TableHead><TableHead>Fin</TableHead><TableHead>Statut</TableHead><TableHead className="text-center">Actions</TableHead></TableRow></TableHeader>
           <TableBody>
             {transferts.map((transfert, index) => <TableRow key={`${transfert.id || "transfert"}-${transfert.athleteId || "sans-athlete"}-${index}`} className="hover:bg-muted/30">
-              <TableCell><p className="font-medium">{transfert.athleteNom || "-"}</p><p className="font-mono text-xs text-muted-foreground">{transfert.athleteId || "-"}</p></TableCell>
+              <TableCell><p className="font-medium">{transfert.athleteNom || "-"}</p></TableCell>
               <TableCell><p className="font-medium">{transfert.clubOrigineNom || "-"}</p><p className="font-mono text-xs text-muted-foreground">{transfert.clubOrigineId || "-"}</p></TableCell>
               <TableCell><ArrowRight className="mx-auto size-4 text-muted-foreground" /></TableCell>
               <TableCell><p className="font-medium">{transfert.clubBeneficiaireNom || "-"}</p><p className="font-mono text-xs text-muted-foreground">{transfert.clubBeneficiaireId || "-"}</p></TableCell>

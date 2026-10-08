@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Entente, Ligue } from "@/lib/types"
 import { compactDateFromSheet } from "@/lib/compact-date"
 
-type SavedEntente = Pick<Entente, "idEntente" | "codeEntente" | "nomEntente" | "pseudoEntente" | "idLigue" | "nomLigue" | "provinceId" | "provinceNom" | "telephone" | "emailEntente" | "dateCreation" | "dateReconnaissance" | "idEntenteCoc" | "statut" | "observations"> & {
+type SavedEntente = Pick<Entente, "idEntente" | "codeEntente" | "nomEntente" | "pseudoEntente" | "idLigue" | "nomLigue" | "provinceId" | "provinceNom" | "telephone" | "emailEntente" | "dateCreation" | "dateReconnaissance" | "statut" | "observations"> & {
   previousIdEntente?: string
 }
 
@@ -43,7 +43,6 @@ function EntenteFormDialog({
     emailEntente: entente?.emailEntente ?? "",
     dateCreation: compactDateFromSheet(entente?.dateCreation ?? ""),
     dateReconnaissance: compactDateFromSheet(entente?.dateReconnaissance ?? ""),
-    idEntenteCoc: entente?.idEntenteCoc ?? "",
     statut: entente?.statut || "active",
     observations: entente?.observations ?? "",
   })
@@ -113,7 +112,6 @@ function EntenteFormDialog({
             <div className="space-y-2"><Label>Adresse e-mail</Label><Input type="email" value={form.emailEntente} onChange={(event) => setForm({ ...form, emailEntente: event.target.value })} /></div>
             <div className="space-y-2"><Label>Date de création</Label><CompactDateInput optional value={form.dateCreation} onValueChange={(dateCreation) => setForm({ ...form, dateCreation })} /></div>
             <div className="space-y-2"><Label>Date de reconnaissance</Label><CompactDateInput optional value={form.dateReconnaissance} onValueChange={(dateReconnaissance) => setForm({ ...form, dateReconnaissance })} /></div>
-            <div className="space-y-2 sm:col-span-2"><Label>Identifiant COC</Label><Input value={form.idEntenteCoc} onChange={(event) => setForm({ ...form, idEntenteCoc: event.target.value })} /></div>
             <div className="space-y-2">
               <Label>Statut</Label>
               <Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}>

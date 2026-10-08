@@ -2,6 +2,12 @@
 
 Lire ce fichier avant chaque nouveau lot d’harmonisation.
 
+## Arrêt des serveurs locaux
+
+- Quand l’utilisateur demande « taskkill », « taskill » ou « arrête tout », rechercher tous les serveurs de développement actifs des projets `C:\Projets\SNDS-HARMONISATION`, même si un seul PID est fourni.
+- Identifier les processus par leur ligne de commande, leur parent et les ports en écoute ; arrêter tous les serveurs de ces projets et leurs processus npm/Next.js associés dont le rattachement est confirmé. Préserver les services Windows et les outils Codex/MCP sans rapport avec les serveurs.
+- Vérifier après l’arrêt qu’aucun serveur de ces projets ne reste actif, rapporter les PID arrêtés et ne relancer aucun serveur sans demande de l’utilisateur.
+
 ## Périmètre et références
 
 - Modifier uniquement `fevoco-cible`.

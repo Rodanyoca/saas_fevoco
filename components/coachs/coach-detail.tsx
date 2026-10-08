@@ -1,5 +1,7 @@
 "use client"
 
+import { AffiliationsPanel } from "@/components/actors/affiliations-panel"
+
 import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -10,15 +12,12 @@ import { StatusBadge } from "@/components/dashboard/status-badge"
 import { getActorAvatarUrl } from "@/lib/actor-avatar"
 import { calculateAge, formatSheetDate } from "@/lib/date-utils"
 import { normalize } from "@/lib/sheet-values"
-import type { BaseActorLicence, Coach, CoachAffiliation } from "@/lib/types"
-import { AffiliationSection, LicenceSection } from "@/components/actors/record-sections"
-import { ArrowLeft, Contact, Fingerprint, UserCog } from "lucide-react"
+import type { BaseActorLicence, Coach } from "@/lib/types"
+import { LicenceSection } from "@/components/actors/record-sections"
+import { ArrowLeft, Contact, Fingerprint, Info, UserCog } from "lucide-react"
 import { CoachFormDialog } from "@/components/coachs/coach-form-dialog"
 import type { SavedCoach } from "@/components/coachs/coach-form-dialog"
 import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
-import { CoachAffiliationFormDialog } from "@/components/coachs/coach-affiliation-form-dialog"
-import type { CoachStructureOption } from "@/components/coachs/coach-affiliation-form-dialog"
-import { CoachLicenceFormDialog } from "@/components/coachs/coach-licence-form-dialog"
 
 function shown(value: unknown, fallback = "Non renseigné") {
   const text = value === null || value === undefined ? "" : String(value).trim()
@@ -38,17 +37,11 @@ function sexeLabel(value: string) {
   return shown(value)
 }
 
-export function CoachDetail({ coach, affiliations, licences, sexes, levels, structures, affiliationTypes, coachFunctions, onAffiliationCreated, onLicenceCreated, onUpdated, onBack }: {
+export function CoachDetail({ coach, licences, sexes, levels, onUpdated, onBack }: {
   coach: Coach
-  affiliations: CoachAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
   levels: CoachReferenceOption[]
-  structures: CoachStructureOption[]
-  affiliationTypes: CoachReferenceOption[]
-  coachFunctions: CoachReferenceOption[]
-  onAffiliationCreated: (affiliation: CoachAffiliation, deactivatedAffiliationId: string) => void
-  onLicenceCreated: (licence: BaseActorLicence, deactivatedLicenceId: string) => void
   onUpdated: (coach: SavedCoach) => void
   onBack: () => void
 }) {
@@ -56,8 +49,6 @@ export function CoachDetail({ coach, affiliations, licences, sexes, levels, stru
   const avatarUrl = getActorAvatarUrl(coach.avatarDriveUrl, coach.avatarDriveId)
   const age = calculateAge(coach.dateNaissance)
   const formattedDate = formatSheetDate(coach.dateNaissance)
-  const affiliationKind = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
-  const clubAffiliations = affiliations.filter((item) => !item.typeAffiliation || affiliationKind(item.typeAffiliation) === "CLUB")
 
   return (
     <div className="w-full space-y-6">
@@ -94,7 +85,7 @@ export function CoachDetail({ coach, affiliations, licences, sexes, levels, stru
         </TabsList>
 
         <TabsContent value="general">
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2">
             <DetailCard
               title="Identité"
               icon={UserCog}
@@ -110,6 +101,15 @@ export function CoachDetail({ coach, affiliations, licences, sexes, levels, stru
               ]}
             />
             <DetailCard
+              title="Contact"
+              icon={Contact}
+              fields={[
+                { label: "Téléphone", value: coach.telephone },
+                { label: "E-mail", value: coach.email },
+                { label: "Adresse", value: coach.adresse },
+              ]}
+            />
+            <DetailCard
               title="Identifiants"
               icon={Fingerprint}
               fields={[
@@ -120,20 +120,15 @@ export function CoachDetail({ coach, affiliations, licences, sexes, levels, stru
               ]}
             />
             <DetailCard
-              title="Contact"
-              icon={Contact}
-              fields={[
-                { label: "Téléphone", value: coach.telephone },
-                { label: "E-mail", value: coach.email },
-                { label: "Adresse", value: coach.adresse },
-              ]}
+              title="Remarque"
+              icon={Info}
+              fields={[{ label: "Remarque", value: "Non renseignée" }]}
             />
           </div>
         </TabsContent>
 
         <TabsContent value="affiliation" className="space-y-8 [&_section:first-of-type]:border-t-0 [&_section:first-of-type]:pt-0">
-          <div className="flex justify-end"><CoachAffiliationFormDialog coach={coach} structures={structures} affiliationTypes={affiliationTypes} coachFunctions={coachFunctions} onSaved={onAffiliationCreated} /></div>
-          <AffiliationSection affiliations={clubAffiliations} actorId={coach.idCoach} title="Affiliations" description="Club actuel et historique des affiliations" />
+          <AffiliationsPanel kind="coach" actorId={coach.idCoach} />
         </TabsContent>
 
         <TabsContent value="licence" className="[&>section]:border-t-0 [&>section]:pt-0">
@@ -141,7 +136,6 @@ export function CoachDetail({ coach, affiliations, licences, sexes, levels, stru
             licences={licences}
             actorId={coach.idCoach}
             showId={false}
-            action={<CoachLicenceFormDialog coach={coach} hasAffiliation={affiliations.some((item) => item.actorId === coach.idCoach)} onSaved={onLicenceCreated} />}
           />
         </TabsContent>
       </Tabs>

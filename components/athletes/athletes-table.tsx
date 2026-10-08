@@ -5,10 +5,12 @@ import type { Athlete } from "@/lib/types"
 
 export function AthletesTable({
   athletes,
+  activeLicenceNumbers,
   title = "Liste des Athlètes",
   onViewAthlete,
 }: {
   athletes: Athlete[]
+  activeLicenceNumbers: Map<string, string>
   title?: string
   onViewAthlete?: (athlete: Athlete) => void
 }) {
@@ -19,7 +21,7 @@ export function AthletesTable({
       onView={onViewAthlete}
       showId={false}
       showCount={false}
-      firstColumn={{ label: "ID athlète", value: (athlete) => athlete.idAthlete }}
+      firstColumn={{ label: "Licence", value: (athlete) => activeLicenceNumbers.get(athlete.idAthlete) || "" }}
       stackSexAge
       emptyMessage="Aucun athlète enregistré."
       toRow={(item) => ({

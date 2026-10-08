@@ -28,7 +28,6 @@ export function mapEntenteRow(row: SheetRow): Entente {
     idVille: str(row, "id_ville"),
     ville: str(row, "nom_ville") || str(row, "id_ville"),
     telephone: str(row, "telephone"),
-    idEntenteCoc: str(row, "id_entente_coc"),
     dateCreation: str(row, "date_creation"),
     dateReconnaissance: str(row, "date_reconnaissance"),
     observations: str(row, "observations"),

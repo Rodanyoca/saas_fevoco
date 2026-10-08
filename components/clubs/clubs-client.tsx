@@ -11,17 +11,14 @@ import { StatusBadge } from "@/components/dashboard/status-badge"
 import { ClubDetail } from "@/components/clubs/club-detail"
 import { ClubFormDialog, type SavedClub } from "@/components/clubs/club-form-dialog"
 import type { ClubReferenceOption } from "@/lib/club-references"
-import type { Athlete, Club, Entente } from "@/lib/types"
+import type { Club, Entente } from "@/lib/types"
+import { emptyClubActors, type ClubActorsBundle } from "@/lib/club-actors-model"
 
 function initials(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "CL"
 }
 
-function belongsToClub(athlete: Pick<Athlete, "clubId" | "clubNom">, club: Club) {
-  return Boolean((athlete.clubId && athlete.clubId === club.idClub) || (athlete.clubNom && athlete.clubNom === club.nomClub))
-}
-
-export function ClubsClient({ clubs, athletes, ententes, categories, sexes, dataLoadError = false }: { clubs: Club[]; athletes: Athlete[]; ententes: Entente[]; categories: ClubReferenceOption[]; sexes: ClubReferenceOption[]; dataLoadError?: boolean }) {
+export function ClubsClient({ clubs, actorData, ententes, categories, sexes, dataLoadError = false }: { clubs: Club[]; actorData: ClubActorsBundle; ententes: Entente[]; categories: ClubReferenceOption[]; sexes: ClubReferenceOption[]; dataLoadError?: boolean }) {
   const [rows, setRows] = useState(clubs)
   const [selectedClub, setSelectedClub] = useState<Club | null>(null)
   useEffect(() => setRows(clubs), [clubs])
@@ -57,7 +54,7 @@ export function ClubsClient({ clubs, athletes, ententes, categories, sexes, data
     { key: "statut", label: "Statut", options: Array.from(new Set(rows.map((club) => club.statut).filter(Boolean))).sort().map((label) => ({ value: label, label })) },
   ], [rows])
 
-  if (selectedClub) return <><Header title={`Fiche Club: ${selectedClub.nomClub || selectedClub.idClub}`} subtitle={selectedClub.pseudoEntente || selectedClub.nomLigue || "Détail du club"} /><main className="space-y-6 p-4 sm:p-6"><ClubDetail club={selectedClub} athletes={athletes.filter((athlete) => belongsToClub(athlete, selectedClub))} ententes={ententes} categories={categories} sexes={sexes} onBack={() => setSelectedClub(null)} onUpdated={applySavedClub} /></main></>
+  if (selectedClub) return <><Header title={`Fiche Club: ${selectedClub.nomClub || selectedClub.idClub}`} subtitle={selectedClub.pseudoEntente || selectedClub.nomLigue || "Détail du club"} /><main className="min-w-0 space-y-6 p-4 sm:p-6"><DataLoadNotice visible={dataLoadError} description="Une partie des données du club n’a pas pu être chargée. Les données disponibles restent affichées." /><ClubDetail key={selectedClub.idClub} club={selectedClub} actors={actorData.byClub[selectedClub.idClub] || emptyClubActors()} actorsAvailable={actorData.available} ignoredRelations={actorData.ignoredRelations} ententes={ententes} categories={categories} sexes={sexes} onBack={() => setSelectedClub(null)} onUpdated={applySavedClub} /></main></>
 
   return <><Header title="Clubs" subtitle="Clubs affiliés à la FEVOCO" /><main className="space-y-5 p-4 sm:p-6">
     <DataLoadNotice visible={dataLoadError} description="Une partie des données Clubs n’a pas pu être chargée. Les données disponibles restent affichées sans contenu fictif." />

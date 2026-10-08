@@ -13,7 +13,7 @@ import type { Ligue, Province } from "@/lib/types"
 import { compactDateFromSheet } from "@/lib/compact-date"
 import { Plus } from "lucide-react"
 
-export type SavedLigue = Pick<Ligue, "idLigue" | "nomLigue" | "sigleLigue" | "telephone" | "emailLigue" | "idProvince" | "nomProvince" | "anneeCreation" | "dateAffiliation" | "idLigueCoc" | "statut" | "observations">
+export type SavedLigue = Pick<Ligue, "idLigue" | "nomLigue" | "telephone" | "emailLigue" | "idProvince" | "nomProvince" | "anneeCreation" | "dateAffiliation" | "statut" | "observations">
 
 const normalizedStatus = (status?: string) => {
   const value = status?.trim().toUpperCase()
@@ -33,10 +33,10 @@ export function LigueFormDialog({ provinces, ligue, onSaved, trigger }: {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState("")
   const [form, setForm] = useState({
-    nomLigue: ligue?.nomLigue ?? "", sigleLigue: ligue?.sigleLigue ?? "",
+    nomLigue: ligue?.nomLigue ?? "",
     telephone: ligue?.telephone ?? "", emailLigue: ligue?.emailLigue ?? "",
     idProvince: ligue?.idProvince ?? "", anneeCreation: ligue?.anneeCreation ?? "",
-    dateAffiliation: compactDateFromSheet(ligue?.dateAffiliation ?? ""), idLigueCoc: ligue?.idLigueCoc ?? "",
+    dateAffiliation: compactDateFromSheet(ligue?.dateAffiliation ?? ""),
     statut: normalizedStatus(ligue?.statut), observations: ligue?.observations ?? "",
   })
 
@@ -72,12 +72,10 @@ export function LigueFormDialog({ provinces, ligue, onSaved, trigger }: {
         <div className="grid gap-4">
           <div className="space-y-2"><Label htmlFor="nom-ligue">Nom de la ligue *</Label><Input id="nom-ligue" required value={form.nomLigue} onChange={(event) => setForm({ ...form, nomLigue: event.target.value })} /></div>
           <div className="space-y-2"><Label>Province *</Label><Select required value={form.idProvince} onValueChange={(value) => setForm({ ...form, idProvince: value })}><SelectTrigger><SelectValue placeholder="Sélectionner une province" /></SelectTrigger><SelectContent>{provinces.map((province) => <SelectItem key={province.idProvince} value={province.idProvince}>{province.nomProvince}</SelectItem>)}</SelectContent></Select></div>
-          <div className="space-y-2"><Label htmlFor="sigle-ligue">Sigle</Label><Input id="sigle-ligue" value={form.sigleLigue} onChange={(event) => setForm({ ...form, sigleLigue: event.target.value })} /></div>
           <div className="space-y-2"><Label htmlFor="telephone-ligue">Téléphone</Label><Input id="telephone-ligue" type="tel" value={form.telephone} onChange={(event) => setForm({ ...form, telephone: event.target.value })} /></div>
           <div className="space-y-2"><Label htmlFor="email-ligue">Adresse e-mail</Label><Input id="email-ligue" type="email" value={form.emailLigue} onChange={(event) => setForm({ ...form, emailLigue: event.target.value })} /></div>
           <div className="space-y-2"><Label htmlFor="annee-creation-ligue">Année de création</Label><Input id="annee-creation-ligue" inputMode="numeric" value={form.anneeCreation} onChange={(event) => setForm({ ...form, anneeCreation: event.target.value })} /></div>
           <div className="space-y-2"><Label htmlFor="date-affiliation-ligue">Date d’affiliation</Label><CompactDateInput id="date-affiliation-ligue" optional value={form.dateAffiliation} onValueChange={(dateAffiliation) => setForm({ ...form, dateAffiliation })} /></div>
-          <div className="space-y-2"><Label htmlFor="id-coc-ligue">Identifiant COC</Label><Input id="id-coc-ligue" value={form.idLigueCoc} onChange={(event) => setForm({ ...form, idLigueCoc: event.target.value })} /></div>
           <div className="space-y-2"><Label>Statut</Label><Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ACTIF">Actif</SelectItem><SelectItem value="INACTIF">Inactif</SelectItem></SelectContent></Select></div>
           <div className="space-y-2 sm:col-span-2"><Label htmlFor="observations-ligue">Observations</Label><Textarea id="observations-ligue" value={form.observations} onChange={(event) => setForm({ ...form, observations: event.target.value })} /></div>
         </div>

@@ -1,7 +1,10 @@
 "use client"
 
+import { AffiliationsPanel } from "@/components/actors/affiliations-panel"
+
 import { ArrowLeft, Contact, Info, User } from "lucide-react"
 import { AutreActeurFormDialog } from "@/components/autres-acteurs/autre-acteur-form-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { DetailCard } from "@/components/dashboard/detail-card"
 import { formatDateForDisplay } from "@/lib/compact-date"
@@ -12,7 +15,8 @@ export function AutreActeurDetail({ acteur, sexes, types, onBack, onUpdated }: {
   const passport = Boolean(acteur.numeroPasseport || acteur.dateDelivrancePasseport || acteur.dateExpirationPasseport)
   return <div className="w-full space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button><AutreActeurFormDialog acteur={acteur} sexes={sexes} types={types} onSaved={onUpdated} /></div>
-    <div className="grid gap-6 md:grid-cols-2">
+    <Tabs defaultValue="general" className="gap-4"><TabsList className="grid h-auto w-full grid-cols-2"><TabsTrigger value="general">G?n?ral</TabsTrigger><TabsTrigger value="affiliations">Affiliations</TabsTrigger></TabsList>
+    <TabsContent value="general"><div className="grid gap-6 md:grid-cols-2">
       <DetailCard title="Identité" icon={User} fields={[
         { label: "Identifiant", value: acteur.idAutreActeur },
         { label: "Nom complet", value: acteur.nomComplet },
@@ -30,6 +34,7 @@ export function AutreActeurDetail({ acteur, sexes, types, onBack, onUpdated }: {
       ]} />
       <DetailCard title="Coordonnées" icon={Contact} fields={[{ label: "Téléphone", value: acteur.telephone }, { label: "Courriel", value: acteur.email }, { label: "Adresse", value: acteur.adresse }]} />
       <DetailCard title="Observations" icon={Info} fields={[{ label: "Remarques", value: acteur.observations }]} />
-    </div>
+    </div></TabsContent>
+    <TabsContent value="affiliations"><AffiliationsPanel kind="autre" actorId={acteur.idAutreActeur} /></TabsContent></Tabs>
   </div>
 }

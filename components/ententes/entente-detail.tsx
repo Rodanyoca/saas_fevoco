@@ -31,7 +31,7 @@ export function EntenteDetail({ entente, ligues, clubs, athletes, onBack, onUpda
 
     <div className="grid gap-6 lg:grid-cols-2">
       <DetailCard title="Informations générales" icon={Shield} iconClassName="text-brand-gold" fields={[{ label: "ID Entente", value: entente.idEntente }, { label: "Nom", value: entente.nomEntente }, { label: "Pseudo", value: entente.pseudoEntente }, { label: "Ligue", value: entente.nomLigue }, { label: "Statut", value: entente.statut }]} />
-      <DetailCard title="Coordonnées et reconnaissance" icon={ShieldCheck} iconClassName="text-brand-gold" fields={[{ label: "Téléphone", value: entente.telephone }, { label: "E-mail", value: entente.emailEntente }, { label: "Date de création", value: formatDateForDisplay(entente.dateCreation ?? "") }, { label: "Date de reconnaissance", value: formatDateForDisplay(entente.dateReconnaissance ?? "") }, { label: "Identifiant COC", value: entente.idEntenteCoc }, { label: "Observations", value: entente.observations }]} />
+      <DetailCard title="Coordonnées et reconnaissance" icon={ShieldCheck} iconClassName="text-brand-gold" fields={[{ label: "Téléphone", value: entente.telephone }, { label: "E-mail", value: entente.emailEntente }, { label: "Date de création", value: formatDateForDisplay(entente.dateCreation ?? "") }, { label: "Date de reconnaissance", value: formatDateForDisplay(entente.dateReconnaissance ?? "") }, { label: "Observations", value: entente.observations }]} />
     </div>
 
     <div className="grid gap-4 sm:grid-cols-2">

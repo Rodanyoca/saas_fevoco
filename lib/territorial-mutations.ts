@@ -18,13 +18,11 @@ const normalizeStatus = (value: unknown) => {
 
 export type LigueInput = {
   nomLigue: string
-  sigleLigue: string
   telephone: string
   emailLigue: string
   idProvince: string
   anneeCreation: string
   dateAffiliation: string
-  idLigueCoc: string
   statut: string
   observations: string
 }
@@ -43,14 +41,12 @@ function ligueResult(idLigue: string, input: LigueInput, province: { idProvince:
   return {
     idLigue,
     nomLigue: input.nomLigue,
-    sigleLigue: input.sigleLigue,
     telephone: input.telephone,
     emailLigue: input.emailLigue,
     idProvince: province.idProvince,
     nomProvince: province.nomProvince,
     anneeCreation: input.anneeCreation,
     dateAffiliation: input.dateAffiliation,
-    idLigueCoc: input.idLigueCoc,
     statut: input.statut,
     observations: input.observations,
   }
@@ -59,13 +55,11 @@ function ligueResult(idLigue: string, input: LigueInput, province: { idProvince:
 export async function createLigue(payload: Record<string, unknown>) {
   const input: LigueInput = {
     nomLigue: text(payload.nomLigue),
-    sigleLigue: text(payload.sigleLigue),
     telephone: text(payload.telephone),
     emailLigue: text(payload.emailLigue),
     idProvince: text(payload.idProvince),
     anneeCreation: text(payload.anneeCreation),
     dateAffiliation: text(payload.dateAffiliation),
-    idLigueCoc: text(payload.idLigueCoc),
     statut: normalizeStatus(payload.statut),
     observations: text(payload.observations),
   }
@@ -86,13 +80,11 @@ export async function createLigue(payload: Record<string, unknown>) {
   await appendSheetRecord(env.googleSheets.territorialSpreadsheetId, "LIGUES", {
     id_ligue: idLigue,
     nom_ligue: input.nomLigue,
-    sigle_ligue: input.sigleLigue,
     telephone: input.telephone,
     email: input.emailLigue,
     id_province: province.idProvince,
     "année_creation": input.anneeCreation,
     date_affiliation_ligue: input.dateAffiliation,
-    id_ligue_coc: input.idLigueCoc,
     statut: input.statut,
     observations: input.observations,
   })
@@ -103,13 +95,11 @@ export async function createLigue(payload: Record<string, unknown>) {
 export async function updateLigue(idLigue: string, payload: Record<string, unknown>) {
   const input: LigueInput = {
     nomLigue: text(payload.nomLigue),
-    sigleLigue: text(payload.sigleLigue),
     telephone: text(payload.telephone),
     emailLigue: text(payload.emailLigue),
     idProvince: text(payload.idProvince),
     anneeCreation: text(payload.anneeCreation),
     dateAffiliation: text(payload.dateAffiliation),
-    idLigueCoc: text(payload.idLigueCoc),
     statut: normalizeStatus(payload.statut),
     observations: text(payload.observations),
   }
@@ -123,12 +113,11 @@ export async function updateLigue(idLigue: string, payload: Record<string, unkno
   }
   await formatSheetDateColumn(env.googleSheets.territorialSpreadsheetId, "LIGUES", "date_affiliation_ligue", "yyyy-mm-dd")
   await updateSheetRecordById(env.googleSheets.territorialSpreadsheetId, "LIGUES", "id_ligue", idLigue, {
-    nom_ligue: input.nomLigue, sigle_ligue: input.sigleLigue,
+    nom_ligue: input.nomLigue,
     telephone: input.telephone, email: input.emailLigue,
     id_province: province.idProvince,
     "année_creation": input.anneeCreation,
     date_affiliation_ligue: input.dateAffiliation,
-    id_ligue_coc: input.idLigueCoc,
     statut: input.statut, observations: input.observations,
   })
   return (await getLigues()).find((item) => item.idLigue === idLigue)
@@ -146,7 +135,6 @@ function ententeResult(input: {
   telephone: string
   dateCreation: string
   dateReconnaissance: string
-  idEntenteCoc: string
   statut: string
   observations: string
 }) {
@@ -164,7 +152,6 @@ function ententeResult(input: {
     telephone: input.telephone,
     dateCreation: input.dateCreation,
     dateReconnaissance: input.dateReconnaissance,
-    idEntenteCoc: input.idEntenteCoc,
     statut: input.statut,
     observations: input.observations,
   }
@@ -179,7 +166,6 @@ export async function createEntente(payload: Record<string, unknown>) {
   const telephone = text(payload.telephone)
   let dateCreation = text(payload.dateCreation)
   let dateReconnaissance = text(payload.dateReconnaissance)
-  const idEntenteCoc = text(payload.idEntenteCoc)
   const statut = normalizeStatus(payload.statut)
   const observations = text(payload.observations)
   if (!codeEntente) throw new Error("Le code de l’entente est obligatoire.")
@@ -212,11 +198,11 @@ export async function createEntente(payload: Record<string, unknown>) {
     nom_entente: nomEntente, sigle_entente: pseudoEntente,
     id_ligue: ligue.idLigue,
     telephone, email: emailEntente, date_creation: dateCreation,
-    date_reconnaissance: dateReconnaissance, id_entente_coc: idEntenteCoc,
+    date_reconnaissance: dateReconnaissance,
     statut, observations,
   })
   return (await getEntentes()).find((item) => item.idEntente === idEntente)
-    ?? ententeResult({ idEntente, codeEntente, nomEntente, pseudoEntente, ligue, telephone, emailEntente, dateCreation, dateReconnaissance, idEntenteCoc, statut, observations })
+    ?? ententeResult({ idEntente, codeEntente, nomEntente, pseudoEntente, ligue, telephone, emailEntente, dateCreation, dateReconnaissance, statut, observations })
 }
 
 export async function updateEntente(idEntente: string, payload: Record<string, unknown>) {
@@ -243,7 +229,6 @@ export async function updateEntente(idEntente: string, payload: Record<string, u
   const telephone = text(payload.telephone)
   let dateCreation = text(payload.dateCreation)
   let dateReconnaissance = text(payload.dateReconnaissance)
-  const idEntenteCoc = text(payload.idEntenteCoc)
   if (emailEntente && !emailPattern.test(emailEntente)) throw new Error("L’adresse e-mail est invalide.")
   try {
     dateCreation = dateCreation ? formatDateForSheet(dateCreation) : ""
@@ -265,7 +250,6 @@ export async function updateEntente(idEntente: string, payload: Record<string, u
     email: emailEntente,
     date_creation: dateCreation,
     date_reconnaissance: dateReconnaissance,
-    id_entente_coc: idEntenteCoc,
     statut,
     observations,
   })
@@ -280,7 +264,6 @@ export async function updateEntente(idEntente: string, payload: Record<string, u
     emailEntente,
     dateCreation,
     dateReconnaissance,
-    idEntenteCoc,
     statut,
     observations,
   })

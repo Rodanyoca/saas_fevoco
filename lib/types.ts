@@ -32,9 +32,7 @@ export interface Ligue {
   provinceId: string
   provinceNom: string
   emailLigue: string
-  sigleLigue?: string
   telephone?: string
-  idLigueCoc?: string
   anneeCreation?: string
   dateAffiliation?: string
   presidentId: string
@@ -65,7 +63,6 @@ export interface Entente {
   idVille?: string
   ville?: string
   telephone?: string
-  idEntenteCoc?: string
   dateCreation?: string
   dateReconnaissance?: string
   observations: string

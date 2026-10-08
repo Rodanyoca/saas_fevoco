@@ -163,7 +163,7 @@ export function DataTable<T extends object>({
       </div>
 
       {/* Table */}
-      {renderMobileCard ? <div className="grid gap-3 md:hidden">{paginatedData.map((item, index) => <div key={getDataTableRowKey(item, idKey, index)}>{renderMobileCard(item)}</div>)}</div> : null}
+      {renderMobileCard ? <div className="grid gap-3 md:hidden">{paginatedData.length ? paginatedData.map((item, index) => <div key={getDataTableRowKey(item, idKey, index)}>{renderMobileCard(item)}</div>) : <p className="rounded-lg border p-6 text-center text-sm text-muted-foreground">Aucune donnée trouvée</p>}</div> : null}
       <div className={cn("overflow-hidden rounded-xl border border-border/80 bg-card/90 shadow-[0_12px_30px_rgba(1,10,20,0.12)]", renderMobileCard && "hidden md:block")}>
         <Table className={tableClassName}>
           <TableHeader>

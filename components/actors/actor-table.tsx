@@ -47,7 +47,7 @@ function SexAge({ row, stacked = false, ageFirst = false }: { row: ActorListRow;
   ) : <>{ageFirst ? `${values.age} / ${values.sexe}` : `${values.sexe} · ${values.age}`}</>
 }
 
-export function ActorTable<T>({ title, items, toRow, onView, emptyMessage, showId = true, firstColumn, stackSexAge = false, showNiveau = false, showGrade = false, showSpecialite = false, showNationalite = false, showCount = true, identityLayout = "separate" }: {
+export function ActorTable<T>({ title, items, toRow, onView, emptyMessage, showId = false, firstColumn, stackSexAge = false, showNiveau = false, showGrade = false, showSpecialite = false, showNationalite = false, showCount = true, identityLayout = "separate" }: {
   title: string
   items: T[]
   toRow: (item: T) => ActorListRow

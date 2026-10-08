@@ -37,7 +37,6 @@ export function LiguesClient({ ligues, ententes, clubs, athletes, provinceOption
   const columns: Column<Ligue>[] = [
     { key: "idLigue", header: "ID", className: "font-mono text-sm" },
     { key: "nomLigue", header: "Ligue", className: "font-medium" },
-    { key: "sigleLigue", header: "Sigle" },
     { key: "nomProvince", header: "Province" },
     { key: "statut", header: "Statut", render: (ligue) => <StatusBadge status={ligue.statut} /> },
   ]

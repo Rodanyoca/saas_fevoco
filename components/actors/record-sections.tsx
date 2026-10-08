@@ -2,7 +2,10 @@
 
 import type { ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
-import { formatSheetDate, parseSheetDate } from "@/lib/date-utils"
+import { formatSheetDate } from "@/lib/date-utils"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { StatusBadge } from "@/components/dashboard/status-badge"
 import {
   affiliationHistory,
   getCurrentAffiliationForActor,
@@ -98,46 +101,35 @@ export function AffiliationSection<T extends BaseActorAffiliation>({
   )
 }
 
-export function LicenceSection({ licences, actorId, action, showId = true }: { licences: BaseActorLicence[]; actorId: string; action?: ReactNode; showId?: boolean }) {
+export function LicenceSection({ licences, actorId, action, athlete = false }: { licences: BaseActorLicence[]; actorId: string; action?: ReactNode; showId?: boolean; athlete?: boolean }) {
   const history = licenceHistory(licences, actorId)
-  const current = history.find((item) => {
-    const end = parseSheetDate(item.dateFinValidite)
-    return !item.dateFinValidite || Boolean(end && end.getTime() >= Date.now())
-  }) ?? history[0]
-  const athleteLicence = current as AthleteLicence | undefined
+  const headers = athlete ? ["Saison", "Numéro", "Structure", "Délivrée le", "Statut"] : ["Numéro", "Délivrée le", "Validité", "Statut"]
   return (
-    <section className="border-t pt-8">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-semibold">Licence</h2><p className="text-sm text-muted-foreground">Licence fédérale, validité et renouvellements</p></div>{action}</div>
-      {current ? (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/15 p-4">
-            <div><p className="text-xs text-muted-foreground">Numéro de licence</p><p className="font-semibold">{value(current.numeroLicence)}</p></div>
-            <ActorStatusBadge status={current.statutLicence} />
-          </div>
-          <Fields
-            className="sm:grid-cols-3"
-            fields={[
-              ...(showId ? [["ID licence", current.idLicence]] as Array<[string, string]> : []),
-              ["Délivrée le", date(current.dateDelivrance)],
-              ["Valable jusqu’au", date(current.dateFinValidite)],
-              ...(athleteLicence?.saison ? [["Saison", athleteLicence.saison]] as Array<[string, string]> : []),
-              ...(athleteLicence?.nomClub || athleteLicence?.idClub
-                ? [["Club", athleteLicence.nomClub || athleteLicence.idClub]] as Array<[string, string]>
-                : []),
-              ...(athleteLicence?.idAffiliation
-                ? [["ID affiliation", athleteLicence.idAffiliation]] as Array<[string, string]>
-                : []),
-              ["Licence précédente", current.numeroLicencePrecedente || current.idLicencePrecedente],
-            ]}
-          />
+    <Card className="min-w-0">
+      <CardHeader className="items-start gap-4">
+        <CardTitle>Historique des licences</CardTitle>
+        {action && <div className="flex flex-wrap gap-2 [&>button]:bg-brand-gold [&>button]:text-[#071827] [&>button:hover]:bg-brand-gold/90">{action}</div>}
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-hidden rounded-lg border border-border">
+          <Table aria-label="Historique des licences">
+            <TableHeader className="bg-muted/50"><TableRow>{headers.map(header => <TableHead key={header}>{header}</TableHead>)}</TableRow></TableHeader>
+            <TableBody>
+              {history.length ? history.map(item => {
+                const licence = item as AthleteLicence
+                return <TableRow key={item.idLicence}>
+                  {athlete && <TableCell>{value(licence.saison)}</TableCell>}
+                  <TableCell className="font-mono font-medium">{value(item.numeroLicence)}</TableCell>
+                  {athlete && <TableCell>{value(licence.nomClub)}</TableCell>}
+                  <TableCell>{date(item.dateDelivrance)}</TableCell>
+                  {!athlete && <TableCell>{date(item.dateDebutValidite || item.dateDelivrance)} — {date(item.dateFinValidite)}</TableCell>}
+                  <TableCell><StatusBadge status={item.statutLicence} /></TableCell>
+                </TableRow>
+              }) : <TableRow><TableCell colSpan={headers.length} className="h-24 text-center text-muted-foreground">Aucune licence enregistrée.</TableCell></TableRow>}
+            </TableBody>
+          </Table>
         </div>
-      ) : <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Aucune licence enregistrée.</p>}
-      {history.length > 0 && <div className="mt-6 space-y-2"><h3 className="text-sm font-semibold">Historique</h3>{history.map((item) => (
-        <div key={item.idLicence} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm">
-          <div><p className="font-medium">{value(item.numeroLicence)}</p><p className="text-muted-foreground">{date(item.dateDelivrance)} — {date(item.dateFinValidite)}</p></div>
-          <ActorStatusBadge status={item.statutLicence} />
-        </div>
-      ))}</div>}
-    </section>
+      </CardContent>
+    </Card>
   )
 }

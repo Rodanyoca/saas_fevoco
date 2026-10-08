@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import type { BaseActorLicence, Coach, CoachAffiliation } from "@/lib/types"
+import type { BaseActorLicence, Coach } from "@/lib/types"
 import { CoachsFilters } from "@/components/coachs/coachs-filters"
 import { CoachsTable } from "@/components/coachs/coachs-table"
 import { CoachDetail } from "@/components/coachs/coach-detail"
@@ -9,40 +9,29 @@ import { CoachFormDialog } from "@/components/coachs/coach-form-dialog"
 import type { SavedCoach } from "@/components/coachs/coach-form-dialog"
 import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
 import { compareLabels } from "@/lib/sort-utils"
-import type { CoachStructureOption } from "@/components/coachs/coach-affiliation-form-dialog"
-
-const affiliationKind = (value: string) =>
-  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toUpperCase()
+import { activeActorLicenceNumbers } from "@/lib/active-actor-licences"
 
 export function CoachsClient({
   coachs,
-  affiliations,
   licences,
   sexes,
   levels,
-  structures,
-  affiliationTypes,
-  coachFunctions,
 }: {
   coachs: Coach[]
-  affiliations: CoachAffiliation[]
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
   levels: CoachReferenceOption[]
-  structures: CoachStructureOption[]
-  affiliationTypes: CoachReferenceOption[]
-  coachFunctions: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(coachs)
-  const [affiliationRows, setAffiliationRows] = useState(affiliations)
   const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null)
   const [search, setSearch] = useState("")
   const [niveau, setNiveau] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(coachs), [coachs])
-  useEffect(() => setAffiliationRows(affiliations), [affiliations])
   useEffect(() => setLicenceRows(licences), [licences])
+  const activeLicenceNumbers = useMemo(() => activeActorLicenceNumbers(licenceRows,
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Kinshasa", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())), [licenceRows])
 
   const applySavedCoach = (saved: SavedCoach) => {
     setRows((current) => {
@@ -56,20 +45,6 @@ export function CoachsClient({
     setSelectedCoach((current) => current?.idCoach === saved.idCoach
       ? { ...current, ...saved, id: saved.idCoach, genre: saved.sexe }
       : current)
-  }
-
-  const applyCreatedAffiliation = (affiliation: CoachAffiliation, deactivatedId: string) => {
-    const closesPreviousClub = affiliationKind(affiliation.typeAffiliation) === "CLUB"
-    setAffiliationRows((current) => [
-      affiliation,
-      ...current.map((item) => item.idAffiliation === deactivatedId
-        ? {
-            ...item,
-            statutAffiliation: "inactif",
-            ...(closesPreviousClub ? { dateFin: affiliation.dateDebut } : {}),
-          }
-        : item),
-    ])
   }
 
   const filtered = useMemo(() => {
@@ -95,7 +70,7 @@ export function CoachsClient({
   return (
     <div className="space-y-6">
       {selectedCoach ? (
-        <CoachDetail coach={selectedCoach} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} levels={levels} structures={structures} affiliationTypes={affiliationTypes} coachFunctions={coachFunctions} onAffiliationCreated={applyCreatedAffiliation} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedCoach} onBack={() => setSelectedCoach(null)} />
+        <CoachDetail coach={selectedCoach} licences={licenceRows} sexes={sexes} levels={levels} onUpdated={applySavedCoach} onBack={() => setSelectedCoach(null)} />
       ) : (
         <>
           <div className="flex justify-end"><CoachFormDialog sexes={sexes} levels={levels} onSaved={applySavedCoach} /></div>
@@ -108,7 +83,7 @@ export function CoachsClient({
             onNiveauChange={setNiveau}
             onStatutChange={setStatut}
           />
-          <CoachsTable coachs={filtered} onViewCoach={setSelectedCoach} />
+          <CoachsTable coachs={filtered} activeLicenceNumbers={activeLicenceNumbers} onViewCoach={setSelectedCoach} />
         </>
       )}
     </div>

@@ -3,13 +3,14 @@
 import { ActorTable } from "@/components/actors/actor-table"
 import type { Coach } from "@/lib/types"
 
-export function CoachsTable({ coachs, onViewCoach }: { coachs: Coach[]; onViewCoach: (coach: Coach) => void }) {
+export function CoachsTable({ coachs, activeLicenceNumbers, onViewCoach }: { coachs: Coach[]; activeLicenceNumbers: Map<string, string>; onViewCoach: (coach: Coach) => void }) {
   return (
     <ActorTable
       title="Liste des Coachs"
       items={coachs}
       onView={onViewCoach}
-      showId
+      showId={false}
+      firstColumn={{ label: "Licence", value: (coach) => activeLicenceNumbers.get(coach.idCoach) || "" }}
       showCount={false}
       showNiveau
       showNationalite

@@ -1,4 +1,5 @@
 import { asText } from "@/lib/sheet-values"
+import { athleteAffiliationClubId, athleteAffiliationClubName } from "@/lib/athlete-affiliation-fields"
 import type {
   AthleteAffiliation,
   AthleteLicence,
@@ -51,8 +52,8 @@ export function mapAthleteAffiliation(row: Row): AthleteAffiliation {
     typeAffiliation: first(row, "type_affiliation", "type_mouvement", "type_transfert"),
     idClubOrigine: normalizeId(first(row, "id_club_origine")),
     nomClubOrigine: first(row, "nom_club_origine"),
-    idClubBeneficiaire: normalizeId(first(row, "id_club_beneficiaire", "id_club")),
-    nomClubBeneficiaire: first(row, "nom_club_beneficiaire", "nom_club"),
+    idClubBeneficiaire: normalizeId(athleteAffiliationClubId(row)),
+    nomClubBeneficiaire: athleteAffiliationClubName(row),
   }
 }
 
@@ -106,9 +107,13 @@ export function mapLicence(row: Row, kind: ActorKind): BaseActorLicence {
   }
 }
 
-export function mapAthleteLicence(row: Row): AthleteLicence {
+export function mapAthleteLicence(row: Row, season: Row = {}): AthleteLicence {
+  const licence = mapLicence(row, "athlete")
   return {
-    ...mapLicence(row, "athlete"),
+    ...licence,
+    // La validité des licences athlètes est portée par SAISON, pas par la licence.
+    dateDebutValidite: first(season, "date_debut") || licence.dateDebutValidite,
+    dateFinValidite: first(season, "date_fin") || licence.dateFinValidite,
     saison: first(row, "id_saison", "saison"),
     idAffiliation: normalizeId(first(row, "id_affiliation_athlete", "id_affiliation")),
     idClub: normalizeId(first(row, "id_club")),

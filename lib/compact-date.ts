@@ -1,6 +1,6 @@
 const COMPACT_DATE = /^(\d{2})(\d{2})(\d{4})$/
-const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
-const FRENCH_DATE = /^(\d{2})[./-](\d{2})[./-](\d{4})$/
+const ISO_DATE = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/
+const FRENCH_DATE = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/
 
 export type DateParts = { day: number; month: number; year: number }
 
@@ -8,11 +8,8 @@ export function sanitizeDateInput(value: string): string {
   return value.replace(/\D/g, "").slice(0, 8)
 }
 
-export function formatCompactDateInput(value: string): string {
-  const digits = sanitizeDateInput(value)
-  if (digits.length <= 2) return digits
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
+function pad2(value: number): string {
+  return String(value).padStart(2, "0")
 }
 
 function validParts(day: number, month: number, year: number): DateParts | null {
@@ -23,19 +20,67 @@ function validParts(day: number, month: number, year: number): DateParts | null 
     : null
 }
 
+function parseExplicitDate(value: string): DateParts | null {
+  const raw = value.trim()
+  if (!raw) return null
+
+  const isoMatch = raw.match(ISO_DATE)
+  if (isoMatch) {
+    const day = Number(isoMatch[3])
+    const month = Number(isoMatch[2])
+    const year = Number(isoMatch[1])
+    return validParts(day, month, year)
+  }
+
+  const frenchMatch = raw.match(FRENCH_DATE)
+  if (frenchMatch) {
+    const day = Number(frenchMatch[1])
+    const month = Number(frenchMatch[2])
+    const year = Number(frenchMatch[3])
+    return validParts(day, month, year)
+  }
+
+  return null
+}
+
+export function formatCompactDateInput(value: string): string {
+  const raw = value.trim()
+  const explicitDate = parseExplicitDate(raw)
+  if (explicitDate) {
+    return `${pad2(explicitDate.day)}/${pad2(explicitDate.month)}/${explicitDate.year}`
+  }
+
+  const digits = sanitizeDateInput(raw)
+  if (!digits) return ""
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
+  if (digits.length === 5) return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`
+}
+
 export function parseCompactDate(value: string): DateParts | null {
+  const explicit = parseExplicitDate(value)
+  if (explicit) return explicit
+
   const match = sanitizeDateInput(value).match(COMPACT_DATE)
   return match ? validParts(Number(match[1]), Number(match[2]), Number(match[3])) : null
 }
 
 function parseKnownDate(value: string): DateParts | null {
   const raw = value.trim()
-  const compact = raw.match(COMPACT_DATE)
-  if (compact) return validParts(Number(compact[1]), Number(compact[2]), Number(compact[3]))
-  const iso = raw.match(ISO_DATE)
-  if (iso) return validParts(Number(iso[3]), Number(iso[2]), Number(iso[1]))
-  const french = raw.match(FRENCH_DATE)
-  if (french) return validParts(Number(french[1]), Number(french[2]), Number(french[3]))
+  if (!raw) return null
+
+  const explicit = parseExplicitDate(raw)
+  if (explicit) return explicit
+
+  const compact = sanitizeDateInput(raw).match(COMPACT_DATE)
+  if (compact) {
+    const day = Number(compact[1])
+    const month = Number(compact[2])
+    const year = Number(compact[3])
+    return validParts(day, month, year)
+  }
+
   return null
 }
 
@@ -43,20 +88,34 @@ export function formatDateForSheet(value: string): string {
   if (!value.trim()) return ""
   const parts = parseKnownDate(value)
   if (!parts) throw new Error("Date invalide.")
-  return `${String(parts.year).padStart(4, "0")}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`
+  return `${String(parts.year).padStart(4, "0")}-${pad2(parts.month)}-${pad2(parts.day)}`
+}
+
+// Compatibilité de lecture des cellules date historiques Google Sheets.
+// La validation des saisies reste celle de formatDateForSheet.
+export function formatDateFromSheet(value: string): string {
+  const raw = value.trim()
+  if (/^\d+(?:\.\d+)?$/.test(raw)) {
+    const serial = Number(raw)
+    if (serial > 0 && serial < 100000) {
+      const date = new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 86_400_000)
+      return formatDateForSheet(date.toISOString().slice(0, 10))
+    }
+  }
+  return formatDateForSheet(raw)
 }
 
 export function formatDateForDisplay(value: string): string {
   if (!value.trim()) return ""
   const parts = parseKnownDate(value)
   if (!parts) return value.trim()
-  return `${String(parts.day).padStart(2, "0")}/${String(parts.month).padStart(2, "0")}/${String(parts.year).padStart(4, "0")}`
+  return `${pad2(parts.day)}/${pad2(parts.month)}/${parts.year}`
 }
 
 export function compactDateFromSheet(value: string): string {
   const parts = parseKnownDate(value)
   if (!parts) return ""
-  return `${String(parts.day).padStart(2, "0")}/${String(parts.month).padStart(2, "0")}/${String(parts.year).padStart(4, "0")}`
+  return `${pad2(parts.day)}/${pad2(parts.month)}/${parts.year}`
 }
 
 export function validateBirthDate(value: string, today = new Date()): string | null {

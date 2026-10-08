@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, CalendarDays, Layers, Pencil, Shield, Users } from "lucide-react"
+import { Activity, ArrowLeft, CalendarDays, Pencil, Shield, UserCog, Users } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,11 +9,15 @@ import { DetailCard } from "@/components/dashboard/detail-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { ClubFormDialog, type SavedClub } from "@/components/clubs/club-form-dialog"
 import type { ClubReferenceOption } from "@/lib/club-references"
-import type { Athlete, Club, Entente } from "@/lib/types"
+import type { Club, Entente } from "@/lib/types"
+import { clubActorKpis, type ClubActor, type ClubActorGroups } from "@/lib/club-actors-model"
+import { DataLoadNotice } from "@/components/dashboard/data-load-notice"
 
 interface ClubDetailProps {
   club: Club
-  athletes: Athlete[]
+  actors: ClubActorGroups
+  actorsAvailable: boolean
+  ignoredRelations: number
   ententes: Entente[]
   categories: ClubReferenceOption[]
   sexes: ClubReferenceOption[]
@@ -30,29 +34,40 @@ function shown(value: unknown, fallback = "-") {
   return text || fallback
 }
 
-function SummaryTile({ icon: Icon, label, value }: {
+function SummaryTile({ icon: Icon, label, value, detail }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: number | string
+  detail?: string
 }) {
   return <Card>
     <CardContent className="flex items-center justify-between gap-3 p-5">
       <div className="min-w-0">
         <p className="truncate text-sm text-muted-foreground">{label}</p>
         <p className="mt-1 truncate text-2xl font-bold">{shown(value)}</p>
+        {detail && <p className="mt-1 text-xs text-muted-foreground">{detail}</p>}
       </div>
       <Icon className="h-6 w-6 shrink-0 text-brand-gold" />
     </CardContent>
   </Card>
 }
 
-export function ClubDetail({ club, athletes, ententes, categories, sexes, onBack, onUpdated }: ClubDetailProps) {
-  const athleteColumns: Column<Athlete>[] = [
-    { key: "idAthlete", header: "ID athlète", className: "font-mono text-sm" },
+function ClubActorTable({ title, showLicence = false, search, rows, available, extra }: { title: string; showLicence?: boolean; search: string; rows: ClubActor[]; available: boolean; extra?: string }) {
+  const columns: Column<ClubActor>[] = [
+    ...(showLicence ? [{ key: "licence", header: "Licence", render: () => "—" }] : []),
     { key: "nomComplet", header: "Nom complet", className: "font-medium" },
-    { key: "sexe", header: "Sexe" },
-    { key: "statut", header: "Statut", render: (athlete) => <StatusBadge status={athlete.statut} /> },
+    { key: "sexe", header: "Sexe", render: actor => actor.sexe || "Non renseigné" },
+    ...(extra ? [{ key: "fonction", header: extra, render: (actor: ClubActor) => actor.fonction || "Non renseigné" }] : []),
+    { key: "telephone", header: "Téléphone", render: actor => actor.telephone || "Non renseigné" },
+    { key: "email", header: "E-mail", className: "break-all", render: actor => actor.email || "Non renseigné" },
+    { key: "statut", header: "Statut acteur", render: actor => <StatusBadge status={actor.statut} /> },
   ]
+  return <Card className="min-w-0" role="region" aria-label={title}><CardHeader><CardTitle>{title}</CardTitle>{available && <p className="text-sm text-muted-foreground">{rows.length} personne{rows.length > 1 ? "s" : ""} rattachée{rows.length > 1 ? "s" : ""}</p>}</CardHeader><CardContent className="min-w-0">{available ? <DataTable data={rows} columns={columns} searchPlaceholder={search} idKey="id" tableClassName="min-w-[760px]" /> : <p className="text-sm text-muted-foreground">Les rattachements sont temporairement indisponibles.</p>}</CardContent></Card>
+}
+
+export function ClubDetail({ club, actors, actorsAvailable, ignoredRelations, ententes, categories, sexes, onBack, onUpdated }: ClubDetailProps) {
+  const kpis = clubActorKpis(actors)
+  const metric = (value: number) => actorsAvailable ? value.toLocaleString("fr-FR") : "Indisponible"
 
   return <div className="space-y-6">
     <div className="flex items-center justify-between gap-3">
@@ -85,15 +100,17 @@ export function ClubDetail({ club, athletes, ententes, categories, sexes, onBack
     </div>
 
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <SummaryTile icon={Users} label="Athlètes" value={athletes.length} />
-      <SummaryTile icon={Layers} label="Catégorie" value={club.categorie} />
-      <SummaryTile icon={Shield} label="Sexe" value={club.version} />
-      <SummaryTile icon={CalendarDays} label="Statut" value={club.statut} />
+      <SummaryTile icon={Users} label="Acteurs rattachés" value={metric(kpis.total)} detail="Toutes les familles du club" />
+      <SummaryTile icon={Users} label="Athlètes" value={metric(kpis.athletes)} />
+      <SummaryTile icon={UserCog} label="Encadrement" value={metric(kpis.staff)} detail="Entraîneurs, médecins, officiels et autres acteurs" />
+      <SummaryTile icon={Activity} label="Acteurs actifs" value={metric(kpis.active)} detail="Selon le statut de la fiche acteur" />
     </div>
 
-    <Card>
-      <CardHeader><CardTitle>Athlètes du club</CardTitle></CardHeader>
-      <CardContent><DataTable data={athletes} columns={athleteColumns} searchPlaceholder="Rechercher un athlète..." idKey="idAthlete" /></CardContent>
-    </Card>
+    <p className="text-sm text-muted-foreground">Personnes liées au club par une affiliation active à la date du jour. Chaque personne est comptée une fois par famille, indépendamment du nombre d’affiliations.</p>
+    <DataLoadNotice visible={ignoredRelations > 0} description="Certaines affiliations de la source sont invalides ou pointent vers un acteur absent. Elles sont exclues des effectifs." />
+    <ClubActorTable title="Athlètes du club" showLicence search="Rechercher un athlète..." rows={actors.athletes} available={actorsAvailable} />
+    <ClubActorTable title="Entraîneurs du club" showLicence search="Rechercher un entraîneur..." rows={actors.coachs} available={actorsAvailable} />
+    <ClubActorTable title="Médecins du club" search="Rechercher un médecin..." rows={actors.medecins} available={actorsAvailable} />
+    <ClubActorTable title="Officiels du club" search="Rechercher un officiel..." rows={actors.officiels} available={actorsAvailable} extra="Fonction" />
   </div>
 }

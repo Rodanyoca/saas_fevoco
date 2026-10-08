@@ -17,14 +17,12 @@ export function ArbitresClient({ arbitres, licences, sexes, grades }: {
   grades: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(arbitres)
-  const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedArbitre, setSelectedArbitre] = useState<Arbitre | null>(null)
   const [search, setSearch] = useState("")
   const [equipeNationale, setEquipeNationale] = useState("all")
   const [grade, setGrade] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(arbitres), [arbitres])
-  useEffect(() => setLicenceRows(licences), [licences])
 
   const applySavedArbitre = (saved: SavedArbitre) => {
     setRows((current) => {
@@ -54,7 +52,7 @@ export function ArbitresClient({ arbitres, licences, sexes, grades }: {
       if (statut !== "all" && arbitre.statut !== statut) return false
 
       if (term) {
-        const licenceNumbers = licenceRows
+        const licenceNumbers = licences
           .filter((licence) => licence.actorId === arbitre.idArbitre)
           .map((licence) => licence.numeroLicence)
           .join(" ")
@@ -65,12 +63,12 @@ export function ArbitresClient({ arbitres, licences, sexes, grades }: {
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, licenceRows, equipeNationale, grade, search, statut])
+  }, [rows, licences, equipeNationale, grade, search, statut])
 
   return (
     <div className="space-y-6">
       {selectedArbitre ? (
-        <ArbitreDetail arbitre={selectedArbitre} licences={licenceRows} sexes={sexes} grades={grades} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedArbitre} onBack={() => setSelectedArbitre(null)} />
+        <ArbitreDetail arbitre={selectedArbitre} licences={licences} sexes={sexes} grades={grades} onUpdated={applySavedArbitre} onBack={() => setSelectedArbitre(null)} />
       ) : (
         <>
           <div className="flex justify-end"><ArbitreFormDialog sexes={sexes} grades={grades} onSaved={applySavedArbitre} /></div>

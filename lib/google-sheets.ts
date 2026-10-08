@@ -1,6 +1,7 @@
 import { env, isGoogleSheetsConfigured } from "@/lib/env"
 import { revalidateTag, unstable_cache } from "next/cache"
 import { withBoundedRetry } from "@/lib/google-sheets-resilience"
+import { createSheetReadBatcher } from "@/lib/sheet-read-batcher"
 export { asText, normalize } from "@/lib/sheet-values"
 
 export type SheetRow = Record<string, string | number | boolean | null>
@@ -11,6 +12,11 @@ type SheetsClient = Awaited<ReturnType<typeof createSheetsClient>>
 let sharedSheetsClient: Promise<SheetsClient> | undefined
 const inflightReads = new Map<string, Promise<SheetRow[]>>()
 const inflightBatchReads = new Map<string, Promise<Record<string, SheetRow[]>>>()
+const batchedReads = createSheetReadBatcher<SheetRow>(fetchSheetsDataFrom, (error) => {
+  const cause = error instanceof Error ? error.cause : error
+  const message = cause instanceof Error ? cause.message : String(cause)
+  return /Unable to parse range|Invalid range|Range .* not found/i.test(message)
+})
 
 async function createSheetsClient() {
   const { google } = await import("googleapis")
@@ -127,16 +133,18 @@ async function fetchSheetsDataFrom(spreadsheetId: string, ranges: string[]) {
 export async function getSheetDataFrom(
   spreadsheetId: string,
   range: string,
+  options: { fresh?: boolean } = {},
 ): Promise<SheetRow[]> {
   if (!spreadsheetId.trim() || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) {
     return []
   }
+  if (options.fresh) return fetchSheetDataFrom(spreadsheetId, range)
   const sheetName = range.split("!", 1)[0]
   const key = `${spreadsheetId}:${range}`
   const existing = inflightReads.get(key)
   if (existing) return existing
   const request = unstable_cache(
-    () => fetchSheetDataFrom(spreadsheetId, range),
+    async () => (await batchedReads(spreadsheetId, [range]))[sheetName] || [],
     ["google-sheet", spreadsheetId, range],
     {
       revalidate: READ_CACHE_TTL_SECONDS,
@@ -152,12 +160,12 @@ export async function getSheetsDataFrom(
   ranges: string[],
 ): Promise<Record<string, SheetRow[]>> {
   if (!spreadsheetId.trim() || !ranges.length || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) return {}
-  const stableRanges = [...ranges]
+  const stableRanges = [...new Set(ranges)].sort()
   const key = `${spreadsheetId}:${stableRanges.join("|")}`
   const existing = inflightBatchReads.get(key)
   if (existing) return existing
   const request = unstable_cache(
-    () => fetchSheetsDataFrom(spreadsheetId, stableRanges),
+    () => batchedReads(spreadsheetId, stableRanges),
     ["google-sheets-batch", spreadsheetId, ...stableRanges],
     {
       revalidate: READ_CACHE_TTL_SECONDS,
@@ -224,6 +232,16 @@ export async function appendSheetRecord(
   record: Record<string, string>,
   insertDataOption: "INSERT_ROWS" | "OVERWRITE" = "INSERT_ROWS",
 ): Promise<void> {
+  return appendSheetRecords(spreadsheetId, sheetName, [record], insertDataOption)
+}
+
+export async function appendSheetRecords(
+  spreadsheetId: string,
+  sheetName: string,
+  records: Record<string, string>[],
+  insertDataOption: "INSERT_ROWS" | "OVERWRITE" = "INSERT_ROWS",
+): Promise<void> {
+  if (!records.length) return
   const sheets = await writableSheets()
   const headerResult = await sheets.spreadsheets.values.get({
     spreadsheetId,
@@ -236,7 +254,7 @@ export async function appendSheetRecord(
     range: `${sheetName}!A:${columnLetter(headers.length - 1)}`,
     valueInputOption: "USER_ENTERED",
     insertDataOption,
-    requestBody: { values: [headers.map((header) => record[header] ?? "")] },
+    requestBody: { values: records.map(record => headers.map(header => record[header] ?? "")) },
   })
   invalidateSheet(spreadsheetId, sheetName)
 }
@@ -343,6 +361,15 @@ export async function formatSheetDateColumn(
   headerName: string,
   pattern = "dd/mm/yyyy",
 ): Promise<void> {
+  return formatSheetDateColumns(spreadsheetId, sheetName, [headerName], pattern)
+}
+
+export async function formatSheetDateColumns(
+  spreadsheetId: string,
+  sheetName: string,
+  headerNames: string[],
+  pattern = "dd/mm/yyyy",
+): Promise<void> {
   const sheets = await writableSheets()
   const [spreadsheet, headerResult] = await Promise.all([
     sheets.spreadsheets.get({
@@ -358,13 +385,16 @@ export async function formatSheetDateColumn(
   if (sheetId === null || sheetId === undefined) throw new Error(`Onglet ${sheetName} introuvable`)
 
   const headers = (headerResult.data.values?.[0] ?? []).map(normalizeHeader)
-  const columnIndex = headers.indexOf(normalizeHeader(headerName))
-  if (columnIndex < 0) throw new Error(`Colonne ${headerName} absente dans ${sheetName}`)
+  const columnIndexes = headerNames.map(headerName => {
+    const index = headers.indexOf(normalizeHeader(headerName))
+    if (index < 0) throw new Error(`Colonne ${headerName} absente dans ${sheetName}`)
+    return index
+  })
 
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId,
     requestBody: {
-      requests: [{
+      requests: columnIndexes.map(columnIndex => ({
         repeatCell: {
           range: {
             sheetId,
@@ -379,7 +409,7 @@ export async function formatSheetDateColumn(
           },
           fields: "userEnteredFormat.numberFormat",
         },
-      }],
+      })),
     },
   })
 }

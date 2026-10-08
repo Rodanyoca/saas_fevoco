@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { toast } from "sonner"
+import { AffiliationsPanel } from "@/components/actors/affiliations-panel"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,8 +11,8 @@ import { StatusBadge } from "@/components/dashboard/status-badge"
 import { getActorAvatarUrl } from "@/lib/actor-avatar"
 import { calculateAge, formatSheetDate } from "@/lib/date-utils"
 import { normalize } from "@/lib/sheet-values"
-import type { Athlete, AthleteAffiliation, AthleteLicence } from "@/lib/types"
-import { AffiliationSection, LicenceSection } from "@/components/actors/record-sections"
+import type { Athlete, AthleteLicence } from "@/lib/types"
+import { LicenceSection } from "@/components/actors/record-sections"
 import { ArrowLeft, Contact, Fingerprint, Info, User } from "lucide-react"
 import { AthleteFormDialog } from "@/components/athletes/athlete-form-dialog"
 import type { SavedAthlete } from "@/components/athletes/athlete-form-dialog"
@@ -36,27 +36,13 @@ function sexeLabel(value: string) {
   return shown(value)
 }
 
-export function AthleteDetail({ athlete, affiliations, licences, sexes, onRefreshAffiliations, onUpdated, onBack }: {
+export function AthleteDetail({ athlete, licences, sexes, onUpdated, onBack }: {
   athlete: Athlete
-  affiliations: AthleteAffiliation[]
   licences: AthleteLicence[]
   sexes: ActorSexOption[]
-  onRefreshAffiliations: () => Promise<void>
   onUpdated: (athlete: SavedAthlete) => void
   onBack: () => void
 }) {
-  const [refreshingAffiliations, setRefreshingAffiliations] = useState(false)
-  const refreshAffiliations = async () => {
-    setRefreshingAffiliations(true)
-    try {
-      await onRefreshAffiliations()
-      toast.success("Affiliations actualisées.")
-    } catch {
-      toast.error("Actualisation des affiliations impossible.")
-    } finally {
-      setRefreshingAffiliations(false)
-    }
-  }
   const avatarUrl = getActorAvatarUrl(athlete.avatarDriveUrl, athlete.avatarDriveId)
   const age = calculateAge(athlete.dateDeNaissance)
   const dateNaissance = formatSheetDate(athlete.dateDeNaissance)
@@ -137,14 +123,10 @@ export function AthleteDetail({ athlete, affiliations, licences, sexes, onRefres
         </TabsContent>
 
         <TabsContent value="affiliation" className="[&>section]:border-t-0 [&>section]:pt-0">
-          <AffiliationSection
-            affiliations={affiliations}
-            actorId={athlete.idAthlete}
-            action={<Button type="button" variant="outline" size="sm" disabled={refreshingAffiliations} onClick={refreshAffiliations}>{refreshingAffiliations ? "Actualisation..." : "Actualiser"}</Button>}
-          />
+          <AffiliationsPanel kind="athlete" actorId={athlete.idAthlete} />
         </TabsContent>
         <TabsContent value="licence" className="[&>section]:border-t-0 [&>section]:pt-0">
-          <LicenceSection licences={licences} actorId={athlete.idAthlete} />
+          <LicenceSection licences={licences} actorId={athlete.idAthlete} athlete />
         </TabsContent>
       </Tabs>
     </div>

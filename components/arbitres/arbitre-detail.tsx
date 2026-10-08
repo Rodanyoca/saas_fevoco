@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowLeft, Contact, Fingerprint, Flag } from "lucide-react"
+import { ArrowLeft, Contact, Fingerprint, Flag, Info } from "lucide-react"
 import { ArbitreFormDialog, type SavedArbitre } from "@/components/arbitres/arbitre-form-dialog"
-import { ArbitreLicenceFormDialog } from "@/components/arbitres/arbitre-licence-form-dialog"
 import { LicenceSection } from "@/components/actors/record-sections"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -34,12 +33,11 @@ function sexeLabel(value: string) {
   return shown(value)
 }
 
-export function ArbitreDetail({ arbitre, licences, sexes, grades, onLicenceCreated, onUpdated, onBack }: {
+export function ArbitreDetail({ arbitre, licences, sexes, grades, onUpdated, onBack }: {
   arbitre: Arbitre
   licences: BaseActorLicence[]
   sexes: ActorSexOption[]
   grades: CoachReferenceOption[]
-  onLicenceCreated: (licence: BaseActorLicence, deactivatedLicenceId: string) => void
   onUpdated: (arbitre: SavedArbitre) => void
   onBack: () => void
 }) {
@@ -65,22 +63,25 @@ export function ArbitreDetail({ arbitre, licences, sexes, grades, onLicenceCreat
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
         <TabsList className="grid h-auto w-full grid-cols-2"><TabsTrigger value="general" className="w-full">Général</TabsTrigger><TabsTrigger value="licence" className="w-full">Licences</TabsTrigger></TabsList>
-        <TabsContent value="general"><div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <TabsContent value="general"><div className="grid gap-6 md:grid-cols-2">
           <DetailCard title="Identité" icon={Flag} fields={[
             { label: "ID", value: arbitre.idArbitre }, { label: "Nom complet", value: arbitre.nomComplet },
             { label: "Sexe", value: sexeLabel(arbitre.sexe) }, { label: "Date de naissance", value: birthDate === "-" ? "—" : birthDate },
             { label: "Âge", value: age === null ? "—" : `${age} ans` }, { label: "Nationalité", value: arbitre.nationalite },
           ]} />
+          <DetailCard title="Contact" icon={Contact} fields={[
+            { label: "Téléphone", value: arbitre.telephone }, { label: "E-mail", value: arbitre.email }, { label: "Adresse", value: arbitre.adresse },
+          ]} />
           <DetailCard title="Identifiants" icon={Fingerprint} fields={[
             { label: "ID national", value: arbitre.idNational }, { label: "ID FIVB", value: arbitre.idFivb },
             { label: "Grade", value: arbitre.grade }, { label: "Statut", value: arbitre.statut },
           ]} />
-          <DetailCard title="Contact" icon={Contact} fields={[
-            { label: "Téléphone", value: arbitre.telephone }, { label: "E-mail", value: arbitre.email }, { label: "Adresse", value: arbitre.adresse },
+          <DetailCard title="Observation" icon={Info} fields={[
+            { label: "Observation", value: "Non renseignée" },
           ]} />
         </div></TabsContent>
         <TabsContent value="licence" className="[&>section]:border-t-0 [&>section]:pt-0">
-          <LicenceSection licences={licences} actorId={arbitre.idArbitre} showId={false} action={<ArbitreLicenceFormDialog arbitre={arbitre} onSaved={onLicenceCreated} />} />
+          <LicenceSection licences={licences} actorId={arbitre.idArbitre} showId={false} />
         </TabsContent>
       </Tabs>
     </div>

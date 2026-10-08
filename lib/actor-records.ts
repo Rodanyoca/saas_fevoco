@@ -3,12 +3,8 @@ import "server-only"
 import { getSheetDataFrom } from "@/lib/google-sheets"
 import { env } from "@/lib/env"
 import {
-  mapAthleteAffiliation,
   mapAthleteLicence,
-  mapCoachAffiliation,
   mapLicence,
-  mapMedecinAffiliation,
-  mapOfficielAffiliation,
 } from "@/lib/mappers/actor-records"
 import type {
   AthleteAffiliation,
@@ -19,11 +15,11 @@ import type {
   OfficielAffiliation,
 } from "@/lib/types"
 import { isMissingSheetRangeError } from "@/lib/optional-sheet"
+import { allActorAffiliationViews } from "@/lib/actor-affiliations"
+import type { ActorAffiliationView } from "@/lib/actor-affiliation-schema"
+import { athleteAffiliationClubId } from "@/lib/athlete-affiliation-fields"
 
-async function rows(sheet: string) {
-  if (!env.googleSheets.affiliationsSpreadsheetId) return []
-  return getSheetDataFrom(env.googleSheets.affiliationsSpreadsheetId, `${sheet}!A:Z`)
-}
+const baseAffiliation = (row: ActorAffiliationView) => ({ idAffiliation: row.id, actorId: row.actorId, actorName: row.actorName || "", idStructure: row.clubId || row.entityId, nomStructure: row.structure, dateDebut: row.dateDebut, dateFin: row.dateFin, statutAffiliation: row.statut, observation: row.observations })
 
 async function licenceRows(sheet: string) {
   if (!env.googleSheets.licencesSpreadsheetId) return []
@@ -31,14 +27,13 @@ async function licenceRows(sheet: string) {
 }
 
 export const getAthleteAffiliations = async (): Promise<AthleteAffiliation[]> =>
-  (await rows("ATHLETE_AFFILIATIONS")).map(mapAthleteAffiliation).filter((item) => item.actorId)
+  (await allActorAffiliationViews("athlete")).map(row => ({ ...baseAffiliation(row), saison: "", typeAffiliation: "CLUB", idClubOrigine: "", nomClubOrigine: "", idClubBeneficiaire: row.clubId, nomClubBeneficiaire: row.structure }))
 export const getCoachAffiliations = async (): Promise<CoachAffiliation[]> =>
-  (await rows("COACH_AFFILIATIONS")).map(mapCoachAffiliation).filter((item) => item.actorId)
+  (await allActorAffiliationViews("coach")).map(row => ({ ...baseAffiliation(row), saison: "", typeAffiliation: "CLUB", fonction: "" }))
 export const getMedecinAffiliations = async (): Promise<MedecinAffiliation[]> =>
-  (await rows("MEDECIN_AFFILIATIONS")).map(mapMedecinAffiliation).filter((item) => item.actorId)
+  (await allActorAffiliationViews("medecin")).map(row => ({ ...baseAffiliation(row), saison: "", typeAffiliation: "CLUB", fonction: "" }))
 export const getOfficielAffiliations = async (): Promise<OfficielAffiliation[]> => {
-  const affiliations = await rows("OFFICIELS_AFFILIATIONS")
-  return affiliations.map(mapOfficielAffiliation).filter((item) => item.actorId)
+  return (await allActorAffiliationViews("officiel")).map(row => ({ ...baseAffiliation(row), idTypeActeur: "", idFonction: row.functionId, idTypeStructure: row.entityTypeId, idSaison: "", typeStructure: row.entityType, saison: "", fonction: row.fonction }))
 }
 
 async function optionalLicenceRows(sheet: string) {
@@ -51,14 +46,41 @@ async function optionalLicenceRows(sheet: string) {
   }
 }
 
-export const getAthleteLicences = async (): Promise<AthleteLicence[]> =>
-  (await optionalLicenceRows("ATHLETE_LICENCES")).map(mapAthleteLicence).filter((item) => item.idLicence && item.actorId)
+export const getAthleteLicences = async (): Promise<AthleteLicence[]> => {
+  const [rows, seasons, affiliations, clubs] = await Promise.all([
+    optionalLicenceRows("ATHLETE_LICENCES"),
+    getSheetDataFrom(env.googleSheets.referentielsSpreadsheetId, "SAISON!A:ZZ"),
+    getSheetDataFrom(env.googleSheets.affiliationsSpreadsheetId, "ATHLETE_AFFILIATIONS!A:ZZ"),
+    getSheetDataFrom(env.googleSheets.territorialSpreadsheetId, "CLUBS!A:ZZ"),
+  ])
+  const text = (value: unknown) => String(value ?? "").trim()
+  const seasonsById = new Map(seasons.map(row => [String(row.id_saison ?? "").trim(), row]))
+  const affiliationsById = new Map(affiliations.map(row => [text(row.id_affiliation_athlete ?? row.id_affiliation), row]))
+  const clubsById = new Map(clubs.map(row => [text(row.id_club), text(row.nom_club)]))
+  return rows.map(row => {
+    const licence = mapAthleteLicence(row, seasonsById.get(text(row.id_saison ?? row.saison)))
+    const affiliation = affiliationsById.get(licence.idAffiliation)
+    // Conserver la structure de l'affiliation utilisée à la délivrance, même historique.
+    if (!affiliation || text(affiliation.id_athlete ?? affiliation.athlete_id ?? affiliation.id_acteur) !== licence.actorId) return licence
+    const idClub = athleteAffiliationClubId(affiliation)
+    return { ...licence, idClub, nomClub: clubsById.get(idClub) || "" }
+  })
+    .filter(item => item.idLicence && item.actorId)
+}
 
 const actorTypeIds = { coach: "TAC002", officiel: "TAC003", arbitre: "TAC004", medecin: "TAC005" } as const
 async function licences(kind: keyof typeof actorTypeIds) {
-  return (await optionalLicenceRows("ACTEURS_LICENCES"))
+  const [rows, statuses] = await Promise.all([
+    optionalLicenceRows("ACTEURS_LICENCES"),
+    getSheetDataFrom(env.googleSheets.referentielsSpreadsheetId, "STATUT_LICENCE!A:ZZ"),
+  ])
+  const labels = new Map(statuses.map(row => [String(row.id_statut_licence ?? "").trim(), String(row.nom_statut_licence ?? "").trim()]))
+  return rows
     .filter((row) => String(row.id_type_acteur ?? "").trim() === actorTypeIds[kind])
-    .map((row) => mapLicence(row, kind)).filter((item) => item.idLicence && item.actorId)
+    .map((row) => {
+      const licence = mapLicence(row, kind)
+      return { ...licence, statutLicence: labels.get(licence.idStatutLicence || "") || licence.statutLicence }
+    }).filter((item) => item.idLicence && item.actorId)
 }
 export const getCoachLicences = (): Promise<BaseActorLicence[]> => licences("coach")
 export const getMedecinLicences = (): Promise<BaseActorLicence[]> => licences("medecin")
