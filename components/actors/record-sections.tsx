@@ -101,9 +101,10 @@ export function AffiliationSection<T extends BaseActorAffiliation>({
   )
 }
 
-export function LicenceSection({ licences, actorId, action, athlete = false }: { licences: BaseActorLicence[]; actorId: string; action?: ReactNode; showId?: boolean; athlete?: boolean }) {
+export function LicenceSection({ licences, actorId, action, athlete = false, showCycle = false }: { licences: BaseActorLicence[]; actorId: string; action?: ReactNode; showId?: boolean; athlete?: boolean; showCycle?: boolean }) {
   const history = licenceHistory(licences, actorId)
-  const headers = athlete ? ["Saison", "Numéro", "Structure", "Délivrée le", "Statut"] : ["Numéro", "Délivrée le", "Validité", "Statut"]
+  const headers = athlete ? ["Saison", "Numéro", "Structure", "Délivrée le", "Statut"]  : ["Numéro", "Délivrée le", "Validité", "Statut"]
+  if (showCycle) headers.splice(1, 0, "Cycle")
   return (
     <Card className="min-w-0">
       <CardHeader className="items-start gap-4">
@@ -120,6 +121,7 @@ export function LicenceSection({ licences, actorId, action, athlete = false }: {
                 return <TableRow key={item.idLicence}>
                   {athlete && <TableCell>{value(licence.saison)}</TableCell>}
                   <TableCell className="font-mono font-medium">{value(item.numeroLicence)}</TableCell>
+                  {showCycle && <TableCell>{value(item.cycleLicence || "")}</TableCell>}
                   {athlete && <TableCell>{value(licence.nomClub)}</TableCell>}
                   <TableCell>{date(item.dateDelivrance)}</TableCell>
                   {!athlete && <TableCell>{date(item.dateDebutValidite || item.dateDelivrance)} — {date(item.dateFinValidite)}</TableCell>}

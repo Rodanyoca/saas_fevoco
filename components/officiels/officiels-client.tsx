@@ -84,7 +84,7 @@ export function OfficielsClient({ officiels, affiliations, licences, sexes, stru
   return (
     <div className="space-y-6">
       {selectedOfficiel ? (
-        <OfficielDetail officiel={selectedOfficiel} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} structures={structures} functions={functions} structureTypes={structureTypes} seasons={seasons} onAffiliationCreated={applyCreatedAffiliation} onLicenceCreated={(licence, deactivatedId) => setLicenceRows((current) => [licence, ...current.map((item) => item.idLicence === deactivatedId ? { ...item, statutLicence: "INACTIF" } : item)])} onUpdated={applySavedOfficiel} onBack={() => setSelectedOfficiel(null)} />
+        <OfficielDetail officiel={selectedOfficiel} affiliations={affiliationRows} licences={licenceRows} sexes={sexes} structures={structures} functions={functions} structureTypes={structureTypes} seasons={seasons} onAffiliationCreated={applyCreatedAffiliation} onUpdated={applySavedOfficiel} onBack={() => setSelectedOfficiel(null)} />
       ) : (
         <>
           <div className="flex justify-end"><OfficielFormDialog sexes={sexes} onSaved={applySavedOfficiel} /></div>

@@ -33,3 +33,13 @@ test("une affiliation officielle résout la fédération par les en-têtes véri
   const item = buildActorLicenceData(data, "2026-10-08").references.affiliations.find(row => row.id === "AFO")
   assert.equal(item?.label, "Fédération · AFO"); assert.equal(item?.targetExists, true)
 })
+
+test("federal affiliations without entity id remain usable for entourage licences", () => {
+  const data = source()
+  data.refs.TYPES_STRUCTURES = [{ id_type_structure: "FED-TYPE", nom_type_structure: "FEDERATION" }, { id_type_structure: "LIG-TYPE", nom_type_structure: "LIGUE" }]
+  data.affiliations.OFFICIELS_AFFILIATIONS = [{ id_affiliation_officiel: "AFO-FED", id_officiel: "OFF", id_type_entite: "FED-TYPE", id_entite: "", id_statut_affiliation: "SAF001", date_debut: "2026-01-01" }, { id_affiliation_officiel: "AFO-LIG", id_officiel: "OFF", id_type_entite: "LIG-TYPE", id_entite: "", id_statut_affiliation: "SAF001", date_debut: "2026-01-01" }]
+  const items = buildActorLicenceData(data, "2026-10-09").references.affiliations
+  assert.equal(items.find(row => row.id === "AFO-FED")?.targetExists, true)
+  assert.equal(items.find(row => row.id === "AFO-LIG")?.targetExists, false)
+  assert.ok(items.find(row => row.id === "AFO-FED")?.label.startsWith("FEDERATION"))
+})

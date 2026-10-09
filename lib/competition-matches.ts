@@ -16,7 +16,7 @@ export async function createMatch(competitionId: string, input: Record<string, u
   const eligible = detail.phasesUnites.filter((row) => clean(row.id_phase_competition) === phaseId && clean(row.statut) === "ACTIF")
   if (![unitA, unitB].every((id) => eligible.some((row) => clean(row.id_unite_competition) === id))) throw new CompetitionDomainError("Une unité n’est pas affectée à cette phase.", 400)
   if (clean(phase.id_mode_phase) === "MPH001") {
-    if (!groupId || !detail.groupes.some((row) => clean(row.id_groupe) === groupId && clean(row.id_phase_competition) === phaseId)) throw new CompetitionDomainError("Un groupe commun est obligatoire.", 400, { id_groupe: "Groupe invalide." })
+    if (!groupId || !detail.groupes.some((row) => clean(row.id_groupe) === groupId && clean(row.id_phase_competition) === phaseId && clean(row.statut) === "ACTIF")) throw new CompetitionDomainError("Un groupe commun est obligatoire.", 400, { id_groupe: "Groupe invalide." })
     if (![unitA, unitB].every((id) => eligible.some((row) => clean(row.id_unite_competition) === id && clean(row.id_groupe) === groupId))) throw new CompetitionDomainError("Les unités doivent appartenir au même groupe.", 400)
   } else if (groupId) throw new CompetitionDomainError("Le groupe est interdit pour cette phase.", 400)
   let date = ""; try { date = formatDateForSheet(clean(input.date_match)) } catch { throw new CompetitionDomainError("Date invalide.", 400, { date_match: "Date invalide." }) }

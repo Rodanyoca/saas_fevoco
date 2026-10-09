@@ -4,7 +4,7 @@ import { env } from "@/lib/env"
 import { appendSheetRecord, formatSheetDateColumns, getSheetDataFrom, getSheetsDataFrom, updateSheetRecordById, type SheetRow } from "@/lib/google-sheets"
 import { formatDateForSheet } from "@/lib/compact-date"
 import { AffiliationDomainError, createAffiliationDomain, type AffiliationKind, type AffiliationStore } from "@/lib/affiliations-domain"
-import { affiliationSheets, affiliationView, readAffiliationRow, writeAffiliationRow, type AffiliationReferences } from "@/lib/actor-affiliation-schema"
+import { isOfficialFederation, affiliationSheets, affiliationView, readAffiliationRow, writeAffiliationRow, type AffiliationReferences } from "@/lib/actor-affiliation-schema"
 
 const text = (value: unknown) => String(value ?? "").trim()
 const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
@@ -27,6 +27,7 @@ async function context(kind: AffiliationKind) {
     async list(_kind, fresh = false) { return (await getSheetDataFrom(config.affiliationsSpreadsheetId, `${definition.sheet}!A:ZZ`, { fresh })).map(row => readAffiliationRow(kind, row, refs.statuses, formatDateForSheet)).filter(row => row.id && row.actorId) },
     actorExists: async (_kind, id) => actors.some(row => text(row[definition.actor]) === id),
     clubExists: async id => clubs.some(item => item.id === id),
+    isFederationType: async type => isOfficialFederation(kind, type, refs.entityTypes),
     entityExists: async (type, id) => Boolean(refs.entities[type]?.some(item => item.id === id)),
     statusExists: async id => refs.statuses.some(item => item.id === id),
     statusLabel: async id => refs.statuses.find(item => item.id === id)?.label || "",

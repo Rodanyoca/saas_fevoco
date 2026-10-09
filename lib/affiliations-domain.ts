@@ -12,6 +12,7 @@ export type AffiliationStore = {
   save(row: AffiliationRow, mode: "create" | "update"): Promise<void>
   actorExists(kind: AffiliationKind, id: string): Promise<boolean>
   clubExists(id: string): Promise<boolean>
+  isFederationType?(typeId: string): Promise<boolean>
   entityExists(typeId: string, id: string): Promise<boolean>
   statusExists(id: string): Promise<boolean>
   officialFunctionExists(id: string): Promise<boolean>
@@ -35,7 +36,7 @@ const prefixes: Record<AffiliationKind, string> = { athlete: "AFA", coach: "AFC"
 const isOfficial = (kind: AffiliationKind) => kind === "officiel"
 const targetsEntity = (kind: AffiliationKind) => kind === "officiel" || kind === "autre"
 const overlap = (a: AffiliationRow, start: string, end: string) => a.dateDebut <= (end || "9999-12-31") && start <= (a.dateFin || "9999-12-31")
-const sameTarget = (a: AffiliationRow, clubId: string, typeId: string, entityId: string) => targetsEntity(a.kind) ? a.entityTypeId === typeId && a.entityId === entityId : a.clubId === clubId
+const sameTarget = (a: AffiliationRow, clubId: string, typeId: string, entityId: string, federation = false) => targetsEntity(a.kind) ? a.entityTypeId === typeId && (federation || a.entityId === entityId) : a.clubId === clubId
 
 function nextId(kind: AffiliationKind, rows: AffiliationRow[]) {
   const prefix = prefixes[kind], pattern = new RegExp(`^${prefix}-(\\d{6})$`)
@@ -67,7 +68,9 @@ export function createAffiliationDomain(store: AffiliationStore) {
     if (!entity && (!values.id_club || !(await store.clubExists(values.id_club)))) throw new AffiliationDomainError("CLUB_INTROUVABLE", "Club introuvable.", 422, { id_club: "Club inconnu." })
     if (official && !values.id_fonction) throw new AffiliationDomainError("VALIDATION", "La fonction est obligatoire.", 422, { id_fonction: "Ce champ est obligatoire." })
     if (official && !(await store.officialFunctionExists(values.id_fonction))) throw new AffiliationDomainError("FONCTION_INVALIDE", "Fonction inconnue.", 422, { id_fonction: "Valeur inconnue." })
-    if (entity && (!values.id_type_entite || !values.id_entite || !(await store.entityExists(values.id_type_entite, values.id_entite)))) throw new AffiliationDomainError("ENTITE_INVALIDE", "Entité incompatible ou introuvable.", 422, { id_entite: "Entité inconnue pour ce type." })
+    const federation = official && Boolean(await store.isFederationType?.(values.id_type_entite))
+    if (federation) values.id_entite = ""
+    if (entity && !federation && (!values.id_type_entite || !values.id_entite || !(await store.entityExists(values.id_type_entite, values.id_entite)))) throw new AffiliationDomainError("ENTITE_INVALIDE", "Entité incompatible ou introuvable.", 422, { id_entite: "Entité inconnue pour ce type." })
     if (!(await store.statusExists(values.id_statut_affiliation))) throw new AffiliationDomainError("STATUT_INVALIDE", "Statut inconnu.", 422, { id_statut_affiliation: "Valeur inconnue." })
     const status = (await store.statusLabel(values.id_statut_affiliation)).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
     if (status === "TERMINE" && !values.date_fin) throw new AffiliationDomainError("VALIDATION", "La date de fin est obligatoire pour une affiliation terminée.", 422, { date_fin: "Ce champ est obligatoire." })
@@ -76,9 +79,9 @@ export function createAffiliationDomain(store: AffiliationStore) {
     const rows = await store.list(kind, true), current = currentId ? rows.find((row) => row.id === currentId && row.actorId === actorId) : undefined
     if (currentId && !current) throw new AffiliationDomainError("INTROUVABLE", "Affiliation introuvable pour cet acteur.", 404)
     const candidate: AffiliationRow = { id: currentId || store.generateId?.(kind) || nextId(kind, rows), kind, actorId, clubId: entity ? "" : values.id_club, entityTypeId: entity ? values.id_type_entite : "", entityId: entity ? values.id_entite : "", functionId: official ? values.id_fonction : "", dateDebut: values.date_debut, dateFin: values.date_fin, statusId: values.id_statut_affiliation, observations: values.observations, seasonId: kind === "autre" ? values.id_saison : "" }
-    const exact = rows.find((row) => row.id !== currentId && (Object.keys(candidate) as Array<keyof AffiliationRow>).filter(key => key !== "id").every(key => (row[key] || "") === (candidate[key] || "")))
+    const exact = rows.find((row) => row.id !== currentId && (Object.keys(candidate) as Array<keyof AffiliationRow>).filter(key => key !== "id" && !(federation && key === "entityId")).every(key => (row[key] || "") === (candidate[key] || "")))
     if (!currentId && exact) return { row: exact, created: false }
-    if (rows.some((row) => row.id !== currentId && row.actorId === actorId && sameTarget(row, candidate.clubId, candidate.entityTypeId, candidate.entityId) && overlap(row, candidate.dateDebut, candidate.dateFin))) throw new AffiliationDomainError("CHEVAUCHEMENT", "Cette période chevauche une affiliation existante.", 409, { date_debut: "Période en conflit.", date_fin: "Période en conflit." })
+    if (rows.some((row) => row.id !== currentId && row.actorId === actorId && sameTarget(row, candidate.clubId, candidate.entityTypeId, candidate.entityId, federation) && overlap(row, candidate.dateDebut, candidate.dateFin))) throw new AffiliationDomainError("CHEVAUCHEMENT", "Cette période chevauche une affiliation existante.", 409, { date_debut: "Période en conflit.", date_fin: "Période en conflit." })
     await store.save(candidate, currentId ? "update" : "create")
     return { row: candidate, created: !currentId }
   }

@@ -15,6 +15,8 @@ function id(kind: "PAR" | "UNI" | "PHU" | "INV", competitionId: string, rows: Sh
 export async function competitionEntryOptions() {
   const [clubs, athletes] = await Promise.all([getClubs(), getAthletes()])
   return {
+    clubLabels: Object.fromEntries(clubs.map(item => [item.idClub, item.nomClub])),
+    athleteLabels: Object.fromEntries(athletes.map(item => [item.idAthlete, item.nomComplet])),
     clubs: clubs.filter((item) => item.statut.toLowerCase() === "actif").map((item) => ({ id: item.idClub, label: item.nomClub })),
     athletes: athletes.filter((item) => item.statut.toLowerCase() === "actif").map((item) => ({ id: item.idAthlete, label: item.nomComplet, clubId: item.clubId, sexId: item.idSexe })),
   }
@@ -26,10 +28,10 @@ export async function createEntry(competitionId: string, input: Record<string, u
   if (!detail) throw new CompetitionDomainError("Compétition introuvable.", 404)
   if (detail.competition.statut === "TERMINEE") throw new CompetitionDomainError("Cette compétition est clôturée.", 409)
   const eventId = clean(input.id_epreuve_competition), phaseId = clean(input.id_phase_competition), groupId = clean(input.id_groupe), clubId = clean(input.id_club), athleteA = clean(input.id_athlete_a), athleteB = clean(input.id_athlete_b)
-  const event = detail.epreuves.find((row) => clean(row.id_epreuve_competition) === eventId), phase = detail.phases.find((row) => clean(row.id_phase_competition) === phaseId && clean(row.id_epreuve_competition) === eventId)
+  const event = detail.epreuves.find((row) => clean(row.id_epreuve_competition) === eventId && clean(row.statut) === "ACTIF"), phase = detail.phases.find((row) => clean(row.id_phase_competition) === phaseId && clean(row.id_epreuve_competition) === eventId && clean(row.statut) === "ACTIF")
   if (!event || !phase) throw new CompetitionDomainError("Épreuve ou phase invalide.", 400)
   const isBeach = clean(event.id_discipline) === "DISC009", typeId = isBeach ? "TUC002" : "TUC004"
-  if (clean(phase.id_mode_phase) === "MPH001") { if (!groupId || !detail.groupes.some((row) => clean(row.id_groupe) === groupId && clean(row.id_phase_competition) === phaseId)) throw new CompetitionDomainError("Un groupe de la phase est obligatoire.", 400, { id_groupe: "Groupe invalide." }) } else if (groupId) throw new CompetitionDomainError("Cette phase n’accepte pas de groupe.", 400, { id_groupe: "Groupe interdit." })
+  if (clean(phase.id_mode_phase) === "MPH001") { if (!groupId || !detail.groupes.some((row) => clean(row.id_groupe) === groupId && clean(row.id_phase_competition) === phaseId && clean(row.statut) === "ACTIF")) throw new CompetitionDomainError("Un groupe de la phase est obligatoire.", 400, { id_groupe: "Groupe invalide." }) } else if (groupId) throw new CompetitionDomainError("Cette phase n’accepte pas de groupe.", 400, { id_groupe: "Groupe interdit." })
   if (clubId && !options.clubs.some((item) => item.id === clubId)) throw new CompetitionDomainError("Club introuvable.", 400, { id_club: "Club invalide." })
   if (!isBeach && !clubId) throw new CompetitionDomainError("Le club est obligatoire en indoor.", 400, { id_club: "Club obligatoire." })
   if (isBeach) {

@@ -48,9 +48,10 @@ export function buildActorLicenceData(data: ActorLicenceSources, today: string) 
       const entityType = config.kind === "officiel" ? entityTypes.get(licenceText(row.id_type_entite)) : "CLUB"
       const entityId = licenceText(config.kind === "officiel" ? row.id_entite : row.id_club)
       const structure = entityType === "CLUB" ? clubs.get(entityId) : ["LIGUE", "ENTENTE", "FEDERATION"].includes(entityType || "") ? (data.structures[entityType === "LIGUE" ? "LIGUES" : entityType === "ENTENTE" ? "ENTENTES" : "FEDERATION"] || []).find(item => licenceText(item[entityType === "LIGUE" ? "id_ligue" : entityType === "ENTENTE" ? "id_entente" : "id_federation"]) === entityId) : undefined
-      const structureLabel = typeof structure === "string" ? structure : structure ? licenceText(structure.nom_ligue || structure.nom_entente || structure.nom_officiel) : ""
+      const federation = config.kind === "officiel" && entityType === "FEDERATION"
+      const structureLabel = federation ? licenceText((data.structures.FEDERATION || [])[0]?.nom_officiel) || "FEDERATION" : typeof structure === "string" ? structure : structure ? licenceText(structure.nom_ligue || structure.nom_entente || structure.nom_officiel) : ""
       const statusId = licenceText(row.id_statut_affiliation), status = (data.refs.STATUTS_AFFILIATION || []).find(item => licenceText(item.id_statut_affiliation) === statusId)
-      refs.affiliations.push({ id, actorId, typeId, label: `${structureLabel || entityId || "Structure introuvable"} · ${id}`, dateDebut: licenceReadDate(row.date_debut), dateFin: licenceText(row.date_fin) ? licenceReadDate(row.date_fin) || "0000-01-01" : "", statusId, status: licenceText(status?.nom_statut_affiliation) || statusId, targetExists: Boolean(structure) })
+      refs.affiliations.push({ id, actorId, typeId, label: `${structureLabel || entityId || "Structure introuvable"} · ${id}`, dateDebut: licenceReadDate(row.date_debut), dateFin: licenceText(row.date_fin) ? licenceReadDate(row.date_fin) || "0000-01-01" : "", statusId, status: licenceText(status?.nom_statut_affiliation) || statusId, targetExists: federation || Boolean(structure) })
     }
   }
   const rows: ActorLicenceView[] = data.licences.filter(row => licenceText(row.id_licence)).map(row => {

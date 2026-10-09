@@ -61,6 +61,8 @@ export async function createPhase(competitionId: string, input: Record<string, u
   const fields: Record<string, string> = {}; for (const key of ["id_epreuve_competition", "id_type_phase", "id_mode_phase", "numero_phase", "nom_phase"] as const) if (!values[key]) fields[key] = "Ce champ est obligatoire."
   if (Object.keys(fields).length) throw new CompetitionDomainError("Veuillez corriger les champs indiqués.", 400, fields)
   if (!detail.epreuves.some((row) => clean(row.id_epreuve_competition) === values.id_epreuve_competition)) throw new CompetitionDomainError("Épreuve étrangère à la compétition.", 400, { id_epreuve_competition: "Épreuve invalide." })
+  if (!detail.epreuves.some(row => clean(row.id_epreuve_competition) === values.id_epreuve_competition && clean(row.statut) === "ACTIF")) throw new CompetitionDomainError("L’épreuve doit être active.", 409)
+  if (!/^[1-9]\d*$/.test(values.numero_phase) || !Number.isSafeInteger(Number(values.numero_phase))) throw new CompetitionDomainError("L’ordre doit être un entier positif.", 400, { numero_phase: "Ordre invalide." })
   requireReference(bundle, "TYPES_PHASES", values.id_type_phase, "id_type_phase"); requireReference(bundle, "MODES_PHASES", values.id_mode_phase, "id_mode_phase")
   const id = entityId("PHA", competitionId, detail.phases, "id_phase_competition")
   await appendSheetRecord(env.googleSheets.competitionsSpreadsheetId, "COMPETITIONS_PHASES", { id_phase_competition: id, id_competition: competitionId, ...values })

@@ -89,3 +89,20 @@ test("une modification conserve la ligne et ne peut cibler l’affiliation d’u
   assert.equal(store.rows[0].statusId, "SAF002")
   await assert.rejects(() => domain.update("coach", "coach-1", result.row.id, { id_club: "club-1", date_debut: "07102026", id_statut_affiliation: "SAF001" }), /Affiliation introuvable/)
 })
+
+test("official federation affiliation needs no entity name; territorial ones still do", async () => {
+  const store = memoryStore()
+  Object.assign(store, { isFederationType: async (id: string) => id === "FED-TYPE" })
+  const domain = createAffiliationDomain(store)
+  const command = { id_type_entite: "FED-TYPE", id_fonction: "FON001", date_debut: "09102026", id_statut_affiliation: "SAF001" }
+  const result = await domain.create("officiel", "officiel-1", command)
+  assert.equal(result.row.entityId, "")
+  await domain.update("officiel", "officiel-1", result.row.id, { ...command, id_entite: "stale-club" })
+  assert.equal(store.rows[0].entityId, "")
+  await assert.rejects(() => domain.create("officiel", "officiel-1", { ...command, id_type_entite: "STR001" }), /incompatible/)
+  await assert.rejects(() => domain.create("officiel", "officiel-1", { ...command, id_type_entite: "unknown" }), /incompatible/)
+  const legacy = { ...store.rows[0], entityId: "FED-LEGACY" }
+  const oldStore = memoryStore([legacy])
+  Object.assign(oldStore, { isFederationType: async (id: string) => id === "FED-TYPE" })
+  await assert.rejects(() => createAffiliationDomain(oldStore).create("officiel", "officiel-1", { ...command, date_debut: "10102026" }), (e: unknown) => e instanceof Error && "code" in e && e.code === "CHEVAUCHEMENT")
+})

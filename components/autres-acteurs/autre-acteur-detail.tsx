@@ -14,8 +14,9 @@ import type { AutreActeur, TypeAutreActeur } from "@/lib/types"
 export function AutreActeurDetail({ acteur, sexes, types, onBack, onUpdated }: { acteur: AutreActeur; sexes: ActorSexOption[]; types: TypeAutreActeur[]; onBack: () => void; onUpdated: (item: AutreActeur) => void }) {
   const passport = Boolean(acteur.numeroPasseport || acteur.dateDelivrancePasseport || acteur.dateExpirationPasseport)
   return <div className="w-full space-y-6">
+    <h2 className="break-words text-2xl font-bold">{acteur.nomComplet}</h2>
     <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button><AutreActeurFormDialog acteur={acteur} sexes={sexes} types={types} onSaved={onUpdated} /></div>
-    <Tabs defaultValue="general" className="gap-4"><TabsList className="grid h-auto w-full grid-cols-2"><TabsTrigger value="general">G?n?ral</TabsTrigger><TabsTrigger value="affiliations">Affiliations</TabsTrigger></TabsList>
+    <Tabs defaultValue="general" className="gap-4"><TabsList className="grid h-auto w-full grid-cols-2"><TabsTrigger value="general">Général</TabsTrigger><TabsTrigger value="affiliations">Affiliations</TabsTrigger></TabsList>
     <TabsContent value="general"><div className="grid gap-6 md:grid-cols-2">
       <DetailCard title="Identité" icon={User} fields={[
         { label: "Identifiant", value: acteur.idAutreActeur },

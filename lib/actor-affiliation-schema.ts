@@ -15,6 +15,8 @@ export const affiliationSheets = {
 } as const
 export const isAffiliationKind = (value: string): value is AffiliationKind => Object.hasOwn(affiliationSheets, value)
 export const usesEntity = (kind: AffiliationKind) => kind === "officiel" || kind === "autre"
+export const isOfficialFederation = (kind: AffiliationKind, typeId: string, types: AffiliationOption[]) =>
+  kind === "officiel" && types.some(item => item.id === typeId && item.label.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase() === "FEDERATION")
 type Row = Record<string, unknown>
 const text = (value: unknown) => String(value ?? "").trim()
 
@@ -38,7 +40,8 @@ export function writeAffiliationRow(row: AffiliationRow, statusLabel: string): R
 
 export function affiliationView(row: AffiliationRow, refs: AffiliationReferences): ActorAffiliationView {
   const find = (options: AffiliationOption[], id: string) => options.find(item => item.id === id)?.label || ""
-  const structure = usesEntity(row.kind) ? find(refs.entities[row.entityTypeId] || [], row.entityId) : find(refs.clubs, row.clubId)
+  const federation = isOfficialFederation(row.kind, row.entityTypeId, refs.entityTypes)
+  const structure = federation ? (find(refs.entities[row.entityTypeId] || [], row.entityId) || refs.entities[row.entityTypeId]?.[0]?.label || find(refs.entityTypes, row.entityTypeId)) : usesEntity(row.kind) ? find(refs.entities[row.entityTypeId] || [], row.entityId) : find(refs.clubs, row.clubId)
   const statut = find(refs.statuses, row.statusId)
   return { ...row, structure, entityType: find(refs.entityTypes, row.entityTypeId), fonction: find(refs.functions, row.functionId), statut: statut || "Statut inconnu", saison: find(refs.seasons, row.seasonId || ""), anomaly: [!structure && "Structure introuvable", !statut && "Statut introuvable"].filter(Boolean).join(" · ") }
 }

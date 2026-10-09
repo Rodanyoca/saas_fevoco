@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Medecin } from "@/lib/types"
 
-export function MedecinsTable({ medecins, onViewMedecin }: { medecins: Medecin[]; onViewMedecin: (item: Medecin) => void }) {
+export function MedecinsTable({ medecins, activeLicenceNumbers, onViewMedecin }: { medecins: Medecin[]; activeLicenceNumbers: Map<string, string>; onViewMedecin: (item: Medecin) => void }) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const pages = Math.max(1, Math.ceil(medecins.length / pageSize))
@@ -20,6 +20,7 @@ export function MedecinsTable({ medecins, onViewMedecin }: { medecins: Medecin[]
       items={visible}
       onView={onViewMedecin}
       showId={false}
+      firstColumn={{ label: "Licence", value: (medecin) => activeLicenceNumbers.get(medecin.idMedecin) || "" }}
       showCount={false}
       identityLayout="avatar-in-name"
       stackSexAge

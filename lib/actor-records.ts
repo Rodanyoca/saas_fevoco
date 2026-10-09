@@ -84,5 +84,12 @@ async function licences(kind: keyof typeof actorTypeIds) {
 }
 export const getCoachLicences = (): Promise<BaseActorLicence[]> => licences("coach")
 export const getMedecinLicences = (): Promise<BaseActorLicence[]> => licences("medecin")
-export const getOfficielLicences = (): Promise<BaseActorLicence[]> => licences("officiel")
+export const getOfficielLicences = async (): Promise<BaseActorLicence[]> => {
+  const [items, cycles] = await Promise.all([
+    licences("officiel"),
+    getSheetDataFrom(env.googleSheets.referentielsSpreadsheetId, "CYCLES_LICENCES!A:ZZ"),
+  ])
+  const names = new Map(cycles.map(row => [String(row.id_cycle_licence ?? "").trim(), String(row.nom_cycle_licence ?? "").trim()]))
+  return items.map(item => ({ ...item, cycleLicence: names.get(item.idCycleLicence || "") || "" }))
+}
 export const getArbitreLicences = (): Promise<BaseActorLicence[]> => licences("arbitre")

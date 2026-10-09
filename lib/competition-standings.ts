@@ -14,8 +14,8 @@ export async function recalculateStandings(competitionId: string, phaseId: strin
   if (!detail) throw new CompetitionDomainError("Compétition introuvable.", 404)
   if (detail.competition.statut === "TERMINEE") throw new CompetitionDomainError("Cette compétition est clôturée.", 409)
   const phase = detail.phases.find((row) => clean(row.id_phase_competition) === phaseId)
-  if (!phase || clean(phase.id_mode_phase) !== "MPH001") throw new CompetitionDomainError("Le classement exige une phase de groupes.", 400)
-  if (!groupId || !detail.groupes.some((row) => clean(row.id_groupe) === groupId && clean(row.id_phase_competition) === phaseId)) throw new CompetitionDomainError("Groupe invalide.", 400)
+  if (!phase || clean(phase.statut) !== "ACTIF" || clean(phase.id_mode_phase) !== "MPH001") throw new CompetitionDomainError("Le classement exige une phase de groupes.", 400)
+  if (!groupId || !detail.groupes.some((row) => clean(row.id_groupe) === groupId && clean(row.id_phase_competition) === phaseId && clean(row.statut) === "ACTIF")) throw new CompetitionDomainError("Groupe invalide.", 400)
   const units = detail.phasesUnites.filter((row) => clean(row.id_phase_competition) === phaseId && clean(row.id_groupe) === groupId && clean(row.statut) === "ACTIF").map((row) => clean(row.id_unite_competition))
   const matches = detail.matches.filter((row) => clean(row.id_phase_competition) === phaseId && clean(row.id_groupe) === groupId)
   const standings = calculateStandings(units, matches, detail.resultats, bundle.referenceData.TYPES_RESULTATS ?? [])
@@ -36,8 +36,8 @@ export async function qualifyUnit(competitionId: string, input: Record<string, u
   if (!source || !destination || clean(source.id_epreuve_competition) !== clean(destination.id_epreuve_competition) || number(destination.numero_phase) <= number(source.numero_phase)) throw new CompetitionDomainError("La phase de destination doit être ultérieure et appartenir à la même épreuve.", 400)
   if (clean(destination.statut) !== "ACTIF") throw new CompetitionDomainError("La phase de destination doit être active.", 409)
   if (!detail.phasesUnites.some((row) => clean(row.id_phase_competition) === sourceId && clean(row.id_unite_competition) === unitId && clean(row.statut) === "ACTIF")) throw new CompetitionDomainError("L’unité n’appartient pas à la phase source.", 400)
-  if (clean(destination.id_mode_phase) === "MPH001") { if (!groupId || !detail.groupes.some((row) => clean(row.id_groupe) === groupId && clean(row.id_phase_competition) === destinationId)) throw new CompetitionDomainError("Un groupe de destination est obligatoire.", 400) } else if (groupId) throw new CompetitionDomainError("Le groupe est interdit dans cette phase.", 400)
-  if (matchId) { const result = detail.resultats.find((row) => clean(row.id_match) === matchId); if (!result || clean(result.id_unite_vainqueur) !== unitId) throw new CompetitionDomainError("L’unité n’est pas le vainqueur officiel du match source.", 400) }
+  if (clean(destination.id_mode_phase) === "MPH001") { if (!groupId || !detail.groupes.some((row) => clean(row.id_groupe) === groupId && clean(row.id_phase_competition) === destinationId && clean(row.statut) === "ACTIF")) throw new CompetitionDomainError("Un groupe de destination est obligatoire.", 400) } else if (groupId) throw new CompetitionDomainError("Le groupe est interdit dans cette phase.", 400)
+  if (matchId) { if (!detail.matches.some(row => clean(row.id_match) === matchId && clean(row.id_phase_competition) === sourceId)) throw new CompetitionDomainError("Match hors de la phase source.", 400); const result = detail.resultats.find((row) => clean(row.id_match) === matchId); if (!result || clean(result.id_unite_vainqueur) !== unitId) throw new CompetitionDomainError("L’unité n’est pas le vainqueur officiel du match source.", 400) }
   if (detail.phasesUnites.some((row) => clean(row.id_phase_competition) === destinationId && clean(row.id_groupe) === groupId && clean(row.id_unite_competition) === unitId && clean(row.statut) === "ACTIF")) throw new CompetitionDomainError("Cette qualification existe déjà.", 409)
   let date = ""; try { date = formatDateForSheet(clean(input.date_affectation)) } catch { throw new CompetitionDomainError("Date d’affectation invalide.", 400) }
   const id = nextId("PHU", competitionId, detail.phasesUnites, "id_phase_unite")

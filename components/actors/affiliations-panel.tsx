@@ -16,7 +16,7 @@ import { CompactDateInput } from "@/components/ui/compact-date-input"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { compactDateFromSheet, formatDateForDisplay } from "@/lib/compact-date"
 import type { AffiliationKind } from "@/lib/affiliations-domain"
-import { usesEntity, type ActorAffiliationView, type AffiliationOption, type AffiliationReferences } from "@/lib/actor-affiliation-schema"
+import { isOfficialFederation, usesEntity, type ActorAffiliationView, type AffiliationOption, type AffiliationReferences } from "@/lib/actor-affiliation-schema"
 
 const emptyRefs: AffiliationReferences = { clubs: [], statuses: [], functions: [], entityTypes: [], entities: {}, seasons: [] }
 const blank = () => ({ id_club: "", id_type_entite: "", id_entite: "", id_fonction: "", id_saison: "", date_debut: "", date_fin: "", id_statut_affiliation: "", observations: "" })
@@ -29,6 +29,7 @@ export function AffiliationsPanel({ kind, actorId, onChanged }: { kind: Affiliat
   const [loading, setLoading] = useState(true), [loadError, setLoadError] = useState("")
   const [open, setOpen] = useState(false), [editing, setEditing] = useState<ActorAffiliationView | null>(null), [viewing, setViewing] = useState(false)
   const [values, setValues] = useState(blank), [errors, setErrors] = useState<Record<string, string>>({}), [saving, setSaving] = useState(false)
+  const federation = isOfficialFederation(kind, values.id_type_entite, refs.entityTypes)
   const endpoint = `/api/affiliations/${kind}`
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true); setLoadError("")
@@ -69,7 +70,7 @@ export function AffiliationsPanel({ kind, actorId, onChanged }: { kind: Affiliat
       {!items.length ? <p className="text-muted-foreground">Aucune affiliation enregistrée.</p> : <><div className="grid gap-3 md:hidden">{items.map(item => <div key={item.id} className="rounded-lg border p-4">{headers.map((header, index) => <div key={header} className="grid grid-cols-2 gap-2 py-1 text-sm"><span className="text-muted-foreground">{header}</span><span className="min-w-0 break-words">{index === headers.length - 1 ? <StatusBadge status={item.statut} /> : cells(item)[index]}</span></div>)}{actions(item)}</div>)}</div><div className="hidden overflow-hidden rounded-lg border md:block"><Table aria-label="Affiliations"><TableHeader className="bg-muted/50"><TableRow>{headers.map(header => <TableHead key={header}>{header}</TableHead>)}<TableHead className="w-20 text-center">Actions</TableHead></TableRow></TableHeader><TableBody>{items.map(item => <TableRow key={item.id}>{cells(item).map((cell, index) => <TableCell key={index} className={index === 0 ? "font-medium" : undefined}>{index === headers.length - 1 ? <StatusBadge status={cell} /> : cell}</TableCell>)}<TableCell className="py-2">{actions(item)}</TableCell></TableRow>)}</TableBody></Table></div></>}
     </>}
   </CardContent><Sheet open={open} onOpenChange={value => { if (!saving) setOpen(value) }}><SheetContent className="w-full overflow-y-auto sm:max-w-md"><form onSubmit={submit} className="flex min-h-full flex-col"><SheetHeader><SheetTitle>{viewing ? "Consulter" : editing ? "Modifier" : "Ajouter"} une affiliation</SheetTitle><SheetDescription>Affiliation de {labels[kind]}. L’identifiant est généré automatiquement.</SheetDescription></SheetHeader><div className="flex-1 space-y-4 px-4 py-2">
-    {usesEntity(kind) ? <>{select("id_type_entite", "Type d’entité *", refs.entityTypes)}{select("id_entite", "Entité *", refs.entities[values.id_type_entite] || [], true)}</> : select("id_club", "Club *", refs.clubs, true)}
+    {usesEntity(kind) ? <>{select("id_type_entite", "Type d’entité *", refs.entityTypes)}{!federation && select("id_entite", "Entité *", refs.entities[values.id_type_entite] || [], true)}</> : select("id_club", "Club *", refs.clubs, true)}
     {kind === "officiel" && select("id_fonction", "Fonction *", refs.functions)}
     {kind === "autre" && select("id_saison", "Saison *", refs.seasons)}
     {(["date_debut", "date_fin"] as const).map(key => <div key={key} className="space-y-2"><Label htmlFor={`affiliation-${key}`}>{key === "date_debut" ? "Date de début *" : "Date de fin (facultative)"}</Label><CompactDateInput id={`affiliation-${key}`} value={values[key]} onValueChange={value => set(key, value)} required={key === "date_debut"} optional={key === "date_fin"} disabled={saving || viewing} aria-invalid={Boolean(errors[key])} />{errors[key] && <p className="text-sm text-destructive">{errors[key]}</p>}</div>)}

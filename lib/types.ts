@@ -244,6 +244,7 @@ export interface BaseActorLicence {
   dateFinValidite: string
   statutLicence: Statut
   idStatutLicence?: string
+  cycleLicence?: string
   idCycleLicence?: string
   idAffiliationActeur?: string
   idLicencePrecedente: string
