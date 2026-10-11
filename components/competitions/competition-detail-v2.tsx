@@ -1,5 +1,7 @@
 import Link from "next/link"
+import type { ReactNode } from "react"
 import { ArrowLeft, MapPin, Trophy } from "lucide-react"
+import { StatusBadge } from "@/components/dashboard/status-badge"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -19,6 +21,8 @@ import { CompetitionStandingsManager } from "@/components/competitions/competiti
 import { CompetitionDistinctionManager } from "@/components/competitions/competition-distinction-manager"
 import { CompetitionCloseAction } from "@/components/competitions/competition-close-action"
 import { CompetitionEditSheet } from "@/components/competitions/competition-edit-sheet"
+import { formatDateForDisplay } from "@/lib/compact-date"
+import { CompetitionEntryEditSheet } from "./competition-entry-edit-sheet"
 
 const tabs = [
   ["general", "Général"], ["epreuves", "Épreuves"], ["structure", "Phases"],
@@ -43,7 +47,18 @@ export function CompetitionDetailV2({ detail, references, entryOptions, peopleOp
     GROUPS: detail.groupes.map(row => ({ id: value(row, "id_groupe"), label: value(row, "nom_groupe") })),
   }
   const participants = detail.intervenants.map(row => ({ ...row, actor_label: peopleOptions.find(person => person.id === value(row, "id_acteur") && person.typeId === value(row, "id_type_acteur"))?.label || value(row, "id_acteur") }))
-  const distinctions = detail.distinctions.map(row => ({ ...row, actor_label: peopleOptions.find(person => person.id === value(row, "id_acteur") && (!value(row, "id_type_acteur") || person.typeId === value(row, "id_type_acteur")))?.label || value(row, "id_acteur") }))
+  const entryRows = detail.unites.map(unit => {
+    const event = detail.epreuves.find(row => value(row, "id_epreuve_competition") === value(unit, "id_epreuve_competition"))
+    const participation = detail.participants.find(row => value(row, "id_participation") === value(unit, "id_participation"))
+    const assignments = detail.phasesUnites.filter(row => value(row, "id_unite_competition") === value(unit, "id_unite_competition") && value(row, "statut") !== "INACTIF")
+    const initialAssignment = detail.phasesUnites.find(row => value(row, "id_unite_competition") === value(unit, "id_unite_competition") && value(row, "id_type_affectation_phase") === "TAP001") ?? assignments[0]
+    return { ...unit, club_label: entryOptions.clubLabels[value(unit, "id_club")] || unitLabels[value(unit, "id_unite_competition")],
+      id_categorie_age: event ? value(event, "id_categorie_age") : "", id_sexe: event ? value(event, "id_sexe") : "",
+      id_groupe: initialAssignment ? value(initialAssignment, "id_groupe") : "",
+      registration_date_label: formatDateForDisplay(participation ? value(participation, "date_inscription") : ""),
+      statut: participation ? value(participation, "statut_participation") || value(unit, "statut") : value(unit, "statut"),
+    }
+  })
   const closed = detail.competition.statut === "TERMINEE"
   return <div className="flex flex-col"><Header title={`Édition : ${detail.competition.nom}`} subtitle={detail.competition.saison} /><main className="space-y-5 p-4 sm:p-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><Button asChild variant="outline"><Link href="/competitions"><ArrowLeft className="size-4" />Retour à la liste</Link></Button>{!closed ? <CompetitionCloseAction competitionId={detail.competition.id} closed={false} /> : null}</div>
@@ -53,12 +68,12 @@ export function CompetitionDetailV2({ detail, references, entryOptions, peopleOp
     {selected === "general" ? <General detail={detail} references={references} /> : null}
     {selected === "epreuves" ? <CompetitionEventCards competitionId={detail.competition.id} closed={closed} events={detail.epreuves} phases={detail.phases} units={detail.unites} matches={detail.matches} references={references} /> : null}
     {selected === "structure" ? <CompetitionPhasePanel competitionId={detail.competition.id} closed={closed} references={references} events={detail.epreuves} phases={detail.phases} groups={detail.groupes} assignments={detail.phasesUnites} matches={detail.matches} /> : null}
-    {selected === "unites" ? <div className="space-y-4"><CompetitionEntryManager competitionId={detail.competition.id} closed={detail.competition.statut === "TERMINEE"} events={detail.epreuves} phases={detail.phases} groups={detail.groupes} options={entryOptions} /><SimpleTable title="Unités engagées" rows={detail.unites} columns={[["id_unite_competition", "Engagement"], ["id_type_unite_competition", "Type"], ["id_club", "Club"], ["id_equipe_nationale_saison", "Équipe nationale"], ["statut", "Statut"]]} references={displayReferences} /></div> : null}
+    {selected === "unites" ? <section className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">Unités engagées</h2><p className="text-sm text-muted-foreground">Chaque club ou paire est engagé dans une épreuve puis affecté à sa phase initiale.</p></div><CompetitionEntryManager competitionId={detail.competition.id} closed={closed} events={detail.epreuves} phases={detail.phases} groups={detail.groupes} options={entryOptions} /></div><SimpleTable renderActions={closed ? undefined : row => <CompetitionEntryEditSheet unit={row} detail={detail} clubOptions={entryOptions.clubs} label={unitLabels[value(row, "id_unite_competition")]} />} discreet title="Unités engagées" rows={entryRows} columns={[["club_label", "Club"], ["id_categorie_age", "Catégorie"], ["id_sexe", "Sexe"], ["id_groupe", "Groupe"], ["registration_date_label", "Date d’inscription"], ["statut", "Statut"]]} references={displayReferences} /></section> : null}
     {selected === "intervenants" ? <div className="space-y-4"><CompetitionPeopleManager unitLabels={unitLabels} competitionId={detail.competition.id} closed={detail.competition.statut === "TERMINEE"} options={peopleOptions} units={detail.unites} /><SimpleTable title="Intervenants" rows={participants} columns={[["actor_label", "Nom"], ["id_type_acteur", "Type"], ["role_participant", "Rôle"], ["id_unite_competition", "Unité"], ["statut", "Statut"]]} references={displayReferences} /></div> : null}
     {selected === "matchs" ? <div className="space-y-4"><CompetitionMatchManager competitionId={detail.competition.id} closed={closed} events={detail.epreuves} phases={detail.phases} groups={detail.groupes} units={detail.unites} phaseUnits={detail.phasesUnites} unitLabels={unitLabels} /><CompetitionMatchCards matches={detail.matches} results={detail.resultats} phases={detail.phases} groups={detail.groupes} unitLabels={unitLabels} /></div> : null}
     {selected === "resultats" ? <div className="space-y-4"><CompetitionResultManager competitionId={detail.competition.id} closed={closed} matches={detail.matches} results={detail.resultats} phases={detail.phases} events={detail.epreuves} units={detail.unites} unitLabels={unitLabels} statuses={references.STATUTS_RESULTATS ?? []} /><CompetitionResultCards matches={detail.matches} results={detail.resultats} phases={detail.phases} groups={detail.groupes} unitLabels={unitLabels} statuses={references.STATUTS_RESULTATS ?? []} /></div> : null}
     {selected === "classements" ? <div className="space-y-4"><CompetitionStandingsManager unitLabels={unitLabels} competitionId={detail.competition.id} closed={detail.competition.statut === "TERMINEE"} phases={detail.phases} groups={detail.groupes} units={detail.unites} phaseUnits={detail.phasesUnites} matches={detail.matches} /><SimpleTable title="Classements et qualifications" rows={detail.classements} columns={[["id_phase_competition", "Phase"], ["id_groupe", "Groupe"], ["rang", "Rang"], ["id_unite_competition", "Unité"], ["matchs_joues", "MJ"], ["victoires", "V"], ["defaites", "D"], ["difference_sets", "+/- sets"], ["ratio_sets", "Ratio sets"], ["ratio_points", "Ratio points"], ["points_classement", "Points"]]} references={displayReferences} /></div> : null}
-    {selected === "distinctions" ? <div className="space-y-4"><CompetitionDistinctionManager unitLabels={unitLabels} competitionId={detail.competition.id} closed={detail.competition.statut === "TERMINEE"} types={references.TYPES_DISTINCTIONS ?? []} targets={distinctionTargets} events={detail.epreuves} phases={detail.phases} matches={detail.matches} units={detail.unites} people={peopleOptions} distinctions={detail.distinctions} /><SimpleTable title="Distinctions" rows={distinctions} columns={[["id_type_distinction", "Distinction"], ["actor_label", "Bénéficiaire"], ["id_unite_competition", "Unité"], ["date_attribution", "Date"], ["statut", "Statut"]]} references={displayReferences} /></div> : null}
+    {selected === "distinctions" ? <CompetitionDistinctionManager clubLabels={entryOptions.clubLabels} unitLabels={unitLabels} competitionId={detail.competition.id} closed={closed} types={references.TYPES_DISTINCTIONS ?? []} targets={distinctionTargets} events={detail.epreuves} phases={detail.phases} matches={detail.matches} units={detail.unites} people={peopleOptions} distinctions={detail.distinctions} /> : null}
   </main></div>
 }
 
@@ -71,8 +86,17 @@ function CompetitionProgress({ detail, closed }: { detail: NonNullable<ReturnTyp
   return <div className="space-y-2"><div className="flex flex-wrap gap-1.5 rounded-lg border bg-muted/30 p-3 text-xs sm:text-sm">{steps.map((step, index) => <span key={step} className="inline-flex items-center gap-1.5"><span className={`rounded-full px-2.5 py-1 font-medium ${done[index] ? "bg-emerald-500/15 text-emerald-700" : "bg-background"}`}>{step}</span>{index < steps.length - 1 ? <span>→</span> : null}</span>)}</div>{warning && !closed ? <p className="text-sm text-amber-700">{warning}</p> : null}</div>
 }
 
-function SimpleTable({ title, rows, columns, references }: { title: string; rows: SheetRow[]; columns: Array<[string, string]>; references: Record<string, Option[]> }) {
+function SimpleTable({ title, rows, columns, references, discreet = false, renderActions }: { renderActions?: (row: SheetRow) => ReactNode; discreet?: boolean; title: string; rows: SheetRow[]; columns: Array<[string, string]>; references: Record<string, Option[]> }) {
   const refByField: Record<string, string> = { id_unite_competition: "UNITS", id_club: "CLUBS", id_phase_competition: "PHASES", id_groupe: "GROUPS", id_discipline: "DISCIPLINES", id_categorie_age: "CATEGORIES_AGE", id_sexe: "SEXES", id_type_phase: "TYPES_PHASES", id_mode_phase: "MODES_PHASES", id_type_unite_competition: "TYPES_UNITES_COMPETITION", id_type_acteur: "TYPES_ACTEURS", id_type_distinction: "TYPES_DISTINCTIONS" }
   const display = (row: SheetRow, key: string) => { const raw = value(row, key); const sheet = refByField[key]; return sheet ? (references[sheet]?.find((option) => option.id === raw)?.label ?? raw ?? "—") || "—" : raw || "—" }
+  if (discreet) return !rows.length ? <p className="rounded-lg border p-6 text-center text-muted-foreground">Aucun club ou paire engagé.</p> : <>
+    <div className="hidden min-w-0 md:block" role="table" aria-label={title}>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))${renderActions ? " auto" : ""}` }}>
+      <div className="contents" role="row">{columns.map(([key, label]) => <div key={key} role="columnheader" className="min-w-0 break-words border-b p-3 text-xs font-semibold uppercase text-muted-foreground">{label}</div>)}{renderActions ? <div role="columnheader" className="border-b p-3 text-xs font-semibold uppercase text-muted-foreground">Actions</div> : null}</div>
+      {rows.map((row, index) => <div key={index} className="contents" role="row">{columns.map(([key]) => <div key={key} role="cell" className="min-w-0 break-words border-b p-3 text-sm">{key.includes("statut") ? <StatusBadge status={display(row, key)} /> : display(row, key)}</div>)}{renderActions ? <div role="cell" className="border-b p-3">{renderActions(row)}</div> : null}</div>)}
+      </div>
+    </div>
+    <div className="grid gap-3 md:hidden">{rows.map((row, index) => <article key={index} className="rounded-lg border p-4"><p className="font-medium">{display(row, columns[0][0])}</p><dl className="mt-3 grid grid-cols-2 gap-2 text-sm">{columns.slice(1).map(([key, label]) => <div key={key} className="contents"><dt className="text-muted-foreground">{label}</dt><dd className="min-w-0 break-words">{key.includes("statut") ? <StatusBadge status={display(row, key)} /> : display(row, key)}</dd></div>)}</dl>{renderActions ? <div className="mt-3 flex justify-end">{renderActions(row)}</div> : null}</article>)}</div>
+  </>
   return <section className="overflow-hidden rounded-xl border bg-card"><div className="border-b px-4 py-3"><h2 className="font-semibold">{title}</h2></div><div className="hidden overflow-x-auto md:block"><Table><TableHeader><TableRow>{columns.map(([key, label]) => <TableHead key={key}>{label}</TableHead>)}</TableRow></TableHeader><TableBody>{rows.map((row, index) => <TableRow key={`${value(row, Object.keys(row)[0])}-${index}`}>{columns.map(([key]) => <TableCell key={key}>{key.includes("statut") ? <Badge variant="outline">{display(row, key)}</Badge> : display(row, key)}</TableCell>)}</TableRow>)}{!rows.length ? <TableRow><TableCell colSpan={columns.length} className="h-28 text-center text-muted-foreground">Aucune donnée enregistrée.</TableCell></TableRow> : null}</TableBody></Table></div><div className="divide-y md:hidden">{rows.map((row, index) => <article key={index} className="grid grid-cols-2 gap-3 p-4 text-sm">{columns.map(([key, label]) => <div key={key} className="min-w-0"><p className="text-xs text-muted-foreground">{label}</p><p className="break-words">{display(row, key)}</p></div>)}</article>)}{!rows.length && <p className="p-6 text-center text-sm text-muted-foreground">Aucune donnée enregistrée.</p>}</div></section>
 }

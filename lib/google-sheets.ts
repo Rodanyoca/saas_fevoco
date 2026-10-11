@@ -297,6 +297,41 @@ export async function updateSheetRecordById(
   invalidateSheet(spreadsheetId, sheetName)
 }
 
+/** Update related records together, addressing cells by header and preserving all other cells. */
+export async function updateSheetRecordsBatch(
+  spreadsheetId: string,
+  records: Array<{ sheetName: string; idHeader: string; id: string; record: Record<string, string>; dateHeaders?: string[] }>,
+): Promise<void> {
+  if (!records.length) return
+  const sheets = await writableSheets()
+  const names = [...new Set(records.map(item => item.sheetName))]
+  const [data, metadata] = await Promise.all([
+    sheets.spreadsheets.values.batchGet({ spreadsheetId, ranges: names.map(name => `${name}!A:ZZ`) }),
+    sheets.spreadsheets.get({ spreadsheetId, fields: "sheets.properties(sheetId,title)" }),
+  ])
+  const requests = records.flatMap(({ sheetName, idHeader, id, record, dateHeaders = [] }) => {
+    const values = data.data.valueRanges?.[names.indexOf(sheetName)]?.values ?? []
+    const headers = (values[0] ?? []).map(normalizeHeader)
+    const idColumn = headers.indexOf(normalizeHeader(idHeader))
+    const sheetId = metadata.data.sheets?.find(sheet => sheet.properties?.title === sheetName)?.properties?.sheetId
+    if (idColumn < 0 || sheetId == null) throw new Error(`Onglet ou identifiant absent dans ${sheetName}`)
+    const matches = values.map((row, index) => ({ row, index })).slice(1).filter(({ row }) => String(row[idColumn] ?? "").trim() === id)
+    if (matches.length !== 1) throw new Error(`${sheetName}: identifiant absent ou dupliqué. Modification refusée.`)
+    return Object.entries(record).map(([header, value]) => {
+      const column = headers.indexOf(normalizeHeader(header))
+      if (column < 0) throw new Error(`Colonne ${header} absente dans ${sheetName}`)
+      const date = dateHeaders.includes(header)
+      return { updateCells: {
+        range: { sheetId, startRowIndex: matches[0].index, endRowIndex: matches[0].index + 1, startColumnIndex: column, endColumnIndex: column + 1 },
+        rows: [{ values: [{ userEnteredValue: { stringValue: value }, ...(date ? { userEnteredFormat: { numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } } } : {}) }] }],
+        fields: date ? "userEnteredValue,userEnteredFormat.numberFormat" : "userEnteredValue",
+      } }
+    })
+  })
+  await sheets.spreadsheets.batchUpdate({ spreadsheetId, requestBody: { requests } })
+  names.forEach(name => invalidateSheet(spreadsheetId, name))
+}
+
 export async function deleteSheetRecordById(
   spreadsheetId: string,
   sheetName: string,
