@@ -16,3 +16,7 @@ node_modules
 .DS_Store
 .vercel
 tsconfig.tsbuildinfo
+
+# Authentication browser verification artifacts
+playwright-report/
+test-results/auth/

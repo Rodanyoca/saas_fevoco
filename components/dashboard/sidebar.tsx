@@ -7,7 +7,7 @@ import type { ComponentType } from "react"
 import { useEffect, useState } from "react"
 import { ArrowRightLeft, BadgeCheck, Building2, Calendar, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CreditCard, FileText, Flag, LayoutDashboard, MapPin, Settings, Shield, Stethoscope, Trophy, UserCog, Users } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { dashboardNavigation, hydrationSafePathname, isNavigationItemActive, type NavigationIcon, type NavigationItem } from "@/lib/navigation"
+import { hydrationSafePathname, isNavigationItemActive, type NavigationIcon, type NavigationItem } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
 const SIDEBAR_STORAGE_KEY = "fevoco:sidebar-collapsed"
@@ -20,7 +20,7 @@ const icons: Record<NavigationIcon, ComponentType<{ className?: string }>> = {
   settings: Settings,
 }
 
-type SidebarProps = { onNavigate?: () => void; collapsible?: boolean }
+type SidebarProps = { navigation: readonly NavigationItem[]; onNavigate?: () => void; collapsible?: boolean }
 
 function NavLink({ item, collapsed, pathname, onNavigate }: { item: NavigationItem; collapsed: boolean; pathname: string; onNavigate?: () => void }) {
   if (!item.icon) return null
@@ -51,12 +51,12 @@ function NavGroup({ item, collapsed, pathname, open, setOpen, onNavigate }: { it
   </div>
 }
 
-export function Sidebar({ onNavigate, collapsible = true }: SidebarProps = {}) {
+export function Sidebar({ onNavigate, collapsible = true, navigation }: SidebarProps) {
   const routedPathname = usePathname()
   const [hydrated, setHydrated] = useState(false)
   const pathname = hydrationSafePathname(routedPathname, hydrated)
   const [collapsed, setCollapsed] = useState(false)
-  const [openGroups, setOpenGroups] = useState<string[]>(() => dashboardNavigation.filter((item) => item.children).map((item) => item.name))
+  const [openGroups, setOpenGroups] = useState<string[]>(() => navigation.filter((item) => item.children).map((item) => item.name))
   const compact = collapsible && collapsed
 
   useEffect(() => {
@@ -68,9 +68,9 @@ export function Sidebar({ onNavigate, collapsible = true }: SidebarProps = {}) {
   }, [collapsible])
 
   useEffect(() => {
-    const activeGroups = dashboardNavigation.filter((item) => item.children && isNavigationItemActive(item, pathname)).map((item) => item.name)
+    const activeGroups = navigation.filter((item) => item.children && isNavigationItemActive(item, pathname)).map((item) => item.name)
     if (activeGroups.length) setOpenGroups((current) => [...new Set([...current, ...activeGroups])])
-  }, [pathname])
+  }, [pathname, navigation])
 
   const toggleCollapsed = () => setCollapsed((current) => {
     const next = !current
@@ -88,7 +88,7 @@ export function Sidebar({ onNavigate, collapsible = true }: SidebarProps = {}) {
     </div>
     {collapsible && <button type="button" onClick={toggleCollapsed} className="absolute -right-3 top-20 z-50 flex size-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-muted shadow-md transition-colors hover:border-sidebar-primary/60 hover:bg-sidebar-accent hover:text-sidebar-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring" aria-label={compact ? "Déployer la navigation" : "Réduire la navigation"} aria-expanded={!compact}>{compact ? <ChevronRight className="size-4" aria-hidden="true" /> : <ChevronLeft className="size-4" aria-hidden="true" />}</button>}
     <nav aria-label="Navigation principale" className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-2 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {dashboardNavigation.map((item) => item.children ? <NavGroup key={item.name} item={item} collapsed={compact} pathname={pathname} open={openGroups.includes(item.name)} setOpen={(open) => setGroup(item.name, open)} onNavigate={onNavigate} /> : <NavLink key={item.name} item={item} collapsed={compact} pathname={pathname} onNavigate={onNavigate} />)}
+      {navigation.map((item) => item.children ? <NavGroup key={item.name} item={item} collapsed={compact} pathname={pathname} open={openGroups.includes(item.name)} setOpen={(open) => setGroup(item.name, open)} onNavigate={onNavigate} /> : <NavLink key={item.name} item={item} collapsed={compact} pathname={pathname} onNavigate={onNavigate} />)}
     </nav>
   </aside>
 }

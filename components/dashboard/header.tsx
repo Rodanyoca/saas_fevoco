@@ -1,5 +1,6 @@
 "use client"
 
+import { AccountMenu } from "./account-menu"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useDashboardNavigation } from "./dashboard-navigation-context"
@@ -24,7 +25,7 @@ export function Header({ title, subtitle }: HeaderProps) {
         </div>
       </div>
 
-      <span aria-hidden="true" />
+      <AccountMenu />
     </header>
   )
 }
