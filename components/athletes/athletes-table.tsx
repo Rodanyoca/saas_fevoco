@@ -7,11 +7,13 @@ export function AthletesTable({
   athletes,
   activeLicenceNumbers,
   title = "Liste des Athlètes",
+  emptyMessage = "Aucun athlète enregistré.",
   onViewAthlete,
 }: {
   athletes: Athlete[]
   activeLicenceNumbers: Map<string, string>
   title?: string
+  emptyMessage?: string
   onViewAthlete?: (athlete: Athlete) => void
 }) {
   return (
@@ -23,7 +25,7 @@ export function AthletesTable({
       showCount={false}
       firstColumn={{ label: "Licence", value: (athlete) => activeLicenceNumbers.get(athlete.idAthlete) || "" }}
       stackSexAge
-      emptyMessage="Aucun athlète enregistré."
+      emptyMessage={emptyMessage}
       toRow={(item) => ({
         id: item.idAthlete,
         nomComplet: item.nomComplet,

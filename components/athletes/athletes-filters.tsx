@@ -1,5 +1,6 @@
 "use client"
 
+import { useId } from "react"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -32,58 +33,39 @@ export function AthletesFilters({
   onGenreChange: (value: string) => void
   onStatutChange: (value: string) => void
 }) {
-  const clubsOptions = Array.from(new Set(athletes.map((athlete) => athlete.clubNom).filter(Boolean)))
 
-  return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap">
-        <div className="contents">
-          <div className="relative min-w-[220px] flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher par nom ou numéro de licence..."
-              className="pl-9"
-              value={search}
-              onChange={(event) => onSearchChange(event.target.value)}
-            />
-          </div>
+  const id = useId()
+  const unique = (values: string[]) => Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }))
+  const clubsOptions = unique(athletes.map(athlete => athlete.clubNom))
+  const genres = unique(athletes.map(athlete => athlete.genre))
+  const statuts = unique(athletes.map(athlete => athlete.statut))
+  const sexLabel = (value: string) => ({ M: "Masculin", F: "Féminin", MASCULIN: "Masculin", FEMININ: "Féminin" }[value.toUpperCase()] || value)
+  const statusLabel = (value: string) => ({ actif: "Actif", inactif: "Inactif", blesse: "Blessé", active: "Actif", inactive: "Inactif" }[value.toLowerCase()] || value.replaceAll("_", " "))
 
-          {clubsOptions.length > 0 && <Select value={club} onValueChange={onClubChange}>
-            <SelectTrigger className="w-full lg:w-[220px]">
-              <SelectValue placeholder="Club" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les clubs</SelectItem>
-              {clubsOptions.map((clubNom) => (
-                <SelectItem key={clubNom} value={clubNom}>
-                  {clubNom}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>}
-
-          <Select value={genre} onValueChange={onGenreChange}>
-            <SelectTrigger className="w-full lg:w-[150px]">
-              <SelectValue placeholder="Sexe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="M">Masculin</SelectItem>
-              <SelectItem value="F">Féminin</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={statut} onValueChange={onStatutChange}>
-            <SelectTrigger className="w-full lg:w-[150px]">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="actif">Actif</SelectItem>
-              <SelectItem value="inactif">Inactif</SelectItem>
-              <SelectItem value="blesse">Blessé</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+  return <div className="flex flex-wrap items-end gap-4">
+    <div className="w-full min-w-0 space-y-1.5 sm:w-80 sm:max-w-full">
+      <label htmlFor={`${id}-search`} className="text-sm font-medium">Recherche</label>
+      <div className="relative"><Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input id={`${id}-search`} type="search" placeholder="Nom, licence ou identifiant…" className="pl-9" value={search} onChange={event => onSearchChange(event.target.value)} />
+      </div>
     </div>
-  )
+    <div className="w-full min-w-0 space-y-1.5 sm:w-[220px]">
+      <label htmlFor={`${id}-club`} className="text-sm font-medium">Club</label>
+      <Select value={club} onValueChange={onClubChange}><SelectTrigger id={`${id}-club`} className="w-full" aria-label="Filtrer par club"><SelectValue /></SelectTrigger><SelectContent>
+        <SelectItem value="all">Tous les clubs</SelectItem>{clubsOptions.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+      </SelectContent></Select>
+    </div>
+    <div className="w-full min-w-0 space-y-1.5 sm:w-[160px]">
+      <label htmlFor={`${id}-sex`} className="text-sm font-medium">Sexe</label>
+      <Select value={genre} onValueChange={onGenreChange}><SelectTrigger id={`${id}-sex`} className="w-full" aria-label="Filtrer par sexe"><SelectValue /></SelectTrigger><SelectContent>
+        <SelectItem value="all">Tous les sexes</SelectItem>{genres.map(value => <SelectItem key={value} value={value}>{sexLabel(value)}</SelectItem>)}
+      </SelectContent></Select>
+    </div>
+    <div className="w-full min-w-0 space-y-1.5 sm:w-[170px]">
+      <label htmlFor={`${id}-status`} className="text-sm font-medium">Statut</label>
+      <Select value={statut} onValueChange={onStatutChange}><SelectTrigger id={`${id}-status`} className="w-full" aria-label="Filtrer par statut"><SelectValue /></SelectTrigger><SelectContent>
+        <SelectItem value="all">Tous les statuts</SelectItem>{statuts.map(value => <SelectItem key={value} value={value}>{statusLabel(value)}</SelectItem>)}
+      </SelectContent></Select>
+    </div>
+  </div>
 }
