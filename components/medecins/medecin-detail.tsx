@@ -46,7 +46,7 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, specialt
     </div></CardContent></Card>
 
     <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
-      <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="general">Général</TabsTrigger><TabsTrigger value="affiliations">Affiliations</TabsTrigger><TabsTrigger value="licences">Licences</TabsTrigger></TabsList>
+      <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="general">Général</TabsTrigger><TabsTrigger value="affiliations">Transferts</TabsTrigger><TabsTrigger value="licences">Licences</TabsTrigger></TabsList>
       <TabsContent value="general"><div className="grid w-full grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6">
         <DetailCard title="Identité" icon={Stethoscope} fields={[{ label: "ID médecin", value: medecin.idMedecin }, { label: "Nom complet", value: medecin.nomComplet }, { label: "Sexe", value: sexeLabel(medecin.sexe) }, { label: "Date de naissance", value: formatDateForDisplay(medecin.dateDeNaissance) || "Non renseignée" }, { label: "Âge", value: age === null ? "Non renseigné" : `${age} ans` }, { label: "Nationalité", value: medecin.nationalite }]} />
         <DetailCard title="Profil" icon={Activity} fields={[{ label: "Spécialité", value: medecin.specialite }, { label: "ID national", value: medecin.idNational }, { label: "ID FIVB", value: medecin.idFivb }, { label: "Statut", value: medecin.statut }]} />

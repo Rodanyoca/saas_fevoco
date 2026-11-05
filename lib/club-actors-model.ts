@@ -1,6 +1,6 @@
 type Row = Record<string, unknown>
 export type ClubActorKind = "athletes" | "coachs" | "medecins" | "officiels" | "autres"
-export type ClubActor = { id: string; nomComplet: string; sexe: string; telephone: string; email: string; statut: string; fonction: string }
+export type ClubActor = { id: string; nomComplet: string; sexe: string; telephone: string; email: string; statut: string; fonction: string; numeroLicence?: string; licenceUnavailable?: boolean }
 export type ClubActorGroups = Record<ClubActorKind, ClubActor[]>
 export type ClubActorsBundle = { byClub: Record<string, ClubActorGroups>; available: boolean; ignoredRelations: number }
 const text = (value: unknown) => String(value ?? "").trim()
@@ -14,7 +14,7 @@ const definitions = [
   { kind: "autres", sheet: "AUTRES", id: "id_autre_acteur", affiliations: "AUTRES_AFFILIATIONS", club: "id_entite" },
 ] as const
 
-export function buildClubActorIndex(sources: { actors: Record<string, Row[]>; affiliations: Record<string, Row[]>; references: Record<string, Row[]> }, today: string, canonicalDate: (value: string) => string): ClubActorsBundle {
+export function buildClubActorIndex(sources: { actors: Record<string, Row[]>; affiliations: Record<string, Row[]>; references: Record<string, Row[]> }, today: string, canonicalDate: (value: string) => string, selectedClubId?: string): ClubActorsBundle {
   const labels = (sheet: string, id: string, name: string) => new Map((sources.references[sheet] || []).map(row => [text(row[id]), text(row[name])]))
   const sexes = labels("SEXES", "id_sexe", "nom_sexe")
   const statuses = labels("STATUTS_AFFILIATION", "id_statut_affiliation", "nom_statut_affiliation")
@@ -34,6 +34,7 @@ export function buildClubActorIndex(sources: { actors: Record<string, Row[]>; af
     } catch { ignoredRelations++; return false }
   }
   for (const def of definitions) {
+    const membersByClub = new Map<string, Map<string, ClubActor>>()
     const identities = new Map((sources.actors[def.sheet] || []).filter(row => text(row[def.id])).map(row => [text(row[def.id]), row]))
     const relations = [...(sources.affiliations[def.affiliations] || [])]
     // Les mandats historiques restent une source de rattachement des officiels.
@@ -42,15 +43,20 @@ export function buildClubActorIndex(sources: { actors: Record<string, Row[]>; af
       const mandate = def.kind === "officiels" && Boolean(text(relation.id_mandat))
       const clubId = text(mandate ? relation.id_structure : relation[def.club])
       if (!clubId) continue
+      if (selectedClubId !== undefined && clubId !== selectedClubId) continue
       if (["officiels", "autres"].includes(def.kind) && normalize(structureTypes.get(text(mandate ? relation.id_type_structure : relation.id_type_entite))) !== "CLUB") continue
       if (!current(relation)) continue
       const id = text(mandate ? relation.id_acteur : relation[def.id]), actor = identities.get(id)
       if (!actor) { ignoredRelations++; continue }
       const group = (byClub[clubId] ??= emptyClubActors())[def.kind]
       const fonction = def.kind === "officiels" ? functions.get(text(relation.id_fonction)) || "" : def.kind === "autres" ? otherTypes.get(text(actor.id_type_autre_acteur)) || "" : ""
-      const previous = group.find(item => item.id === id)
+      let members = membersByClub.get(clubId)
+      if (!members) { members = new Map(); membersByClub.set(clubId, members) }
+      const previous = members.get(id)
       if (previous) { if (fonction && !previous.fonction.split(" · ").includes(fonction)) previous.fonction = [previous.fonction, fonction].filter(Boolean).join(" · "); continue }
-      group.push({ id, nomComplet: text(actor.nom_complet), sexe: sexes.get(text(actor.id_sexe)) || "", telephone: text(actor.telephone), email: text(actor.email), statut: text(actor.statut), fonction })
+      const member = { id, nomComplet: text(actor.nom_complet), sexe: sexes.get(text(actor.id_sexe)) || "", telephone: text(actor.telephone), email: text(actor.email), statut: text(actor.statut), fonction }
+      group.push(member)
+      members.set(id, member)
     }
   }
   Object.values(byClub).forEach(groups => Object.values(groups).forEach(rows => rows.sort((a, b) => a.nomComplet.localeCompare(b.nomComplet, "fr"))))

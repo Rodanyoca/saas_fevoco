@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "counts": {
+    "desktop": 2,
+    "mobile": 2,
+    "error": 2,
+    "rapid": 2
+  },
+  "browserErrors": []
+}

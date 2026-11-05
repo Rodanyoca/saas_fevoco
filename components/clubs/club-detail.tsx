@@ -17,6 +17,7 @@ interface ClubDetailProps {
   club: Club
   actors: ClubActorGroups
   actorsAvailable: boolean
+  actorsLoading?: boolean
   ignoredRelations: number
   ententes: Entente[]
   categories: ClubReferenceOption[]
@@ -54,7 +55,7 @@ function SummaryTile({ icon: Icon, label, value, detail }: {
 
 function ClubActorTable({ title, showLicence = false, search, rows, available, extra }: { title: string; showLicence?: boolean; search: string; rows: ClubActor[]; available: boolean; extra?: string }) {
   const columns: Column<ClubActor>[] = [
-    ...(showLicence ? [{ key: "licence", header: "Licence", render: () => "—" }] : []),
+    ...(showLicence ? [{ key: "numeroLicence", header: "Licence", render: (actor: ClubActor) => actor.licenceUnavailable ? "Indisponible" : actor.numeroLicence || "—" }] : []),
     { key: "nomComplet", header: "Nom complet", className: "font-medium" },
     { key: "sexe", header: "Sexe", render: actor => actor.sexe || "Non renseigné" },
     ...(extra ? [{ key: "fonction", header: extra, render: (actor: ClubActor) => actor.fonction || "Non renseigné" }] : []),
@@ -65,7 +66,7 @@ function ClubActorTable({ title, showLicence = false, search, rows, available, e
   return <Card className="min-w-0" role="region" aria-label={title}><CardHeader><CardTitle>{title}</CardTitle>{available && <p className="text-sm text-muted-foreground">{rows.length} personne{rows.length > 1 ? "s" : ""} rattachée{rows.length > 1 ? "s" : ""}</p>}</CardHeader><CardContent className="min-w-0">{available ? <DataTable data={rows} columns={columns} searchPlaceholder={search} idKey="id" tableClassName="min-w-[760px]" /> : <p className="text-sm text-muted-foreground">Les rattachements sont temporairement indisponibles.</p>}</CardContent></Card>
 }
 
-export function ClubDetail({ club, actors, actorsAvailable, ignoredRelations, ententes, categories, sexes, onBack, onUpdated }: ClubDetailProps) {
+export function ClubDetail({ club, actors, actorsAvailable, actorsLoading = false, ignoredRelations, ententes, categories, sexes, onBack, onUpdated }: ClubDetailProps) {
   const kpis = clubActorKpis(actors)
   const metric = (value: number) => actorsAvailable ? value.toLocaleString("fr-FR") : "Indisponible"
 
@@ -99,6 +100,7 @@ export function ClubDetail({ club, actors, actorsAvailable, ignoredRelations, en
       ]} />
     </div>
 
+    {actorsLoading ? <Card><CardContent className="p-5 text-sm text-muted-foreground" role="status">Chargement des effectifs du club…</CardContent></Card> : <>
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <SummaryTile icon={Users} label="Acteurs rattachés" value={metric(kpis.total)} detail="Toutes les familles du club" />
       <SummaryTile icon={Users} label="Athlètes" value={metric(kpis.athletes)} />
@@ -112,5 +114,6 @@ export function ClubDetail({ club, actors, actorsAvailable, ignoredRelations, en
     <ClubActorTable title="Entraîneurs du club" showLicence search="Rechercher un entraîneur..." rows={actors.coachs} available={actorsAvailable} />
     <ClubActorTable title="Médecins du club" search="Rechercher un médecin..." rows={actors.medecins} available={actorsAvailable} />
     <ClubActorTable title="Officiels du club" search="Rechercher un officiel..." rows={actors.officiels} available={actorsAvailable} extra="Fonction" />
+    </>}
   </div>
 }

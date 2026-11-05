@@ -114,7 +114,7 @@ export function mapAthleteLicence(row: Row, season: Row = {}): AthleteLicence {
     // La validité des licences athlètes est portée par SAISON, pas par la licence.
     dateDebutValidite: first(season, "date_debut") || licence.dateDebutValidite,
     dateFinValidite: first(season, "date_fin") || licence.dateFinValidite,
-    saison: first(row, "id_saison", "saison"),
+    saison: first(season, "nom_saison") || first(row, "nom_saison", "saison"),
     idAffiliation: normalizeId(first(row, "id_affiliation_athlete", "id_affiliation")),
     idClub: normalizeId(first(row, "id_club")),
     nomClub: first(row, "nom_club"),

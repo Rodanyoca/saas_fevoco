@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { EntentesClient } from "@/components/ententes/ententes-client"
-import { getAthletes, getClubs, getEntentes, getLigues } from "@/lib/data"
+import { getAthletes, getTerritorialHierarchy } from "@/lib/data"
 import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
 
 export const runtime = "nodejs"
@@ -8,12 +8,12 @@ export const dynamic = "force-dynamic"
 
 export default async function EntentesPage() {
   const loaded = await Promise.allSettled([
-    getEntentes(),
-    getClubs(),
+    getTerritorialHierarchy(),
     getAthletes(),
-    getLigues(),
   ])
-  const [ententes, clubs, athletes, ligues] = loaded.map((result) => result.status === "fulfilled" ? result.value : []) as [Entente[], Club[], Athlete[], Ligue[]]
+  const hierarchy = loaded[0].status === "fulfilled" ? loaded[0].value : { ententes: [], clubs: [], ligues: [] }
+  const { ententes, clubs, ligues } = hierarchy as { ententes: Entente[]; clubs: Club[]; ligues: Ligue[] }
+  const athletes = loaded[1].status === "fulfilled" ? loaded[1].value as Athlete[] : []
 
   return (
     <DashboardLayout>

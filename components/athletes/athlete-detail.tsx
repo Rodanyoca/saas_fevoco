@@ -77,7 +77,7 @@ export function AthleteDetail({ athlete, licences, sexes, onUpdated, onBack }: {
       <Tabs defaultValue="general" className="gap-4">
         <TabsList className="grid h-auto w-full grid-cols-3">
           <TabsTrigger value="general" className="w-full">Général</TabsTrigger>
-          <TabsTrigger value="affiliation" className="w-full">Affiliations</TabsTrigger>
+          <TabsTrigger value="affiliation" className="w-full">Transferts</TabsTrigger>
           <TabsTrigger value="licence" className="w-full">Licence</TabsTrigger>
         </TabsList>
 

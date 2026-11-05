@@ -9,6 +9,12 @@ export interface LigueHierarchy {
   diagnostics: string[]
 }
 
+export function countAthletesByClub(athletes: Pick<Athlete, "clubId">[]): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const athlete of athletes) counts.set(athlete.clubId, (counts.get(athlete.clubId) ?? 0) + 1)
+  return counts
+}
+
 function uniqueById<T>(items: T[], getId: (item: T) => string): T[] {
   const seen = new Set<string>()
   return items.filter((item) => {
@@ -50,11 +56,15 @@ export function buildLigueHierarchy(
 
   const clubsByEntenteId = new Map<string, Club[]>()
   for (const club of ligueClubs) {
-    clubsByEntenteId.set(club.idEntente, [...(clubsByEntenteId.get(club.idEntente) ?? []), club])
+    const group = clubsByEntenteId.get(club.idEntente)
+    if (group) group.push(club)
+    else clubsByEntenteId.set(club.idEntente, [club])
   }
   const athletesByClubId = new Map<string, Athlete[]>()
   for (const athlete of ligueAthletes) {
-    athletesByClubId.set(athlete.clubId, [...(athletesByClubId.get(athlete.clubId) ?? []), athlete])
+    const group = athletesByClubId.get(athlete.clubId)
+    if (group) group.push(athlete)
+    else athletesByClubId.set(athlete.clubId, [athlete])
   }
 
   return { ententes: ligueEntentes, clubs: ligueClubs, athletes: ligueAthletes, clubsByEntenteId, athletesByClubId, diagnostics }

@@ -31,7 +31,7 @@ function computeProvinceCompletude(p: Province): number {
 
 const cell = (row: SheetRow | undefined, key: string) => String(row?.[key] ?? "").trim()
 
-async function getTerritorialHierarchy() {
+export async function getTerritorialHierarchy() {
   const [territorial, references, sexes] = await Promise.all([
     getSheetsDataFrom(env.googleSheets.territorialSpreadsheetId, [
       "LIGUES!A:ZZ",

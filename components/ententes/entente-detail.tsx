@@ -10,16 +10,18 @@ import { StatusBadge } from "@/components/dashboard/status-badge"
 import { EditEntenteDialog, type SavedEntente } from "@/components/ententes/entente-form-dialog"
 import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
 import { formatDateForDisplay } from "@/lib/compact-date"
+import { countAthletesByClub } from "@/lib/territorial-hierarchy"
 
 export function EntenteDetail({ entente, ligues, clubs, athletes, onBack, onUpdated }: { entente: Entente; ligues: Ligue[]; clubs: Club[]; athletes: Athlete[]; onBack: () => void; onUpdated: (entente: SavedEntente) => void }) {
   const relatedClubs = clubs.filter((club) => club.idEntente === entente.idEntente || club.ententeId === entente.idEntente)
   const clubIds = new Set(relatedClubs.map((club) => club.idClub))
   const relatedAthletes = athletes.filter((athlete) => clubIds.has(athlete.clubId))
+  const athleteCounts = countAthletesByClub(relatedAthletes)
   const columns: Column<Club>[] = [
     { key: "idClub", header: "ID", className: "font-mono text-sm" },
     { key: "nomClub", header: "Club", className: "font-medium" },
     { key: "categorie", header: "Catégorie" },
-    { key: "athletes", header: "Athlètes", render: (club) => relatedAthletes.filter((athlete) => athlete.clubId === club.idClub).length },
+    { key: "athletes", header: "Athlètes", render: (club) => athleteCounts.get(club.idClub) ?? 0 },
     { key: "statut", header: "Statut", render: (club) => <StatusBadge status={club.statut} /> },
   ]
 

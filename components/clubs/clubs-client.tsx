@@ -12,15 +12,36 @@ import { ClubDetail } from "@/components/clubs/club-detail"
 import { ClubFormDialog, type SavedClub } from "@/components/clubs/club-form-dialog"
 import type { ClubReferenceOption } from "@/lib/club-references"
 import type { Club, Entente } from "@/lib/types"
-import { emptyClubActors, type ClubActorsBundle } from "@/lib/club-actors-model"
+import { emptyClubActors, type ClubActorGroups } from "@/lib/club-actors-model"
 
 function initials(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "CL"
 }
 
-export function ClubsClient({ clubs, actorData, ententes, categories, sexes, dataLoadError = false }: { clubs: Club[]; actorData: ClubActorsBundle; ententes: Entente[]; categories: ClubReferenceOption[]; sexes: ClubReferenceOption[]; dataLoadError?: boolean }) {
+export function ClubsClient({ clubs, ententes, categories, sexes, dataLoadError = false }: { clubs: Club[]; ententes: Entente[]; categories: ClubReferenceOption[]; sexes: ClubReferenceOption[]; dataLoadError?: boolean }) {
   const [rows, setRows] = useState(clubs)
   const [selectedClub, setSelectedClub] = useState<Club | null>(null)
+  const [detailVersion, setDetailVersion] = useState(0)
+  const [actorState, setActorState] = useState<{ clubId: string; sourceClubs: Club[]; status: "loading" | "ready" | "error"; actors?: ClubActorGroups; ignoredRelations?: number } | null>(null)
+  const openClub = (club: Club) => { setActorState(null); setSelectedClub(club) }
+  const selectedClubId = selectedClub?.idClub
+  useEffect(() => {
+    if (!selectedClubId) return
+    const controller = new AbortController()
+    let current = true
+    setActorState({ clubId: selectedClubId, sourceClubs: clubs, status: "loading" })
+    void (async () => {
+      try {
+        const response = await fetch(`/api/clubs/${encodeURIComponent(selectedClubId)}/actors`, { cache: "no-store", signal: controller.signal })
+        if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) throw new Error("Lecture impossible")
+        const data = await response.json() as { actors: ClubActorGroups; ignoredRelations: number }
+        if (current) setActorState({ clubId: selectedClubId, sourceClubs: clubs, status: "ready", actors: data.actors, ignoredRelations: data.ignoredRelations })
+      } catch {
+        if (current) setActorState({ clubId: selectedClubId, sourceClubs: clubs, status: "error" })
+      }
+    })()
+    return () => { current = false; controller.abort() }
+  }, [selectedClubId, detailVersion, clubs])
   useEffect(() => setRows(clubs), [clubs])
   useEffect(() => {
     const returnToList = (event: Event) => { if ((event as CustomEvent<string>).detail === "/clubs") setSelectedClub(null) }
@@ -30,6 +51,7 @@ export function ClubsClient({ clubs, actorData, ententes, categories, sexes, dat
 
   const applySavedClub = (saved: SavedClub) => {
     const previousId = saved.previousIdClub || saved.idClub
+    if (selectedClub?.idClub === previousId) { setActorState(null); setDetailVersion(version => version + 1) }
     setRows((current) => {
       const existing = current.find((club) => club.idClub === previousId)
       const merged: Club = { provinceId: "", provinceNom: "", personneContactNom: "", personneContactTelephone: "", presidentId: "", presidentNom: "", presidentTelephone: "", presidentEmail: "", adresse: "", ...existing, ...saved, id: saved.idClub, numeroOrdre: saved.codeClub, nom: saved.nomClub, ligueId: saved.idLigue, ligueNom: saved.nomLigue, ententeId: saved.idEntente, ententeNom: saved.nomEntente, dateAffiliation: saved.dateAffiliationClub }
@@ -56,14 +78,17 @@ export function ClubsClient({ clubs, actorData, ententes, categories, sexes, dat
     { key: "statut", label: "Statut", options: Array.from(new Set(rows.map((club) => club.statut).filter(Boolean))).sort().map((label) => ({ value: label, label })) },
   ], [rows])
 
-  if (selectedClub) return <><Header title={`Fiche Club: ${selectedClub.nomClub || selectedClub.idClub}`} subtitle={selectedClub.pseudoEntente || selectedClub.nomLigue || "Détail du club"} /><main className="min-w-0 space-y-6 p-4 sm:p-6"><DataLoadNotice visible={dataLoadError} description="Une partie des données du club n’a pas pu être chargée. Les données disponibles restent affichées." /><ClubDetail key={selectedClub.idClub} club={selectedClub} actors={actorData.byClub[selectedClub.idClub] || emptyClubActors()} actorsAvailable={actorData.available} ignoredRelations={actorData.ignoredRelations} ententes={ententes} categories={categories} sexes={sexes} onBack={() => setSelectedClub(null)} onUpdated={applySavedClub} /></main></>
+  if (selectedClub) {
+    const detail = actorState?.clubId === selectedClub.idClub && actorState.sourceClubs === clubs ? actorState : null
+    return <><Header title={`Fiche Club: ${selectedClub.nomClub || selectedClub.idClub}`} subtitle={selectedClub.pseudoEntente || selectedClub.nomLigue || "Détail du club"} /><main className="min-w-0 space-y-6 p-4 sm:p-6"><DataLoadNotice visible={dataLoadError} description="Une partie des données du club n’a pas pu être chargée. Les données disponibles restent affichées." />{detail?.status === "error" && <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border p-4 text-sm"><span>Lecture des effectifs impossible.</span><Button variant="outline" onClick={() => setDetailVersion(version => version + 1)}>Réessayer</Button></div>}<ClubDetail key={selectedClub.idClub} club={selectedClub} actors={detail?.actors || emptyClubActors()} actorsAvailable={detail?.status === "ready"} actorsLoading={!detail || detail.status === "loading"} ignoredRelations={detail?.ignoredRelations || 0} ententes={ententes} categories={categories} sexes={sexes} onBack={() => setSelectedClub(null)} onUpdated={applySavedClub} /></main></>
+  }
 
   return <><Header title="Clubs" subtitle="Clubs affiliés à la FEVOCO" /><main className="space-y-5 p-4 sm:p-6">
     <DataLoadNotice visible={dataLoadError} description="Une partie des données Clubs n’a pas pu être chargée. Les données disponibles restent affichées sans contenu fictif." />
     <div className="flex justify-end"><ClubFormDialog ententes={ententes} categories={categories} sexes={sexes} onSaved={applySavedClub} /></div>
     <DataTable data={rows} columns={columns} filters={filters} searchPlaceholder="Rechercher un club..." idKey="idClub"
-      renderActions={(club) => <><Button variant="ghost" size="icon" onClick={() => setSelectedClub(club)} aria-label={`Voir ${club.nomClub}`} title="Voir"><Eye className="size-4" /></Button><ClubFormDialog club={club} ententes={ententes} categories={categories} sexes={sexes} onSaved={applySavedClub} trigger={<Button variant="ghost" size="icon" className="hover:bg-brand-gold/10 hover:text-brand-gold" aria-label={`Modifier ${club.nomClub}`} title="Modifier"><Pencil className="size-4" /></Button>} /></>}
-      renderMobileCard={(club) => <div className="rounded-xl border border-border/80 bg-card p-4"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3">{logo(club, "size-12")}<div className="min-w-0"><p className="truncate font-semibold">{club.nomClub || "Club non renseigné"}</p><p className="mt-1 font-mono text-xs text-muted-foreground">{club.idClub || "-"}</p></div></div><StatusBadge status={club.statut} /></div><div className="mt-3 space-y-1 text-sm text-muted-foreground"><p>{club.categorie || "Catégorie non renseignée"}</p><p>Version : {clubVersion(club)}</p><p>{club.pseudoEntente || "Entente non renseignée"} · {club.nomLigue || "Ligue non renseignée"}</p></div><div className="mt-4 flex justify-end"><Button variant="ghost" size="icon" onClick={() => setSelectedClub(club)} aria-label={`Voir ${club.nomClub}`}><Eye className="size-4" /></Button></div></div>}
+      renderActions={(club) => <><Button variant="ghost" size="icon" onClick={() => openClub(club)} aria-label={`Voir ${club.nomClub}`} title="Voir"><Eye className="size-4" /></Button><ClubFormDialog club={club} ententes={ententes} categories={categories} sexes={sexes} onSaved={applySavedClub} trigger={<Button variant="ghost" size="icon" className="hover:bg-brand-gold/10 hover:text-brand-gold" aria-label={`Modifier ${club.nomClub}`} title="Modifier"><Pencil className="size-4" /></Button>} /></>}
+      renderMobileCard={(club) => <div className="rounded-xl border border-border/80 bg-card p-4"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3">{logo(club, "size-12")}<div className="min-w-0"><p className="truncate font-semibold">{club.nomClub || "Club non renseigné"}</p><p className="mt-1 font-mono text-xs text-muted-foreground">{club.idClub || "-"}</p></div></div><StatusBadge status={club.statut} /></div><div className="mt-3 space-y-1 text-sm text-muted-foreground"><p>{club.categorie || "Catégorie non renseignée"}</p><p>Version : {clubVersion(club)}</p><p>{club.pseudoEntente || "Entente non renseignée"} · {club.nomLigue || "Ligue non renseignée"}</p></div><div className="mt-4 flex justify-end"><Button variant="ghost" size="icon" onClick={() => openClub(club)} aria-label={`Voir ${club.nomClub}`}><Eye className="size-4" /></Button></div></div>}
     />
   </main></>
 }
