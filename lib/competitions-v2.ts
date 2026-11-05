@@ -33,13 +33,13 @@ export type CompetitionBundle = {
   data: Record<string, SheetRow[]>
 }
 
-export async function loadCompetitionBundle(): Promise<CompetitionBundle> {
+export async function loadCompetitionBundle(options: { fresh?: boolean } = {}): Promise<CompetitionBundle> {
   if (!env.googleSheets.competitionsSpreadsheetId || !env.googleSheets.referentielsSpreadsheetId) {
     return { competitions: [], references: {}, referenceData: {}, data: {} }
   }
   const [data, refs] = await Promise.all([
-    getSheetsDataFrom(env.googleSheets.competitionsSpreadsheetId, COMPETITION_SHEETS.map((sheet) => `${sheet}!A:ZZ`)),
-    getSheetsDataFrom(env.googleSheets.referentielsSpreadsheetId, COMPETITION_REFERENCE_SHEETS.map((sheet) => `${sheet}!A:ZZ`)),
+    getSheetsDataFrom(env.googleSheets.competitionsSpreadsheetId, COMPETITION_SHEETS.map((sheet) => `${sheet}!A:ZZ`), options),
+    getSheetsDataFrom(env.googleSheets.referentielsSpreadsheetId, COMPETITION_REFERENCE_SHEETS.map((sheet) => `${sheet}!A:ZZ`), options),
   ])
   const types = mapLabels(rows(refs, "TYPES_COMPETITIONS"), "id_type_competition", "nom_type_competition")
   const disciplines = mapLabels(rows(refs, "DISCIPLINES"), "id_discipline", "nom_discipline")

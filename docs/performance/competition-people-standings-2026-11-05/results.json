@@ -1,0 +1,27 @@
+{
+  "result": "PASS",
+  "results": [
+    {
+      "viewport": "desktop",
+      "requests": [
+        "POST",
+        "PUT",
+        "POST"
+      ],
+      "noReads": true,
+      "noOverflow": true
+    },
+    {
+      "viewport": "mobile",
+      "requests": [
+        "POST",
+        "PUT",
+        "POST"
+      ],
+      "noReads": true,
+      "noOverflow": true
+    }
+  ],
+  "errors": [],
+  "synthetic": true
+}

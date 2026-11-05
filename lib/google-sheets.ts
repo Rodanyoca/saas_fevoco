@@ -158,9 +158,11 @@ export async function getSheetDataFrom(
 export async function getSheetsDataFrom(
   spreadsheetId: string,
   ranges: string[],
+  options: { fresh?: boolean } = {},
 ): Promise<Record<string, SheetRow[]>> {
   if (!spreadsheetId.trim() || !ranges.length || !env.googleSheets.clientEmail || !env.googleSheets.privateKey) return {}
   const stableRanges = [...new Set(ranges)].sort()
+  if (options.fresh) return fetchSheetsDataFrom(spreadsheetId, stableRanges)
   const key = `${spreadsheetId}:${stableRanges.join("|")}`
   const existing = inflightBatchReads.get(key)
   if (existing) return existing

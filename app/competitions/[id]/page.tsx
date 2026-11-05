@@ -10,9 +10,10 @@ export const dynamic = "force-dynamic"
 export default async function CompetitionPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const [{ id }, query] = await Promise.all([params, searchParams])
   const [bundle, entryOptions] = await Promise.all([loadCompetitionBundle(), competitionEntryOptions()])
-  const peopleOptions = await competitionPeopleOptions(decodeURIComponent(id), bundle)
+  let peopleOptions: Awaited<ReturnType<typeof competitionPeopleOptions>> = [], peopleError = ""
+  if (["intervenants", "distinctions"].includes(query.tab || "")) { try { peopleOptions = await competitionPeopleOptions(decodeURIComponent(id), bundle) } catch { peopleError = "Le registre des participants est momentanément indisponible. Réessayez la page." } }
   const detail = competitionData(bundle, decodeURIComponent(id))
   if (!detail) notFound()
   const distinctionTargets = Object.fromEntries((bundle.referenceData.TYPES_DISTINCTIONS ?? []).map((row) => [String(row.id_type_distinction ?? ""), String(row.cible_autorisee ?? "")]))
-  return <CompetitionDetailV2 detail={detail} references={bundle.references} entryOptions={entryOptions} peopleOptions={peopleOptions} distinctionTargets={distinctionTargets} activeTab={query.tab ?? "general"} />
+  return <CompetitionDetailV2 detail={detail} references={bundle.references} entryOptions={entryOptions} peopleOptions={peopleOptions} distinctionTargets={distinctionTargets} activeTab={query.tab ?? "general"} peopleError={peopleError} resultTypes={bundle.referenceData.TYPES_RESULTATS ?? []} />
 }
