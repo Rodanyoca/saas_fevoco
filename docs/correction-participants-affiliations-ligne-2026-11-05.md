@@ -1,0 +1,36 @@
+# Participants : rattachement réel et formulaire sur une ligne
+
+Référence : `24796dc` sur `feature/competitions-fevoco`. Cible unique vérifiée : `C:/Projets/SNDS-RDC/data/monosport/fevoco-managment`. Instructions AGENTS et CONTEXT relus. Travaux locaux transferts/licences conservés ; aucun autre dépôt modifié, aucune écriture Google, aucun commit/push/déploiement pour ce correctif.
+
+## Défaut confirmé
+
+`competitionPeopleOptions` utilisait `getAthletes().clubId`. Or `getAthletes` mappe la feuille ATHLETES, dont le schéma réel contient l'identité, sans `id_club`. Le rattachement est stocké dans ATHLETE_AFFILIATIONS. Le filtre des candidats et la validation serveur comparaient donc le club engagé à une chaîne vide, même lorsque l'affiliation était valide.
+
+Les tests du lot précédent fournissaient artificiellement `clubId` dans les fixtures du lecteur d'athlètes : ils ne reproduisaient pas ce contrat réel. La fixture est maintenant sans ce champ et contient une feuille d'affiliations séparée. Avant correction, le scénario d'ajout valide reproduit **422 au lieu de 201** ; après correction, ajout et modification passent. Il s'agit d'une erreur de raccordement du lot précédent, pas d'une absence d'affiliation à corriger dans Sheets.
+
+Lecture ciblée du cas signalé : la licence fournie permet de retrouver un acteur existant ; son affiliation est active et l'unité de son club est engagée dans la compétition. Cet acteur n'était pas déjà inscrit comme intervenant. Aucun identifiant personnel, numéro de licence réel ou nom de personne n'est copié dans les fixtures ou captures. Sources vérifiées en lecture seule après métadonnées/en-têtes : [Acteurs](https://docs.google.com/spreadsheets/d/1CdtZDlfEAlxBeC0XkwiH_OayXajBUN_N05TQuAJvbZI/edit), [Affiliations](https://docs.google.com/spreadsheets/d/1ibsyycExJF5IMlNlWKzkTwX5ug13nnwgUhCYHd6lTMs/edit), [Licences](https://docs.google.com/spreadsheets/d/1vPsu-Vog5d4CK_f7BK4e4BaU72QTQwz-jPypE22iUYo/edit), [Compétitions](https://docs.google.com/spreadsheets/d/1QFXJjd6MsNXcc4AnIcUmNur3Bz4gPtWe0s6sFSSpd14/edit), [Structure](https://docs.google.com/spreadsheets/d/1NP19RMt5huJU57vK8hGmTrwsCWvpeQRETndwTfWO7Ro/edit).
+
+## Corrections
+
+- `lib/competition-person-affiliations.ts` : index par athlète des clubs courants depuis ATHLETE_AFFILIATIONS, statut SAF001 et dates inclusives au jour civil Africa/Kinshasa. Dates françaises/ISO canonicalisées ; historique terminé, suspension, annulation, période future/invalide ou plusieurs clubs concurrents ne deviennent pas un club courant. Les zéros initiaux restent des chaînes. Aucun club n'est déduit du préfixe d'une licence ni de l'identité brute.
+- `lib/competition-people.ts` : les options exposent ce club réel ; la mutation recharge les affiliations sans cache avant sa validation. La lecture GET réutilise exactement `ATHLETE_AFFILIATIONS!A:ZZ`, déjà demandée par le lecteur des licences, pour partager cache et requête identique en cours. Une seule collection est lue/indexée, aucune lecture par personne/unité. Pas de dépendance aux nouveaux modules sportifs non publiés et aucune modification de leurs invalidations.
+- `competition-people-manager.tsx` : catégories sur une même ligne dès 1024 px, champs Unité / Personne / Rôle / Observations / Actions sur une même ligne, aperçu de licence sous le formulaire. À plus petite largeur, champs/cartes répartis sans débordement. Résultats de recherche en liste flottante, et recherche par nom, identifiant **ou numéro de licence**. Permissions, clôture, contrôles de doublon, paires et caractère informatif de la licence conservés.
+
+## Validation
+
+- `competition-person-affiliations.test.ts` : 4 tests, club depuis l'affiliation, zéros initiaux, bornes inclusives, dates françaises, périodes invalides/futures, états non actifs, transfert futur et ambiguïté entre clubs.
+- `competition-people-harmonisation.test.cjs` : 6 tests des vrais services/routes avec sources simulées, dont le contrat réel sans club dans la fiche et l'absence de contournement par un club de profil périmé ou un numéro de licence. Création/modification, doublons, mauvais club/unité, paires protégées, clôture et pannes conservés.
+- Non-régression `competition-cards`, `competition-context-rules`, `competition-entry-edit` : 21 tests supplémentaires. Total ciblé : **31 tests réussis**.
+- Le banc `verify-competition-people-standings-ui.cjs` utilise six catégories et une licence synthétique recherchable. Les assertions mesurent les positions des six cartes et des cinq champs/actions sur ordinateur ; il simule une largeur réservée à la navigation. Ajout, modification, refus 403, lecture seule, classement et qualifications restent exercés. Aucun GET de données lors des recherches ; seules les trois soumissions simulées du scénario sont interceptées. Preuves sous `docs/performance/competition-people-standings-2026-11-05/`.
+- Le premier contrôle d'alignement échouait avec le CSS de production du build antérieur : les nouvelles classes n'y figuraient pas. Le build normal a été relancé avant la vérification finale ; aucun résultat rouge du banc n'est présenté comme un succès.
+- TypeScript indépendant avec cache isolé et lint complet exécutés ; résultats finaux consolidés ci-dessous. Build normal `npm run build` réussi, 27 pages générées ; configuration `ignoreBuildErrors` préexistante inchangée. Aucun essai d'ajout réel de l'athlète dans Google et aucune session authentifiée de production utilisée pour les tests de mutation.
+
+## Fichiers et retour arrière
+
+Résultat final navigateur : **PASS** à 1440×1000, 1024×900 avec largeur réservée à la navigation, et 390×844. Les assertions portent sur les positions réelles des cinq contrôles/actions, pas seulement leurs conteneurs, et sur les six cartes de catégories. Zéro erreur JavaScript et aucun débordement global. Captures ordinateur/portable/mobile inspectées. Un titre de rôle compact et une enveloppe du Select corrigent aussi l'alignement des contrôles à largeur réduite. Build final réussi. Le lint ciblé a révélé quatre globals Web Request/Response non déclarés dans le banc CommonJS ; leur déclaration a été corrigée, sans changer le comportement des tests.
+
+Contrôles finaux : lint ciblé sans erreur, TypeScript indépendant réussi et diff-check réussi. Le cache de vérification a été supprimé ; les imports de développement de `next-env.d.ts` antérieurs au build sont préservés, ainsi que `tsconfig.json`. Aucun changement dans les fichiers de transferts/licences existants.
+
+Adaptés : `lib/competition-people.ts`, `lib/competition-people-harmonisation.test.cjs`, `components/competitions/competition-people-manager.tsx`, `scripts/verify-competition-people-standings-ui.cjs`, les preuves et ce rapport. Nouveaux : `lib/competition-person-affiliations.ts` et son test. Aucun changement du référentiel, du lecteur global d'athlètes ou de l'ajout d'unités.
+
+Retour arrière ciblé : retirer uniquement le raccordement à l'index d'affiliations, la recherche par licence et les classes/disposition de ce formulaire, sans restaurer intégralement les fichiers partagés. Cette restauration réintroduirait le défaut de rattachement et n'est donc pas une réparation des données. Aucun rollback Sheets nécessaire. Le prochain push nécessite une nouvelle instruction de l'utilisateur.

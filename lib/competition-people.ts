@@ -5,6 +5,7 @@ import { appendSheetRecord, updateSheetRecordById, getSheetDataFrom } from "@/li
 import { competitionData, loadCompetitionBundle, type CompetitionBundle } from "@/lib/competitions-v2"
 import { CompetitionDomainError } from "@/lib/competition-structure"
 import { formatDateForSheet } from "@/lib/compact-date"
+import { competitionAthleteClubs, competitionAffiliationDate } from "@/lib/competition-person-affiliations"
 import type { BaseActorLicence } from "@/lib/types"
 
 const clean = (value: unknown) => String(value ?? "").trim()
@@ -22,14 +23,15 @@ function currentLicence(licences: BaseActorLicence[], actorId: string, start: st
   return { licenceNumber: licence.numeroLicence || "—", licenceStatus: valid ? "VALIDE" : "À VÉRIFIER" }
 }
 
-export async function competitionPeopleOptions(competitionId: string, loadedBundle?: CompetitionBundle) {
+export async function competitionPeopleOptions(competitionId: string, loadedBundle?: CompetitionBundle, readOptions: { fresh?: boolean } = {}) {
   const bundle = loadedBundle ?? await loadCompetitionBundle(), competition = bundle.competitions.find((item) => item.id === competitionId)
   if (!competition) return []
-  const [athletes, coaches, referees, officials, doctors, athleteLicences, coachLicences, refereeLicences, officialLicences, doctorLicences, otherRows] = await Promise.all([getAthletes(), getCoachs(), getArbitres(), getOfficiels(), getMedecins(), getAthleteLicences(), getCoachLicences(), getArbitreLicences(), getOfficielLicences(), getMedecinLicences(), (bundle.references.TYPES_ACTEURS || []).some(item => normalized(item.label).includes("AUTRE")) ? getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "AUTRES!A:Z") : Promise.resolve([])])
+  const [athletes, coaches, referees, officials, doctors, athleteLicences, coachLicences, refereeLicences, officialLicences, doctorLicences, otherRows, athleteAffiliations] = await Promise.all([getAthletes(), getCoachs(), getArbitres(), getOfficiels(), getMedecins(), getAthleteLicences(), getCoachLicences(), getArbitreLicences(), getOfficielLicences(), getMedecinLicences(), (bundle.references.TYPES_ACTEURS || []).some(item => normalized(item.label).includes("AUTRE")) ? getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "AUTRES!A:Z") : Promise.resolve([]), getSheetDataFrom(env.googleSheets.affiliationsSpreadsheetId, "ATHLETE_AFFILIATIONS!A:ZZ", readOptions)])
+  const athleteClubs = competitionAthleteClubs(athleteAffiliations, competitionAffiliationDate())
   const types = bundle.references.TYPES_ACTEURS ?? []
   const type = (terms: string[]) => types.find((item) => terms.some((term) => normalized(item.label).includes(term)))
   const groups: Array<{ ref?: { id: string; label: string }; actors: Array<{ id: string; name: string; clubId?: string }>; licences: BaseActorLicence[] }> = [
-    { ref: type(["ATHLETE", "JOUEUR"]), actors: athletes.map((item) => ({ id: item.idAthlete, name: item.nomComplet, clubId: item.clubId })), licences: athleteLicences },
+    { ref: type(["ATHLETE", "JOUEUR"]), actors: athletes.map((item) => ({ id: item.idAthlete, name: item.nomComplet, clubId: athleteClubs.get(item.idAthlete) || "" })), licences: athleteLicences },
     { ref: type(["COACH", "ENTRAINEUR"]), actors: coaches.map((item) => ({ id: item.idCoach, name: item.nomComplet })), licences: coachLicences },
     { ref: type(["ARBITRE"]), actors: referees.map((item) => ({ id: item.idArbitre, name: item.nomComplet })), licences: refereeLicences },
     { ref: type(["OFFICIEL"]), actors: officials.map((item) => ({ id: item.idOfficiel, name: item.nomComplet })), licences: officialLicences },
@@ -46,7 +48,7 @@ export async function addCompetitionPerson(competitionId: string, input: Record<
   if (detail.competition.statut === "TERMINEE") throw new CompetitionDomainError("Cette compétition est clôturée.", 409)
   const current = currentId ? detail.intervenants.find(row => clean(row.id_intervenant_competition) === currentId) : undefined
   if (currentId && !current) throw new CompetitionDomainError("Participant introuvable dans cette compétition.", 404)
-  const options = await competitionPeopleOptions(competitionId, bundle)
+  const options = await competitionPeopleOptions(competitionId, bundle, { fresh: true })
   const actorId = clean(input.id_acteur), typeId = clean(input.id_type_acteur), unitId = clean(input.id_unite_competition), clubId = clean(input.id_club), role = clean(input.role_participant), observations = clean(input.observations)
   const actor = options.find((item) => item.id === actorId && item.typeId === typeId)
   if (!actor) throw new CompetitionDomainError("Acteur ou type d’acteur invalide.", 400)
