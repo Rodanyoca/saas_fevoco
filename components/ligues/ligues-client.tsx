@@ -9,10 +9,12 @@ import { LigueDetail } from "@/components/ligues/ligue-detail"
 import { LigueFormDialog, type SavedLigue } from "@/components/ligues/ligue-form-dialog"
 import { Header } from "@/components/dashboard/header"
 import type { Athlete, Club, Entente, Ligue, Province } from "@/lib/types"
+import type { LigueResponsables } from "@/lib/ligue-responsables-model"
 
-export function LiguesClient({ ligues, ententes, clubs, athletes, provinceOptions, relationsReady }: {
+export function LiguesClient({ ligues, ententes, clubs, athletes, provinceOptions, relationsReady, responsables, responsablesReady }: {
   ligues: Ligue[]; ententes: Entente[]; clubs: Club[]; athletes: Athlete[]
   provinceOptions: Province[]; relationsReady: boolean
+  responsables: LigueResponsables; responsablesReady: boolean
 }) {
   const [rows, setRows] = useState(ligues)
   const [selectedLigue, setSelectedLigue] = useState<Ligue | null>(null)
@@ -45,7 +47,7 @@ export function LiguesClient({ ligues, ententes, clubs, athletes, provinceOption
     { key: "statut", label: "Statut", options: Array.from(new Set(rows.map((ligue) => ligue.statut).filter(Boolean))).sort().map((label) => ({ value: label, label })) },
   ], [rows])
 
-  if (selectedLigue) return <><Header title={`Fiche Ligue : ${selectedLigue.nomLigue || selectedLigue.idLigue}`} subtitle={selectedLigue.nomProvince || "Détail de la ligue"} /><main className="space-y-6 p-4 sm:p-6"><LigueDetail ligue={selectedLigue} ententes={ententes} clubs={clubs} athletes={athletes} provinces={provinceOptions} onBack={() => setSelectedLigue(null)} onUpdated={applySavedLigue} relationsReady={relationsReady} /></main></>
+  if (selectedLigue) return <><Header title={`Fiche Ligue : ${selectedLigue.nomLigue || selectedLigue.idLigue}`} subtitle={selectedLigue.nomProvince || "Détail de la ligue"} /><main className="space-y-6 p-4 sm:p-6"><LigueDetail ligue={selectedLigue} ententes={ententes} clubs={clubs} athletes={athletes} provinces={provinceOptions} onBack={() => setSelectedLigue(null)} onUpdated={applySavedLigue} relationsReady={relationsReady} responsables={responsables[selectedLigue.idLigue] ?? []} responsablesReady={responsablesReady} /></main></>
 
   return <><Header title="Ligues" subtitle="Liste et administration des ligues provinciales" /><main className="space-y-5 p-4 sm:p-6">
     <div className="flex justify-end"><LigueFormDialog provinces={provinceOptions} onSaved={applySavedLigue} /></div>

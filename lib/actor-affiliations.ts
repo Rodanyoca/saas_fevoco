@@ -5,17 +5,21 @@ import { appendSheetRecord, formatSheetDateColumns, getSheetDataFrom, getSheetsD
 import { formatDateForSheet } from "@/lib/compact-date"
 import { AffiliationDomainError, createAffiliationDomain, type AffiliationKind, type AffiliationStore } from "@/lib/affiliations-domain"
 import { isOfficialFederation, affiliationSheets, affiliationView, readAffiliationRow, writeAffiliationRow, type AffiliationReferences } from "@/lib/actor-affiliation-schema"
+import { mutateAthleteTransfer } from "@/lib/sports-mutations"
+import { sportsWritesEnabled, sportsWriteBlockReason } from "@/lib/sports-atomic-store"
+import { sportsToday, temporalState } from "@/lib/sports-model"
+import { transferRole } from "@/lib/athlete-transfers-domain"
 
 const text = (value: unknown) => String(value ?? "").trim()
 const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
 const options = (rows: SheetRow[], id: string, label: string) => rows.map(row => ({ id: text(row[id]), label: text(row[label]) })).filter(item => item.id && item.label)
 
-async function context(kind: AffiliationKind) {
+async function context(kind: AffiliationKind, includeSports = false) {
   const config = env.googleSheets, definition = affiliationSheets[kind]
   if (!config.affiliationsSpreadsheetId || !config.acteursSpreadsheetId || !config.territorialSpreadsheetId || !config.referentielsSpreadsheetId || !config.clientEmail || !config.privateKey) throw new AffiliationDomainError("SOURCE_INDISPONIBLE", "Les classeurs des affiliations ne sont pas configurés.", 503)
   const entity = kind === "officiel" || kind === "autre"
   const [reference, territory, actors] = await Promise.all([
-    getSheetsDataFrom(config.referentielsSpreadsheetId, ["STATUTS_AFFILIATION", ...(entity ? ["TYPES_STRUCTURES", "FEDERATION"] : []), ...(kind === "officiel" ? ["FONCTION_OFFICIEL"] : []), ...(kind === "autre" ? ["SAISON"] : [])].map(name => `${name}!A:ZZ`)),
+    getSheetsDataFrom(config.referentielsSpreadsheetId, ["STATUTS_AFFILIATION", ...(kind === "athlete" && includeSports ? ["TYPES_TRANSFERT"] : []), ...(entity ? ["TYPES_STRUCTURES", "FEDERATION"] : []), ...(kind === "officiel" ? ["FONCTION_OFFICIEL"] : []), ...(kind === "autre" ? ["SAISON"] : [])].map(name => `${name}!A:ZZ`)),
     getSheetsDataFrom(config.territorialSpreadsheetId, (entity ? ["CLUBS", "LIGUES", "ENTENTES"] : ["CLUBS"]).map(name => `${name}!A:ZZ`)),
     getSheetDataFrom(config.acteursSpreadsheetId, `${definition.actorSheet}!A:ZZ`),
   ])
@@ -41,25 +45,32 @@ async function context(kind: AffiliationKind) {
       else await updateSheetRecordById(config.affiliationsSpreadsheetId, definition.sheet, definition.id, row.id, record)
     },
   }
+  if (kind === "athlete") Object.assign(refs, { transferTypes: options(reference.TYPES_TRANSFERT || [], "id_type_transfert", "nom_transfert"), sportsWritesEnabled: sportsWritesEnabled(), sportsWriteBlockReason })
   const names = new Map(actors.map(row => [text(row[definition.actor]), text(row.nom_complet)]))
   return { refs, store, actorName: (id: string) => names.get(id) || "" }
 }
 
 export async function listActorAffiliations(kind: AffiliationKind, actorId: string) {
-  const { refs, store } = await context(kind)
+  const { refs, store } = await context(kind, true)
   if (!actorId || !(await store.actorExists(kind, actorId))) throw new AffiliationDomainError("ACTEUR_INTROUVABLE", "Acteur introuvable.", 404)
   const rows = (await store.list(kind)).filter(row => row.actorId === actorId).sort((a, b) => b.dateDebut.localeCompare(a.dateDebut))
-  return { affiliations: rows.map(row => affiliationView(row, refs)), references: refs }
+  const raw = rows.map(row => writeAffiliationRow(row, row.statusId)), byId = new Map(raw.map(row => [row.id_affiliation_athlete, row]))
+  return { affiliations: rows.map((row, index) => ({ ...affiliationView(row, refs), ...(kind === "athlete" ? { temporalState: temporalState(raw[index], sportsToday()), transferRole: transferRole(raw[index], byId) } : {}) })), references: refs }
 }
 
-export async function allActorAffiliationViews(kind: AffiliationKind) {
-  const { refs, store, actorName } = await context(kind)
-  return (await store.list(kind)).map(row => ({ ...affiliationView(row, refs), actorName: actorName(row.actorId) }))
+export async function allActorAffiliationViews(kind: AffiliationKind, includeSports = false) {
+  const { refs, store, actorName } = await context(kind, includeSports)
+  return (await store.list(kind)).map(row => ({ ...affiliationView(row, refs), actorName: actorName(row.actorId), ...(kind === "athlete" && includeSports ? { temporalState: temporalState(writeAffiliationRow(row, row.statusId), sportsToday()) } : {}) }))
 }
 
 // Sérialise les écritures dans une instance ; les UUID évitent les collisions entre instances.
 const pending = new Map<string, Promise<unknown>>()
 export async function saveActorAffiliation(kind: AffiliationKind, actorId: string, input: unknown, id?: string) {
+  if (kind === "athlete") {
+    const row = await mutateAthleteTransfer(actorId, input, id)
+    const { refs } = await context(kind, true)
+    return { affiliation: affiliationView(readAffiliationRow(kind, row, refs.statuses, formatDateForSheet), refs), created: !id }
+  }
   const key = `${kind}:${actorId}`, previous = pending.get(key) || Promise.resolve()
   const task = previous.catch(() => {}).then(async () => {
     const { refs, store } = await context(kind), domain = createAffiliationDomain(store)

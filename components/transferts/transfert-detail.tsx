@@ -106,7 +106,9 @@ export function TransfertDetail({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <InfoRow label="Type" value={transfert.typeTransfert} />
+            <InfoRow label="Type" value={transfert.typeTransfert || "Non renseigné"} />
+            <InfoRow label="Affiliation précédente" value={transfert.idAffiliationPrecedente || "Non renseigné"} />
+            <InfoRow label="État temporel" value={transfert.etatTemporel || "Non renseigné"} />
             <InfoRow label="Statut" value={transfert.statut} />
             <InfoRow label="Observation" value={transfert.observation} />
           </CardContent>

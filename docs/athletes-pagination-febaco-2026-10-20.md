@@ -78,3 +78,10 @@ Ajustement demandé : pied gauche limité au total des athlètes ; plage et nomb
 Ajustement suivant : suppression du bouton Réinitialiser, de sa prop onReset, du gestionnaire resetFilters et du calcul hasFilters. Les filtres restent modifiables individuellement.
 
 Dernier ajustement visuel demandé : disposition FEBACO du pied de liste (Afficher + sélecteur 70 px + total atténué à gauche, chevrons outline sm et numéro de page à droite, gap 8 px). Le total reste la seule information de comptage, sans plage ni compteur filtré. Retour à la ligne conservé sur petits écrans. ESLint ciblé et diff check réussis ; validation navigateur non réalisée.
+
+## Ajustement ultérieur — retrait du filtre Club (5 novembre 2026)
+
+Le filtre Club a été retiré de la liste des athlètes. La recherche, le filtre
+Sexe, le filtre Statut, le tri et la pagination restent inchangés. Cette
+modification ne concerne pas les filtres par club des autres écrans, notamment
+la synthèse des licences.

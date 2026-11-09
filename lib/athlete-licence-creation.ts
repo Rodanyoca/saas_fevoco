@@ -1,18 +1,17 @@
 import "server-only"
 
 import { env } from "@/lib/env"
-import { appendSheetRecords, formatSheetDateColumn, getSheetDataFrom, getSheetsDataFrom, updateSheetRecordById, type SheetRow } from "@/lib/google-sheets"
-import { createLicenceDomain, type LicenceStore } from "@/lib/licences-domain"
+import { getSheetsDataFrom, type SheetRow } from "@/lib/google-sheets"
+import { mutateSeasonalLicence } from "@/lib/sports-mutations"
+import { sportsWritesEnabled, sportsWriteBlockReason } from "@/lib/sports-atomic-store"
 import { athleteAffiliationClubId, athleteAffiliationClubName } from "@/lib/athlete-affiliation-fields"
-import { formatDateForSheet } from "@/lib/compact-date"
 
 const clean = (value: unknown) => String(value ?? "").trim()
 const first = (row: SheetRow, ...keys: string[]) => keys.map((key) => clean(row[key])).find(Boolean) ?? ""
-const civilDate = (value: string) => { try { return formatDateForSheet(value) } catch { return "" } }
 
 async function source() {
   const [licences, affiliations, actors, structures, references] = await Promise.all([
-    getSheetsDataFrom(env.googleSheets.licencesSpreadsheetId, ["ATHLETE_LICENCES!A:ZZ", "ACTEURS_LICENCES!A:ZZ"]),
+    getSheetsDataFrom(env.googleSheets.licencesSpreadsheetId, ["COMPTEURS_LICENCES!A:F"]),
     getSheetsDataFrom(env.googleSheets.affiliationsSpreadsheetId, ["ATHLETE_AFFILIATIONS!A:ZZ"]),
     getSheetsDataFrom(env.googleSheets.acteursSpreadsheetId, ["ATHLETES!A:ZZ"]),
     getSheetsDataFrom(env.googleSheets.territorialSpreadsheetId, ["CLUBS!A:ZZ", "ENTENTES!A:ZZ", "LIGUES!A:ZZ"]),
@@ -63,6 +62,9 @@ export async function athleteLicenceCreationOptions() {
     ...[...clubs.entries()].filter(([id]) => Boolean(id)).map(([id, row]) => [id, { id, label: first(row, "nom_club") || id }] as const),
   ])
   return {
+    sportsWritesEnabled: sportsWritesEnabled(),
+    sportsWriteBlockReason,
+    counters: (data.licences.COMPTEURS_LICENCES ?? []).map(row => ({ clubId: clean(row.id_club), seasonId: clean(row.id_saison), status: clean(row.statut_compteur) })),
     clubs: [...clubOptions.values()].map(item => {
       const club = clubs.get(item.id), ententeId = clean(club?.id_entente), entente = ententes.get(ententeId), ligueId = clean(entente?.id_ligue)
       return { ...item, ententeId, entente: first(entente || {}, "nom_entente"), ligueId, ligue: first(ligues.get(ligueId) || {}, "nom_ligue") }
@@ -73,56 +75,6 @@ export async function athleteLicenceCreationOptions() {
   }
 }
 
-async function licenceStore() {
-  const data = await source()
-  const athleteRows = data.actors.ATHLETES ?? []
-  const clubIds = new Set((data.structures.CLUBS ?? []).map((row) => clean(row.id_club)).filter(Boolean))
-  const affiliationRows = data.affiliations.ATHLETE_AFFILIATIONS ?? []
-  const stringRows = (rows: SheetRow[]) => rows.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [key, clean(value)])))
-  const store: LicenceStore = {
-    async load(fresh) { return { athleteLicences: stringRows(fresh ? await getSheetDataFrom(env.googleSheets.licencesSpreadsheetId, "ATHLETE_LICENCES!A:ZZ", { fresh: true }) : data.licences.ATHLETE_LICENCES ?? []), actorLicences: stringRows(data.licences.ACTEURS_LICENCES ?? []) } },
-    async updateAthlete(id, row) {
-      await formatSheetDateColumn(env.googleSheets.licencesSpreadsheetId, "ATHLETE_LICENCES", "date_delivrance", "yyyy-mm-dd")
-      await updateSheetRecordById(env.googleSheets.licencesSpreadsheetId, "ATHLETE_LICENCES", "id_licence", id, row)
-    },
-    async appendAthlete(rows) {
-      await formatSheetDateColumn(env.googleSheets.licencesSpreadsheetId, "ATHLETE_LICENCES", "date_delivrance", "yyyy-mm-dd")
-      await appendSheetRecords(env.googleSheets.licencesSpreadsheetId, "ATHLETE_LICENCES", rows)
-    },
-    async appendActor() { throw new Error("Création de licence acteur hors périmètre.") },
-    async athleteExists(id) { return athleteRows.some((row) => clean(row.id_athlete) === id) },
-    async actorExists() { return false },
-    async seasonExists(id) { return (data.references.SAISON ?? []).some((row) => clean(row.id_saison) === id) },
-    async cycleExists() { return false },
-    async statusExists(id) { return (data.references.STATUT_LICENCE ?? []).some((row) => clean(row.id_statut_licence) === id) },
-    async affiliation(kind, id) {
-      if (kind !== "athlete") return null
-      const row = affiliationRows.find((item) => first(item, "id_affiliation_athlete", "id_affiliation") === id)
-      if (!row) return null
-      const clubId = athleteAffiliationClubId(row)
-      return {
-        id,
-        actorId: first(row, "id_athlete", "athlete_id", "id_acteur"),
-        activeFrom: civilDate(clean(row.date_debut)) || "9999-12-31",
-        activeUntil: clean(row.date_fin) ? civilDate(clean(row.date_fin)) || "0000-01-01" : "",
-        statusId: (() => {
-          const status = (data.references.STATUTS_AFFILIATION ?? []).find(item => clean(item.id_statut_affiliation) === clean(row.id_statut_affiliation))
-          return ["ACTIF", "ACTIVE"].includes(first(status || row, "nom_statut_affiliation", "statut_affiliation", "statut").toUpperCase()) ? "SAF001" : first(row, "id_statut_affiliation", "statut_affiliation", "statut")
-        })(),
-        targetExists: clubIds.has(clubId),
-        clubId,
-      }
-    },
-  }
-  return store
-}
-
-let pending: Promise<unknown> = Promise.resolve()
-async function mutation<T>(run: (store: LicenceStore) => Promise<T>) {
-  const task = pending.catch(() => {}).then(async () => run(await licenceStore()))
-  pending = task
-  return task
-}
-export const createAthleteLicence = (input: unknown) => mutation(store => createLicenceDomain(store).createAthlete(input, new Date().toISOString().slice(0, 10)))
-export const updateAthleteLicence = (id: string, input: unknown) => mutation(store => createLicenceDomain(store).updateAthlete(id, input))
-export const renewClubLicences = (input: unknown) => mutation(store => createLicenceDomain(store).renewClub(input))
+export const createAthleteLicence = async (input: unknown) => (await mutateSeasonalLicence(input))[0]
+export const updateAthleteLicence = async (id: string, input: unknown) => (await mutateSeasonalLicence(input, id))[0]
+export const renewClubLicences = (input: unknown) => mutateSeasonalLicence(input)

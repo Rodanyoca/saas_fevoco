@@ -49,7 +49,9 @@ export function mapAthleteAffiliation(row: Row): AthleteAffiliation {
   return {
     ...baseAffiliation(row, "athlete"),
     saison: first(row, "saison"),
-    typeAffiliation: first(row, "type_affiliation", "type_mouvement", "type_transfert"),
+    typeAffiliation: first(row, "type_affiliation", "type_mouvement", "type_transfert") || "Non renseigné",
+    idTypeTransfert: first(row, "id_type_transfert"),
+    idAffiliationPrecedente: first(row, "id_affiliation_precedente"),
     idClubOrigine: normalizeId(first(row, "id_club_origine")),
     nomClubOrigine: first(row, "nom_club_origine"),
     idClubBeneficiaire: normalizeId(athleteAffiliationClubId(row)),
@@ -118,5 +120,7 @@ export function mapAthleteLicence(row: Row, season: Row = {}): AthleteLicence {
     idAffiliation: normalizeId(first(row, "id_affiliation_athlete", "id_affiliation")),
     idClub: normalizeId(first(row, "id_club")),
     nomClub: first(row, "nom_club"),
+    idClubAttribution: normalizeId(first(row, "id_club_attribution")),
+    compteurSaison: first(row, "compteur_saison"),
   }
 }

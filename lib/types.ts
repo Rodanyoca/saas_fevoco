@@ -204,6 +204,9 @@ export interface BaseActorAffiliation {
 }
 
 export interface AthleteAffiliation extends BaseActorAffiliation {
+  idTypeTransfert?: string
+  idAffiliationPrecedente?: string
+  etatTemporel?: string
   saison: string
   typeAffiliation: string
   idClubOrigine: string
@@ -256,6 +259,10 @@ export interface AthleteLicence extends BaseActorLicence {
   idAffiliation: string
   idClub: string
   nomClub: string
+  idClubAttribution?: string
+  compteurSaison?: string
+  idClubActuel?: string
+  nomClubActuel?: string
 }
 
 export interface Officiel {
@@ -545,6 +552,9 @@ export interface CompetitionClassement {
 }
 
 export interface Transfert {
+  idTypeTransfert?: string
+  idAffiliationPrecedente?: string
+  etatTemporel?: string
   id: string
   athleteId: string
   athleteNom: string

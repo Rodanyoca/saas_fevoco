@@ -1,9 +1,11 @@
 import "server-only"
 
 import { env } from "@/lib/env"
-import { appendSheetRecord, formatSheetDateColumn, updateSheetRecordById } from "@/lib/google-sheets"
+import { appendSheetRecord, formatSheetDateColumn, updateSheetRecordById, updateSheetRecordsBatch } from "@/lib/google-sheets"
 import { getEntentes, getLigues, getProvinceOptions } from "@/lib/data"
 import { formatDateForSheet } from "@/lib/compact-date"
+import { prepareLigueContactChanges } from "@/lib/ligue-contact-editor"
+import { LIGUE_CONTACT_SHEET } from "@/lib/ligue-contact-rules"
 
 const statuses = new Set(["ACTIF", "INACTIF"])
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -111,15 +113,25 @@ export async function updateLigue(idLigue: string, payload: Record<string, unkno
   if (ligues.some((item) => item.idLigue !== idLigue && item.idProvince === input.idProvince && item.nomLigue.toLowerCase() === input.nomLigue.toLowerCase())) {
     throw new Error("Une ligue portant ce nom existe déjà dans cette province.")
   }
-  await formatSheetDateColumn(env.googleSheets.territorialSpreadsheetId, "LIGUES", "date_affiliation_ligue", "yyyy-mm-dd")
-  await updateSheetRecordById(env.googleSheets.territorialSpreadsheetId, "LIGUES", "id_ligue", idLigue, {
+  const record = {
     nom_ligue: input.nomLigue,
     telephone: input.telephone, email: input.emailLigue,
     id_province: province.idProvince,
     "année_creation": input.anneeCreation,
     date_affiliation_ligue: input.dateAffiliation,
     statut: input.statut, observations: input.observations,
-  })
+  }
+  if (Object.hasOwn(payload, "responsables")) {
+    const contacts = await prepareLigueContactChanges(idLigue, payload.responsables, payload.responsablesRevision)
+    await updateSheetRecordsBatch(env.googleSheets.territorialSpreadsheetId, [
+      { sheetName: "LIGUES", idHeader: "id_ligue", id: idLigue, record, dateHeaders: ["date_affiliation_ligue"] },
+      ...contacts.records,
+    ], contacts.validateRows, [LIGUE_CONTACT_SHEET])
+    return ligueResult(idLigue, input, province)
+  } else {
+    await formatSheetDateColumn(env.googleSheets.territorialSpreadsheetId, "LIGUES", "date_affiliation_ligue", "yyyy-mm-dd")
+    await updateSheetRecordById(env.googleSheets.territorialSpreadsheetId, "LIGUES", "id_ligue", idLigue, record)
+  }
   return (await getLigues()).find((item) => item.idLigue === idLigue)
     ?? ligueResult(idLigue, input, province)
 }

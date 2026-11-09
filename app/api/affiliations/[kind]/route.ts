@@ -3,11 +3,12 @@ import { revalidatePath } from "next/cache"
 import { isAffiliationKind } from "@/lib/actor-affiliation-schema"
 import { AffiliationDomainError } from "@/lib/affiliations-domain"
 import { listActorAffiliations, saveActorAffiliation } from "@/lib/actor-affiliations"
+import { SportsError } from "@/lib/sports-model"
 
 export const runtime = "nodejs"
 const paths = ["/athletes", "/coachs", "/medecins", "/officiels", "/autres-acteurs", "/clubs", "/ligues", "/ententes", "/licences", "/transferts", "/"]
 function failure(error: unknown) {
-  if (error instanceof AffiliationDomainError) return NextResponse.json({ message: error.message, code: error.code, fields: error.fields }, { status: error.status })
+  if (error instanceof AffiliationDomainError || error instanceof SportsError) return NextResponse.json({ message: error.message, code: error.code, fields: error.fields }, { status: error.status, headers: { "Cache-Control": "private, no-store" } })
   return NextResponse.json({ message: "Les affiliations sont temporairement indisponibles. Réessayez.", code: "SOURCE_INDISPONIBLE" }, { status: 503 })
 }
 export async function GET(request: Request, context: { params: Promise<{ kind: string }> }) {
@@ -22,7 +23,7 @@ async function mutate(request: Request, context: { params: Promise<{ kind: strin
   try { body = await request.json(); if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error() } catch { return NextResponse.json({ message: "Requête invalide." }, { status: 400 }) }
   if (update && (typeof body.id !== "string" || !body.id)) return NextResponse.json({ message: "Affiliation manquante." }, { status: 422 })
   try {
-    const result = await saveActorAffiliation(kind, typeof body.actorId === "string" ? body.actorId : "", body, update ? String(body.id) : undefined)
+    const result = await saveActorAffiliation(kind, typeof body.actorId === "string" ? body.actorId : "", { ...body, ...(request.headers.get("Idempotency-Key") ? { idempotency_key: request.headers.get("Idempotency-Key") } : {}) }, update ? String(body.id) : undefined)
     paths.forEach(path => revalidatePath(path))
     return NextResponse.json({ ...result, message: update ? "Affiliation modifiée." : "Affiliation enregistrée." }, { status: result.created ? 201 : 200 })
   } catch (error) { return failure(error) }

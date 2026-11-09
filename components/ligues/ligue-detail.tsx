@@ -11,10 +11,12 @@ import { StatusBadge } from "@/components/dashboard/status-badge"
 import { LigueFormDialog, type SavedLigue } from "@/components/ligues/ligue-form-dialog"
 import { buildLigueHierarchy } from "@/lib/territorial-hierarchy"
 import type { Athlete, Club, Entente, Ligue, Province } from "@/lib/types"
+import type { LigueResponsable } from "@/lib/ligue-responsables-model"
 
-export function LigueDetail({ ligue, ententes, clubs, athletes, provinces, onBack, onUpdated, relationsReady }: {
+export function LigueDetail({ ligue, ententes, clubs, athletes, provinces, onBack, onUpdated, relationsReady, responsables, responsablesReady }: {
   ligue: Ligue; ententes: Entente[]; clubs: Club[]; athletes: Athlete[]; provinces: Province[]
   onBack: () => void; onUpdated: (ligue: SavedLigue) => void; relationsReady: boolean
+  responsables: LigueResponsable[]; responsablesReady: boolean
 }) {
   const hierarchy = useMemo(() => buildLigueHierarchy(ligue, ententes, clubs, athletes), [ligue, ententes, clubs, athletes])
   const ententesById = useMemo(() => new Map(hierarchy.ententes.map((item) => [item.idEntente, item])), [hierarchy.ententes])
@@ -34,7 +36,18 @@ export function LigueDetail({ ligue, ententes, clubs, athletes, provinces, onBac
     <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button><LigueFormDialog ligue={ligue} provinces={provinces} onSaved={onUpdated} trigger={<Button className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" aria-label={`Modifier ${ligue.nomLigue}`} title="Modifier"><Pencil className="size-4" />Modifier</Button>} /></div>
     <div className="grid gap-6 lg:grid-cols-2">
       <DetailCard title="Informations générales" icon={MapPin} iconClassName="text-brand-gold" fields={[{ label: "ID Ligue", value: ligue.idLigue }, { label: "Nom", value: ligue.nomLigue }, { label: "Province", value: ligue.nomProvince }, { label: "Année de création", value: ligue.anneeCreation }, { label: "Date d’affiliation", value: ligue.dateAffiliation }, { label: "Téléphone", value: ligue.telephone }, { label: "E-mail", value: ligue.emailLigue }, { label: "Statut", value: ligue.statut }]} />
-      <DetailCard title="Responsables" icon={Shield} iconClassName="text-brand-gold" fields={[{ label: "Président", value: ligue.presidentNom }, { label: "Téléphone président", value: ligue.presidentTelephone }, { label: "E-mail président", value: ligue.presidentEmail }, { label: "Secrétaire", value: ligue.secretaireNom }, { label: "Téléphone secrétaire", value: ligue.secretaireTelephone }, { label: "E-mail secrétaire", value: ligue.secretaireEmail }]} />
+      <DetailCard title="Responsables" icon={Shield} iconClassName="text-brand-gold" fields={
+        !responsablesReady
+          ? [{ label: "Lecture", value: "Les responsables sont momentanément indisponibles." }]
+          : responsables.length === 0
+            ? [{ label: "Désignations", value: "Aucun responsable désigné" }]
+            : responsables.flatMap(contact => [
+              { label: contact.role, value: contact.nomComplet },
+              ...(contact.referenceIntrouvable ? [{ label: "Référence introuvable", value: contact.referenceIntrouvable }] : []),
+              { label: "Téléphone", value: contact.telephone },
+              { label: "E-mail", value: contact.email },
+            ])
+      } />
     </div>
     <div className="grid gap-4 md:grid-cols-3"><StatCard className="[&_svg]:text-brand-gold" title="Ententes liées" value={relationsReady ? hierarchy.ententes.length : "—"} icon={Network} /><StatCard className="[&_svg]:text-brand-gold" title="Clubs liés" value={relationsReady ? hierarchy.clubs.length : "—"} icon={Building2} /><StatCard className="[&_svg]:text-brand-gold" title="Athlètes liés" value={relationsReady ? hierarchy.athletes.length : "—"} icon={Users} /></div>
     {!relationsReady && <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-5" role="status">Certaines relations territoriales sont temporairement indisponibles.</p>}

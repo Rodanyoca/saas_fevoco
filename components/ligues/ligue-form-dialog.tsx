@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -12,6 +13,9 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Ligue, Province } from "@/lib/types"
 import { compactDateFromSheet } from "@/lib/compact-date"
 import { Plus } from "lucide-react"
+import { apiFetch } from "@/lib/api/client"
+import { LigueResponsablesFields } from "@/components/ligues/ligue-responsables-fields"
+import type { LigueContactEditorData } from "@/lib/ligue-contact-editor-model"
 
 export type SavedLigue = Pick<Ligue, "idLigue" | "nomLigue" | "telephone" | "emailLigue" | "idProvince" | "nomProvince" | "anneeCreation" | "dateAffiliation" | "statut" | "observations">
 
@@ -29,9 +33,33 @@ export function LigueFormDialog({ provinces, ligue, onSaved, trigger }: {
   trigger?: ReactNode
 }) {
   const editing = Boolean(ligue)
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
+  const submitLock = useRef(false)
   const [error, setError] = useState("")
+  const [editor, setEditor] = useState<LigueContactEditorData | null>(null)
+  const [contactsError, setContactsError] = useState("")
+  const [loadAttempt, setLoadAttempt] = useState(0)
+  const ligueId = ligue?.idLigue
+  useEffect(() => {
+    if (!open || !ligueId) return
+    const controller = new AbortController()
+    setEditor(null)
+    setContactsError("")
+    async function load() {
+      try {
+        const response = await apiFetch(`/api/ligues/${encodeURIComponent(ligueId!)}`, { signal: controller.signal })
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.message || "Chargement des responsables impossible.")
+        if (!controller.signal.aborted) setEditor(data)
+      } catch (cause) {
+        if (!controller.signal.aborted) setContactsError(cause instanceof Error ? cause.message : "Chargement impossible.")
+      }
+    }
+    void load()
+    return () => controller.abort()
+  }, [open, ligueId, loadAttempt])
   const [form, setForm] = useState({
     nomLigue: ligue?.nomLigue ?? "",
     telephone: ligue?.telephone ?? "", emailLigue: ligue?.emailLigue ?? "",
@@ -42,25 +70,28 @@ export function LigueFormDialog({ provinces, ligue, onSaved, trigger }: {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (submitLock.current || (editing && !editor)) return
+    submitLock.current = true
     setError("")
     setPending(true)
     try {
       const response = await fetch(editing ? `/api/ligues/${encodeURIComponent(ligue!.idLigue)}` : "/api/ligues", {
-        method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
+        method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, ...(editing && editor ? { responsables: editor.contacts, responsablesRevision: editor.revision } : {}) }),
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || "Enregistrement impossible.")
       onSaved(result.ligue)
       toast.success(result.message)
       setOpen(false)
+      router.refresh()
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Enregistrement impossible."
       setError(message)
       toast.error(message)
-    } finally { setPending(false) }
+    } finally { submitLock.current = false; setPending(false) }
   }
 
-  return <Sheet open={open} onOpenChange={(value) => { if (!pending) setOpen(value) }}>
+  return <Sheet open={open} onOpenChange={(value) => { if (!pending) { setEditor(null); setContactsError(""); setError(""); setOpen(value) } }}>
     <SheetTrigger asChild>{trigger ?? <Button variant={editing ? "outline" : "default"} className={editing ? "hover:border-brand-gold/60 hover:bg-brand-gold/10 hover:text-brand-gold" : "bg-brand-gold text-[#071827] hover:bg-brand-gold/90"}>{!editing && <Plus className="size-4" />}{editing ? "Modifier la ligue" : "Ajouter une ligue"}</Button>}</SheetTrigger>
     <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
       <SheetHeader>
@@ -79,8 +110,9 @@ export function LigueFormDialog({ provinces, ligue, onSaved, trigger }: {
           <div className="space-y-2"><Label>Statut</Label><Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ACTIF">Actif</SelectItem><SelectItem value="INACTIF">Inactif</SelectItem></SelectContent></Select></div>
           <div className="space-y-2 sm:col-span-2"><Label htmlFor="observations-ligue">Observations</Label><Textarea id="observations-ligue" value={form.observations} onChange={(event) => setForm({ ...form, observations: event.target.value })} /></div>
         </div>
+        {editing && (editor ? <LigueResponsablesFields data={editor} disabled={pending} onChange={contacts => setEditor(current => current ? { ...current, contacts } : current)} /> : contactsError ? <div className="space-y-2"><p className="text-sm text-destructive" role="alert">{contactsError}</p><Button type="button" variant="outline" onClick={() => setLoadAttempt(value => value + 1)}>Réessayer le chargement</Button></div> : <p className="text-sm text-muted-foreground" role="status">Chargement des responsables…</p>)}
         {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
-        <SheetFooter className="px-0"><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)} className={editing ? "hover:border-brand-gold/60 hover:bg-brand-gold/10 hover:text-brand-gold" : undefined}>Annuler</Button><Button type="submit" disabled={pending} className={editing ? "bg-brand-gold text-[#071827] hover:bg-brand-gold/90" : undefined}>{pending ? "Enregistrement…" : "Enregistrer"}</Button></SheetFooter>
+        <SheetFooter className="px-0"><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)} className={editing ? "hover:border-brand-gold/60 hover:bg-brand-gold/10 hover:text-brand-gold" : undefined}>Annuler</Button><Button type="submit" disabled={pending || (editing && !editor)} className={editing ? "bg-brand-gold text-[#071827] hover:bg-brand-gold/90" : undefined}>{pending ? "Enregistrement…" : "Enregistrer"}</Button></SheetFooter>
       </form>
     </SheetContent>
   </Sheet>

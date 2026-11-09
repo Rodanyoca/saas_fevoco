@@ -3,8 +3,9 @@
 import { apiFetch } from "@/lib/api/client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { useRef, useState } from "react"
-import { Eye, EyeOff, LoaderCircle, LockKeyhole, Mail } from "lucide-react"
+import { Eye, EyeOff, LoaderCircle, LockKeyhole } from "lucide-react"
 
 import { normalizeLoginRedirect } from "@/lib/auth/login-redirect"
 import { Button } from "@/components/ui/button"
@@ -77,15 +78,14 @@ export default function LoginPage() {
         <div className={styles.heroInner}>
           <div className={styles.brandLockup}>
             <div className={styles.brandLogo}>
-              <Image unoptimized src="/logo-fevoco.png" alt="Logo du Fédération de Volleyball du Congo" fill sizes="64px" className={styles.brandLogoImage} />
+              <Image unoptimized src="/logo-fevoco.png" alt="Logo de la Fédération de Volleyball du Congo" fill sizes="64px" className={styles.brandLogoImage} />
             </div>
             <div>
               <p className={styles.brandName}>FEVOCO</p>
-              <p className={styles.brandCountry}>Fédération de Volleyball du Congo</p>
             </div>
           </div>
           <div className={styles.heroContent}>
-            <p className={styles.eyebrow}>Institution sportive nationale</p>
+            <p className={styles.eyebrow}>Fédération sportive nationale</p>
             <h1 id="institution-title">Ensemble, portons plus haut les couleurs de la RDC.</h1>
             <p className={styles.introduction}>Une plateforme fédérale dédiée aux structures, aux acteurs et au développement du volleyball congolais.</p>
           </div>
@@ -99,14 +99,12 @@ export default function LoginPage() {
           <div className={styles.welcome}>
             <p className={styles.panelEyebrow}>Fédération de Volleyball du Congo</p>
             <h2 id="login-title">Espace institutionnel</h2>
-            <p>Connectez-vous pour accéder à la plateforme de gestion du volleyball congolais.</p>
           </div>
 
           <form onSubmit={handleSubmit} className={styles.form} aria-busy={loading}>
             <div className={styles.field}>
               <Label htmlFor="email">Adresse e-mail</Label>
               <div className={styles.inputWrap}>
-                <Mail aria-hidden="true" />
                 <Input id="email" name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} value={email} onChange={(event) => setEmail(event.target.value)} disabled={loading} aria-invalid={error === "credentials" || error === "validation"} required />
               </div>
             </div>
@@ -114,7 +112,6 @@ export default function LoginPage() {
             <div className={styles.field}>
               <Label htmlFor="password">Mot de passe</Label>
               <div className={styles.inputWrap}>
-                <LockKeyhole aria-hidden="true" />
                 <Input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} disabled={loading} aria-invalid={error === "credentials" || error === "validation"} aria-describedby={error ? "login-error" : undefined} required />
                 <button type="button" className={styles.passwordToggle} onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}>
                   {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
@@ -127,14 +124,15 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className={styles.submit} disabled={loading}>
               {loading && <LoaderCircle className={styles.spinner} aria-hidden="true" />}
+              {!loading && <LockKeyhole aria-hidden="true" />}
               {phase === "redirect" ? "Redirection en cours…" : loading ? "Connexion en cours…" : "Se connecter"}
             </Button>
           </form>
 
-          <div className={styles.panelMeta}>
-            <span>Version 1.0 · Accès sécurisé</span>
-            <span>Administration FEVOCO</span>
-          </div>
+          <nav aria-label="Informations institutionnelles" className={styles.legalLinks}>
+            <Link href="/confidentialite">Politique de confidentialité</Link>
+            <Link href="/conditions-utilisation">Conditions d’utilisation</Link>
+          </nav>
           <p className={styles.platformLabel}>Plateforme du référentiel sportif national</p>
           <p className={styles.signature} aria-label="Design par DS Concept"><span>Design by</span><strong>DS Concept</strong></p>
         </div>

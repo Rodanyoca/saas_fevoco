@@ -15,28 +15,23 @@ import { Search } from "lucide-react"
 export function AthletesFilters({
   athletes,
   search,
-  club,
   genre,
   statut,
   onSearchChange,
-  onClubChange,
   onGenreChange,
   onStatutChange,
 }: {
   athletes: Athlete[]
   search: string
-  club: string
   genre: string
   statut: string
   onSearchChange: (value: string) => void
-  onClubChange: (value: string) => void
   onGenreChange: (value: string) => void
   onStatutChange: (value: string) => void
 }) {
 
   const id = useId()
   const unique = (values: string[]) => Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }))
-  const clubsOptions = unique(athletes.map(athlete => athlete.clubNom))
   const genres = unique(athletes.map(athlete => athlete.genre))
   const statuts = unique(athletes.map(athlete => athlete.statut))
   const sexLabel = (value: string) => ({ M: "Masculin", F: "Féminin", MASCULIN: "Masculin", FEMININ: "Féminin" }[value.toUpperCase()] || value)
@@ -48,12 +43,6 @@ export function AthletesFilters({
       <div className="relative"><Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input id={`${id}-search`} type="search" placeholder="Nom, licence ou identifiant…" className="pl-9" value={search} onChange={event => onSearchChange(event.target.value)} />
       </div>
-    </div>
-    <div className="w-full min-w-0 space-y-1.5 sm:w-[220px]">
-      <label htmlFor={`${id}-club`} className="text-sm font-medium">Club</label>
-      <Select value={club} onValueChange={onClubChange}><SelectTrigger id={`${id}-club`} className="w-full" aria-label="Filtrer par club"><SelectValue /></SelectTrigger><SelectContent>
-        <SelectItem value="all">Tous les clubs</SelectItem>{clubsOptions.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
-      </SelectContent></Select>
     </div>
     <div className="w-full min-w-0 space-y-1.5 sm:w-[160px]">
       <label htmlFor={`${id}-sex`} className="text-sm font-medium">Sexe</label>

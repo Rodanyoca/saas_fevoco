@@ -6,6 +6,7 @@ export type AffiliationKind = "athlete" | "coach" | "medecin" | "officiel" | "au
 export type AffiliationRow = {
   id: string; kind: AffiliationKind; actorId: string; clubId: string; entityTypeId: string; entityId: string
   functionId: string; dateDebut: string; dateFin: string; statusId: string; observations: string; seasonId?: string
+  transferTypeId?: string; previousAffiliationId?: string
 }
 export type AffiliationStore = {
   list(kind: AffiliationKind, fresh?: boolean): Promise<AffiliationRow[]>

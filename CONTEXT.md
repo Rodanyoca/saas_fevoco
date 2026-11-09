@@ -26,3 +26,7 @@ L’athlète est rattaché directement au club. Les catégories de club et les s
 - **Licence d’acteur** : autorisation périodique d’un coach, officiel, arbitre ou médecin. Celle d’un coach, officiel ou médecin conserve l’affiliation utilisée lors de sa délivrance.
 - **Arbitre** : seul acteur licenciable sans affiliation. Sa `date_affiliation` est une information de profil et non une relation d’affiliation.
 - **Numéro officiel de licence** : donnée administrative distincte de l’identifiant technique immuable de la licence.
+- **Club d’attribution** : club fixé lors de l’attribution d’une licence sportive ; il reste porté par son numéro après un transfert.
+- **Compteur saisonnier** : suite réservée à un couple club–saison ; une valeur attribuée reste consommée quel que soit le statut ultérieur de la licence.
+- **Cession temporaire** : rattachement sportif borné à un autre club, accompagné d’une interruption du rattachement d’origine.
+- **Retour de cession** : rattachement d’origine confirmé après une cession ; il ne résulte pas d’une réactivation automatique de statut.

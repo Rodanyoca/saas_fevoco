@@ -15,7 +15,8 @@ test("lit et écrit les en-têtes réels des cinq feuilles sans dépendre de leu
     const row = readAffiliationRow(kind, source, statuses, formatDateForSheet), written = writeAffiliationRow(row, "ACTIF")
     assert.equal(row.dateDebut, "2026-10-07")
     assert.equal(row.statusId, "status-active")
-    assert.deepEqual(Object.keys(written).sort(), Object.keys(source).sort())
+    assert.deepEqual(Object.keys(written).sort(), [...Object.keys(source), ...(kind === "athlete" ? ["id_type_transfert", "id_affiliation_precedente"] : [])].sort())
+    if (kind === "athlete") { assert.equal(written.id_type_transfert, ""); assert.equal(written.id_affiliation_precedente, ""); assert.equal(affiliationView(row, refs).transferType, "Non renseigné") }
     assert.equal(written[config.actor], "ACTOR")
     assert.equal(written.date_debut, "2026-10-07")
     assert.equal(written.date_fin, "")

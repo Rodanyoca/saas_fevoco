@@ -2,6 +2,7 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { LiguesClient } from "@/components/ligues/ligues-client"
 import { getAthletes, getTerritorialHierarchy, getProvinceOptions } from "@/lib/data"
 import type { Athlete, Club, Entente, Ligue, Province } from "@/lib/types"
+import { getLigueResponsables } from "@/lib/ligue-responsables"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -11,6 +12,7 @@ export default async function LiguesPage() {
     getTerritorialHierarchy(),
     getAthletes(),
     getProvinceOptions(),
+    getLigueResponsables(),
   ])
   const hierarchy = results[0].status === "fulfilled" ? results[0].value : { ligues: [], ententes: [], clubs: [] }
   const { ligues, ententes, clubs } = hierarchy as { ligues: Ligue[]; ententes: Entente[]; clubs: Club[] }
@@ -27,6 +29,8 @@ export default async function LiguesPage() {
         athletes={athletes}
         provinceOptions={provinces}
         relationsReady={relationsReady}
+        responsables={results[3].status === "fulfilled" ? results[3].value : {}}
+        responsablesReady={results[3].status === "fulfilled"}
       />
     </DashboardLayout>
   )

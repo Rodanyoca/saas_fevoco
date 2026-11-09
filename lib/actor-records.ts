@@ -18,6 +18,7 @@ import { isMissingSheetRangeError } from "@/lib/optional-sheet"
 import { allActorAffiliationViews } from "@/lib/actor-affiliations"
 import type { ActorAffiliationView } from "@/lib/actor-affiliation-schema"
 import { athleteAffiliationClubId } from "@/lib/athlete-affiliation-fields"
+import { currentSportsClubs, sportsToday } from "@/lib/sports-model"
 
 const baseAffiliation = (row: ActorAffiliationView) => ({ idAffiliation: row.id, actorId: row.actorId, actorName: row.actorName || "", idStructure: row.clubId || row.entityId, nomStructure: row.structure, dateDebut: row.dateDebut, dateFin: row.dateFin, statutAffiliation: row.statut, observation: row.observations })
 
@@ -26,8 +27,10 @@ async function licenceRows(sheet: string) {
   return getSheetDataFrom(env.googleSheets.licencesSpreadsheetId, `${sheet}!A:Z`)
 }
 
-export const getAthleteAffiliations = async (): Promise<AthleteAffiliation[]> =>
-  (await allActorAffiliationViews("athlete")).map(row => ({ ...baseAffiliation(row), saison: "", typeAffiliation: "CLUB", idClubOrigine: "", nomClubOrigine: "", idClubBeneficiaire: row.clubId, nomClubBeneficiaire: row.structure }))
+export const getAthleteAffiliations = async (): Promise<AthleteAffiliation[]> => {
+  const rows = await allActorAffiliationViews("athlete", true), byId = new Map(rows.map(row => [row.id, row]))
+  return rows.map(row => { const previous = byId.get(row.previousAffiliationId || ""); return { ...baseAffiliation(row), saison: "", typeAffiliation: row.transferType || "Non renseigné", idClubOrigine: previous?.clubId || "", nomClubOrigine: previous?.structure || "", idClubBeneficiaire: row.clubId, nomClubBeneficiaire: row.structure, etatTemporel: row.temporalState || "", idTypeTransfert: row.transferTypeId || "", idAffiliationPrecedente: row.previousAffiliationId || "" } })
+}
 export const getCoachAffiliations = async (): Promise<CoachAffiliation[]> =>
   (await allActorAffiliationViews("coach")).map(row => ({ ...baseAffiliation(row), saison: "", typeAffiliation: "CLUB", fonction: "" }))
 export const getMedecinAffiliations = async (): Promise<MedecinAffiliation[]> =>
@@ -59,13 +62,15 @@ export const getAthleteLicences = async (): Promise<AthleteLicence[]> => {
   const affiliationsById = new Map(affiliations.map(row => [text(row.id_affiliation_athlete ?? row.id_affiliation), row]))
   const clubsById = new Map(clubs.map(row => [text(row.id_club), text(row.nom_club)]))
   const statusLabels = new Map(statuses.map(row => [text(row.id_statut_licence), text(row.nom_statut_licence)]))
+  const currentClubs = currentSportsClubs(affiliations, sportsToday())
   return rows.map(row => {
     const mapped = mapAthleteLicence(row, seasonsById.get(text(row.id_saison ?? row.saison)))
-    const licence = { ...mapped, statutLicence: statusLabels.get(mapped.idStatutLicence || "") || mapped.statutLicence }
+    const currentClub = currentClubs.get(mapped.actorId)
+    const licence = { ...mapped, statutLicence: statusLabels.get(mapped.idStatutLicence || "") || mapped.statutLicence, idClubActuel: currentClub || "", nomClubActuel: currentClub === null ? "À vérifier" : clubsById.get(currentClub || "") || "" }
     const affiliation = affiliationsById.get(licence.idAffiliation)
     // Conserver la structure de l'affiliation utilisée à la délivrance, même historique.
     if (!affiliation || text(affiliation.id_athlete ?? affiliation.athlete_id ?? affiliation.id_acteur) !== licence.actorId) return licence
-    const idClub = athleteAffiliationClubId(affiliation)
+    const idClub = licence.idClubAttribution || athleteAffiliationClubId(affiliation)
     return { ...licence, idClub, nomClub: clubsById.get(idClub) || "" }
   })
     .filter(item => item.idLicence && item.actorId)

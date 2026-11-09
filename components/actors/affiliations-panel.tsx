@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/dashboard/status-badge"
 import { compactDateFromSheet, formatDateForDisplay } from "@/lib/compact-date"
 import type { AffiliationKind } from "@/lib/affiliations-domain"
 import { isOfficialFederation, usesEntity, type ActorAffiliationView, type AffiliationOption, type AffiliationReferences } from "@/lib/actor-affiliation-schema"
+import { AthleteTransfersPanel } from "@/components/athletes/athlete-transfers-panel"
 
 const emptyRefs: AffiliationReferences = { clubs: [], statuses: [], functions: [], entityTypes: [], entities: {}, seasons: [] }
 const blank = () => ({ id_club: "", id_type_entite: "", id_entite: "", id_fonction: "", id_saison: "", date_debut: "", date_fin: "", id_statut_affiliation: "", observations: "" })
@@ -24,6 +25,9 @@ type Values = ReturnType<typeof blank>
 const labels: Record<AffiliationKind, string> = { athlete: "l’athlète", coach: "l’entraîneur", medecin: "le médecin", officiel: "l’officiel", autre: "l’acteur" }
 
 export function AffiliationsPanel({ kind, actorId, onChanged }: { kind: AffiliationKind; actorId: string; onChanged?: () => Promise<void> }) {
+  return kind === "athlete" ? <AthleteTransfersPanel key={actorId} actorId={actorId} onChanged={onChanged} /> : <GenericAffiliationsPanel kind={kind} actorId={actorId} onChanged={onChanged} />
+}
+function GenericAffiliationsPanel({ kind, actorId, onChanged }: { kind: AffiliationKind; actorId: string; onChanged?: () => Promise<void> }) {
   const router = useRouter(), guard = useRef(false)
   const [items, setItems] = useState<ActorAffiliationView[]>([]), [refs, setRefs] = useState(emptyRefs)
   const [loading, setLoading] = useState(true), [loadError, setLoadError] = useState("")

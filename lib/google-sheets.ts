@@ -36,6 +36,12 @@ function sheetsClient(): Promise<SheetsClient> {
   return sharedSheetsClient
 }
 
+// Sports transactions reuse the authenticated client; they never cache mutation reads.
+export const sportsSheetsClient = () => sheetsClient()
+export function invalidateSportsSheets(spreadsheetId: string, sheets: string[]) {
+  for (const sheet of sheets) invalidateSheet(spreadsheetId, sheet)
+}
+
 function normalizeHeader(value: unknown): string {
   return String(value ?? "")
     .trim()
@@ -300,24 +306,39 @@ export async function updateSheetRecordById(
 }
 
 /** Update related records together, addressing cells by header and preserving all other cells. */
+export type SheetRecordMutation = {
+  sheetName: string; idHeader: string; id: string; record: Record<string, string | boolean>
+  dateHeaders?: string[]; create?: boolean
+}
+
 export async function updateSheetRecordsBatch(
   spreadsheetId: string,
-  records: Array<{ sheetName: string; idHeader: string; id: string; record: Record<string, string>; dateHeaders?: string[] }>,
+  records: SheetRecordMutation[],
+  validateRows?: (tables: Record<string, SheetRow[]>) => void,
+  additionalSheets: string[] = [],
 ): Promise<void> {
   if (!records.length) return
   const sheets = await writableSheets()
-  const names = [...new Set(records.map(item => item.sheetName))]
+  const names = [...new Set([...records.map(item => item.sheetName), ...additionalSheets])]
   const [data, metadata] = await Promise.all([
     sheets.spreadsheets.values.batchGet({ spreadsheetId, ranges: names.map(name => `${name}!A:ZZ`) }),
     sheets.spreadsheets.get({ spreadsheetId, fields: "sheets.properties(sheetId,title)" }),
   ])
-  const requests = records.flatMap(({ sheetName, idHeader, id, record, dateHeaders = [] }) => {
+  validateRows?.(Object.fromEntries(names.map((name, index) => [name, valuesToRows(data.data.valueRanges?.[index]?.values ?? [])])))
+  const requests = records.flatMap<import("googleapis").sheets_v4.Schema$Request>(({ sheetName, idHeader, id, record, dateHeaders = [], create = false }) => {
     const values = data.data.valueRanges?.[names.indexOf(sheetName)]?.values ?? []
     const headers = (values[0] ?? []).map(normalizeHeader)
+    if (new Set(headers.filter(Boolean)).size !== headers.filter(Boolean).length) throw new Error(`En-têtes dupliqués dans ${sheetName}`)
     const idColumn = headers.indexOf(normalizeHeader(idHeader))
     const sheetId = metadata.data.sheets?.find(sheet => sheet.properties?.title === sheetName)?.properties?.sheetId
     if (idColumn < 0 || sheetId == null) throw new Error(`Onglet ou identifiant absent dans ${sheetName}`)
     const matches = values.map((row, index) => ({ row, index })).slice(1).filter(({ row }) => String(row[idColumn] ?? "").trim() === id)
+    const cellValue = (value: string | boolean) => typeof value === "boolean" ? { boolValue: value } : { stringValue: value }
+    if (create) {
+      if (matches.length || String(record[normalizeHeader(idHeader)] ?? "") !== id) throw new Error(`${sheetName}: nouvel identifiant invalide ou déjà utilisé.`)
+      if (Object.keys(record).some(header => !headers.includes(normalizeHeader(header)))) throw new Error(`Colonne absente dans ${sheetName}`)
+      return [{ appendCells: { sheetId, rows: [{ values: headers.map(header => ({ userEnteredValue: cellValue(record[header] ?? "") })) }], fields: "userEnteredValue" } }]
+    }
     if (matches.length !== 1) throw new Error(`${sheetName}: identifiant absent ou dupliqué. Modification refusée.`)
     return Object.entries(record).map(([header, value]) => {
       const column = headers.indexOf(normalizeHeader(header))
@@ -325,7 +346,7 @@ export async function updateSheetRecordsBatch(
       const date = dateHeaders.includes(header)
       return { updateCells: {
         range: { sheetId, startRowIndex: matches[0].index, endRowIndex: matches[0].index + 1, startColumnIndex: column, endColumnIndex: column + 1 },
-        rows: [{ values: [{ userEnteredValue: { stringValue: value }, ...(date ? { userEnteredFormat: { numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } } } : {}) }] }],
+        rows: [{ values: [{ userEnteredValue: cellValue(value), ...(date ? { userEnteredFormat: { numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } } } : {}) }] }],
         fields: date ? "userEnteredValue,userEnteredFormat.numberFormat" : "userEnteredValue",
       } }
     })

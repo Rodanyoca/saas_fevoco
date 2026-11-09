@@ -29,7 +29,6 @@ export function AthletesClient({
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [search, setSearch] = useState("")
-  const [club, setClub] = useState("all")
   const [genre, setGenre] = useState("all")
   const [statut, setStatut] = useState("all")
   useEffect(() => setRows(athletes), [athletes])
@@ -71,7 +70,6 @@ export function AthletesClient({
     const s = search.trim().toLowerCase()
 
     return rows.filter((athlete) => {
-      if (club !== "all" && athlete.clubNom !== club) return false
       if (genre !== "all" && athlete.genre !== genre) return false
       if (statut !== "all" && athlete.statut !== statut) return false
 
@@ -82,7 +80,7 @@ export function AthletesClient({
 
       return true
     }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, activeLicenceNumbers, club, genre, search, statut])
+  }, [rows, activeLicenceNumbers, genre, search, statut])
 
   const pagination = paginateRows(filtered, page, pageSize)
 
@@ -96,11 +94,9 @@ export function AthletesClient({
           <AthletesFilters
             athletes={rows}
             search={search}
-            club={club}
             genre={genre}
             statut={statut}
             onSearchChange={(value) => { setSearch(value); setPage(1) }}
-            onClubChange={(value) => { setClub(value); setPage(1) }}
             onGenreChange={(value) => { setGenre(value); setPage(1) }}
             onStatutChange={(value) => { setStatut(value); setPage(1) }}
           />

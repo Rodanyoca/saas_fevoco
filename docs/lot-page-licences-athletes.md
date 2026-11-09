@@ -1,3 +1,5 @@
+> **Mise à jour du 5 novembre 2026** : la numérotation, le renouvellement et la coordination décrits ci-dessous sont remplacés par le [lot transferts/licences sportives](transferts-licences-sportives-2026-11-05.md). Le numéro est désormais généré par le serveur pour chaque saison ; le renouvellement ne recopie plus l’ancien numéro. Le club d’attribution est distinct du club actuel.
+
 # Page Licences des athlètes — FEVOCO — 8 octobre 2026
 
 ## Ajustement demandé : synthèse sans action

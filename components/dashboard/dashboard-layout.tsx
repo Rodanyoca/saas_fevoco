@@ -13,7 +13,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardFrameContext = createContext(false)
-const standaloneRoutes = new Set(["/login", "/activation", "/service-indisponible", "/acces-refuse", "/mon-compte"])
+const standaloneRoutes = new Set(["/confidentialite", "/conditions-utilisation", "/login", "/activation", "/service-indisponible", "/acces-refuse", "/mon-compte"])
 
 /** The root layout owns this shell, so route transitions retain its state. */
 export function DashboardShell({ children, navigation = [] }: DashboardLayoutProps) {

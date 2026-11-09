@@ -20,7 +20,7 @@ export async function proxy(request: NextRequest) {
   const assets = new Set(["/_vercel/insights/script.js", "/favicon.ico", "/logo-fevoco.png", "/icon.svg", "/apple-icon.png", "/icon-dark-32x32.png", "/icon-light-32x32.png", "/placeholder-logo.png", "/placeholder-logo.svg", "/placeholder-user.jpg", "/placeholder.jpg", "/placeholder.svg", "/images/login/volleyball.svg", "/img-20250901-wa01791.jpg"])
   if ((path.startsWith("/_next/") || assets.has(path)) && ["GET", "HEAD"].includes(request.method)) return NextResponse.next()
   if (!isMutationOriginAllowed(request)) return deny(request, 403)
-  if (["/login", "/service-indisponible", "/api/auth/login"].includes(path)) return NextResponse.next()
+  if (["/login", "/confidentialite", "/conditions-utilisation", "/service-indisponible", "/api/auth/login"].includes(path)) return NextResponse.next()
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
   if (!token) return deny(request)
   // Logout remains possible even when the data source is unavailable.

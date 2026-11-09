@@ -3,35 +3,6 @@ import assert from "node:assert/strict"
 // @ts-expect-error Node's transform-types runner requires an explicit TypeScript extension.
 import { createLicenceDomain, effectiveLicenceStatus, type LicenceStore } from "./licences-domain.ts"
 
-test("modifier conserve identité, saison et affiliation et valide la date", async () => {
-  const memory = store()
-  memory.athleteLicences.push({ id_licence: "L1", id_athlete: "ATH001", id_saison: "SAI001", id_affiliation_athlete: "AFF-athlete", numero_licence: "OLD", date_delivrance: "2026-01-01", id_statut_licence: "STL001" })
-  memory.updateAthlete = async (id, row) => { memory.athleteLicences[memory.athleteLicences.findIndex(item => item.id_licence === id)] = row }
-  const domain = createLicenceDomain(memory)
-  await assert.rejects(() => domain.updateAthlete("L1", { numero_licence: "NEW", date_delivrance: "31/02/2026", id_statut_licence: "STL001" }))
-  const row = await domain.updateAthlete("L1", { numero_licence: "NEW", date_delivrance: "08/10/2026", id_statut_licence: "STL001", id_athlete: "OTHER" })
-  assert.equal(row.id_athlete, "ATH001"); assert.equal(row.id_saison, "SAI001"); assert.equal(row.id_affiliation_athlete, "AFF-athlete"); assert.equal(row.date_delivrance, "2026-10-08"); assert.equal(memory.athleteLicences.length, 1)
-})
-
-test("renouvelle par club avec le numéro précédent et ajoute une seule fois", async () => {
-  const memory = store(), baseAffiliation = memory.affiliation
-  memory.affiliation = async (kind, id) => { const row = await baseAffiliation(kind, id); return row && { ...row, clubId: "CL1" } }
-  memory.athleteLicences.push({ id_licence: "OLD", id_athlete: "ATH001", id_saison: "OLD", numero_licence: "123", date_delivrance: "2025-09-01" })
-  const input = { id_club: "CL1", id_saison: "SAI001", id_affiliations_athletes: ["AFF-athlete"], date_delivrance: "08/10/2026", id_statut_licence: "STL001" }
-  const result = await createLicenceDomain(memory).renewClub(input)
-  assert.equal(result[0].numero_licence, "123"); assert.equal(result[0].date_delivrance, "2026-10-08"); assert.equal(memory.athleteLicences.length, 2)
-  await assert.rejects(() => createLicenceDomain(memory).renewClub(input)); assert.equal(memory.athleteLicences.length, 2)
-})
-
-test("renouvellement refuse un autre club, une première licence et un doublon avant toute écriture", async () => {
-  const memory = store(), baseAffiliation = memory.affiliation
-  memory.affiliation = async (kind, id) => { const row = await baseAffiliation(kind, id); return row && { ...row, clubId: "CL1" } }
-  const input = { id_club: "CL1", id_saison: "SAI001", id_affiliations_athletes: ["AFF-athlete"], date_delivrance: "08/10/2026", id_statut_licence: "STL001" }
-  await assert.rejects(() => createLicenceDomain(memory).renewClub({ ...input, id_club: "CL2" })); await assert.rejects(() => createLicenceDomain(memory).renewClub(input)); assert.equal(memory.athleteLicences.length, 0)
-  memory.athleteLicences.push({ id_licence: "OLD", id_athlete: "ATH001", id_saison: "OLD", numero_licence: "123", date_delivrance: "2025-09-01" })
-  await assert.rejects(() => createLicenceDomain(memory).renewClub({ ...input, id_affiliations_athletes: ["AFF-athlete", "AFF-athlete"] })); assert.equal(memory.athleteLicences.length, 1)
-})
-
 function store(): LicenceStore & { athleteLicences: Record<string, string>[]; actorLicences: Record<string, string>[] } {
   const athleteLicences: Record<string, string>[] = [], actorLicences: Record<string, string>[] = []
   return {
@@ -43,31 +14,6 @@ function store(): LicenceStore & { athleteLicences: Record<string, string>[]; ac
     async affiliation(kind, id) { if (id !== `AFF-${kind}`) return null; return { id, actorId: kind === "athlete" ? "ATH001" : ({ coach: "COA001", officiel: "OFF001", medecin: "MED001" } as Record<string, string>)[kind], activeFrom: "2026-01-01", activeUntil: "", statusId: "SAF001", targetExists: true } },
   }
 }
-
-test("crée une licence saisonnière depuis une affiliation active", async () => {
-  const memory = store(), domain = createLicenceDomain(memory)
-  const row = await domain.createAthlete({ id_athlete: "ATH001", id_saison: "SAI001", id_affiliation_athlete: "AFF-athlete", numero_licence: "123", date_delivrance: "01/09/2026", id_statut_licence: "STL001", observations: "" }, "2026-09-01")
-  assert.equal(row.id_licence, "VOL-LIC-2026-000001")
-})
-
-test("autorise une licence depuis une affiliation existante même terminée", async () => {
-  const memory = store(), domain = createLicenceDomain(memory)
-  memory.affiliation = async (_kind, id) => id === "AFF-HISTORIQUE" ? { id, actorId: "ATH001", activeFrom: "2024-01-01", activeUntil: "2024-12-31", statusId: "SAF002", targetExists: false } : null
-  const row = await domain.createAthlete({ id_athlete: "ATH001", id_saison: "SAI001", id_affiliation_athlete: "AFF-HISTORIQUE", numero_licence: "124", date_delivrance: "01/09/2026", id_statut_licence: "STL001", observations: "" }, "2026-09-01")
-  assert.equal(row.id_affiliation_athlete, "AFF-HISTORIQUE")
-})
-
-test("refuse une affiliation appartenant à un autre athlète", async () => {
-  const memory = store(), domain = createLicenceDomain(memory)
-  memory.affiliation = async (_kind, id) => ({ id, actorId: "ATH999", activeFrom: "2026-01-01", activeUntil: "", statusId: "SAF001", targetExists: true })
-  await assert.rejects(() => domain.createAthlete({ id_athlete: "ATH001", id_saison: "SAI001", id_affiliation_athlete: "AFF-AUTRE", numero_licence: "125", date_delivrance: "01/09/2026", id_statut_licence: "STL001", observations: "" }, "2026-09-01"), (error: unknown) => error instanceof Error && "code" in error && error.code === "AFFILIATION_INADMISSIBLE")
-})
-
-test("refuse une deuxième licence pour le même athlète et la même saison", async () => {
-  const memory = store(), domain = createLicenceDomain(memory), command = { id_athlete: "ATH001", id_saison: "SAI001", id_affiliation_athlete: "AFF-athlete", numero_licence: "123", date_delivrance: "01/09/2026", id_statut_licence: "STL001", observations: "" }
-  await domain.createAthlete(command, "2026-09-01")
-  await assert.rejects(() => domain.createAthlete(command, "2026-09-01"), (error: unknown) => error instanceof Error && "code" in error && error.code === "LICENCE_EXISTANTE")
-})
 
 test("autorise l’arbitre sans affiliation et refuse une fausse affiliation", async () => {
   const memory = store(), domain = createLicenceDomain(memory), base = { id_type_acteur: "TAC004", id_acteur: "ARB001", id_cycle_licence: "CYC001", numero_licence: "ARB-9", date_delivrance: "01/01/2026", date_debut_validite: "01/01/2026", date_fin_validite: "31/12/2026", id_statut_licence: "STL001", observations: "" }
@@ -139,4 +85,12 @@ test("transitions entourage : suspension, réactivation, clôture et annulation 
   await assert.rejects(() => domain.transitionActor(original.id_licence, "reactivate", "2026-10-08"))
   assert.equal((await domain.transitionActor(original.id_licence, "cancel", "2026-10-08")).id_statut_licence, "STL005")
   await assert.rejects(() => domain.transitionActor(original.id_licence, "cancel", "2026-10-08"))
+})
+
+test('les anciens chemins sportifs refusent toute attribution ou modification manuelle', async () => {
+ const memory=store(), domain=createLicenceDomain(memory)
+ await assert.rejects(()=>domain.createAthlete({},'2026-11-05'), /parcours sportif atomique/)
+ await assert.rejects(()=>domain.updateAthlete('L1',{}), /parcours sportif atomique/)
+ await assert.rejects(()=>domain.renewClub({}), /saisonnier atomique/)
+ assert.equal(memory.athleteLicences.length,0)
 })
