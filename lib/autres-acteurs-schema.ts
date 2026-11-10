@@ -12,6 +12,8 @@ export const autreActeurFormSchema = z.object({
   dateNaissance: z.string().trim().refine((value) => !value || !validateBirthDate(value), "La date de naissance est invalide ou future."),
   lieuNaissance: optionalText(120),
   nationalite: optionalText(80),
+  entite: optionalText(250).default(""),
+  role: optionalText(150).default(""),
   idTypeAutreActeur: z.string().trim().min(1, "Le type d’autre acteur est obligatoire.").max(40),
   telephone: optionalText(40).transform(normalizePhone).refine((value) => !value || /^\+?\d{6,15}$/.test(value), "Le numéro de téléphone est invalide."),
   email: optionalText(160).refine((value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), "L’adresse e-mail est invalide."),

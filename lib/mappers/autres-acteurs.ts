@@ -16,15 +16,17 @@ export function mapTypeAutreActeurRow(row: SheetRow): TypeAutreActeur {
 export function mapAutreActeurRow(row: SheetRow, sexesById: Map<string, string>, typesById: Map<string, string>): AutreActeur {
   const id = value(row, "id_autre_acteur")
   const idSexe = value(row, "id_sexe")
-  const idTypeAutreActeur = value(row, "id_type_autre_acteur")
+  const idTypeAutreActeur = value(row, "type_autre_acteur") || value(row, "id_type_autre_acteur")
   return {
     idAutreActeur: id,
     nomComplet: value(row, "nom_complet"),
     idSexe,
     sexe: sexesById.get(idSexe) ?? (idSexe ? "Sexe non reconnu" : ""),
-    dateNaissance: value(row, "date_de_naissance"),
+    dateNaissance: value(row, "date_naissance") || value(row, "date_de_naissance"),
     lieuNaissance: value(row, "lieu_de_naissance"),
     nationalite: value(row, "nationalite"),
+    entite: value(row, "entite"),
+    role: value(row, "role"),
     idTypeAutreActeur,
     typeAutreActeur: typesById.get(idTypeAutreActeur) ?? (idTypeAutreActeur ? "Type non reconnu" : ""),
     telephone: value(row, "telephone"),
@@ -34,7 +36,7 @@ export function mapAutreActeurRow(row: SheetRow, sexesById: Map<string, string>,
     dateDelivrancePasseport: value(row, "date_de_delivrance_passeport"),
     dateExpirationPasseport: value(row, "date_expiration_passeport"),
     statut: value(row, "statut"),
-    observations: value(row, "observations"),
+    observations: value(row, "Observations") || value(row, "observations"),
     avatarDriveId: value(row, "avatar_drive_id"),
     avatarDriveUrl: value(row, "avatar_drive_url"),
     passeportDriveId: value(row, "passeport_drive_id"),

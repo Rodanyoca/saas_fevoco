@@ -12,7 +12,7 @@ export type AutresActeursBundle = { acteurs: AutreActeur[]; types: TypeAutreActe
 
 export async function loadAutresActeurs(): Promise<AutresActeursBundle> {
   const [actorRows, references] = await Promise.all([
-    getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "AUTRES!A:Z"),
+    getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "AUTRES!A:ZZ"),
     getSheetsDataFrom(env.googleSheets.referentielsSpreadsheetId, ["TYPES_AUTRES_ACTEURS!A:H", "SEXES!A:C"]),
   ])
   const types = (references.TYPES_AUTRES_ACTEURS ?? []).map(mapTypeAutreActeurRow).filter((item) => item.id && item.nom)

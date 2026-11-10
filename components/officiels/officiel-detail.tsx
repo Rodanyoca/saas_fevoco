@@ -33,7 +33,6 @@ export function OfficielDetail({ officiel, licences, sexes, onUpdated, onBack }:
   const [activeTab, setActiveTab] = useState("general")
   const avatarUrl = getActorAvatarUrl(officiel.avatarDriveUrl, officiel.avatarDriveId)
   const age = calculateAge(officiel.dateDeNaissance)
-  const hasPassport = Boolean(officiel.numeroPasseport || officiel.dateDelivrancePasseport || officiel.dateExpirationPasseport)
 
   return <div className="w-full space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button>{activeTab === "general" && <OfficielFormDialog officiel={officiel} sexes={sexes} onSaved={onUpdated} />}</div>
@@ -43,7 +42,7 @@ export function OfficielDetail({ officiel, licences, sexes, onUpdated, onBack }:
       <TabsContent value="general"><div className="grid w-full gap-6 md:grid-cols-2">
         <DetailCard title="Identité" icon={Flag} fields={[{label:"ID officiel",value:officiel.idOfficiel},{label:"Nom complet",value:officiel.nomComplet},{label:"Sexe",value:sexeLabel(officiel.sexe)},{label:"Date de naissance",value:formatDateForDisplay(officiel.dateDeNaissance)||"Non renseignée"},{label:"Âge",value:age===null?"Non renseigné":`${age} ans`},{label:"Lieu de naissance",value:officiel.lieuNaissance},{label:"Nationalité",value:officiel.nationalite}]} />
         <DetailCard title="Contact" icon={Contact} fields={[{label:"Téléphone",value:officiel.telephone},{label:"E-mail",value:officiel.email},{label:"Adresse",value:officiel.adresse}]} />
-        <DetailCard title="Identifiants" icon={Fingerprint} fields={[{label:"ID national",value:officiel.idNational},{label:"ID FIVB",value:officiel.idFivb},{label:"Statut",value:officiel.statut},...(hasPassport ? [{label:"Passeport",value:officiel.numeroPasseport},{label:"Date de d\u00e9livrance",value:formatDateForDisplay(officiel.dateDelivrancePasseport)},{label:"Date d'expiration",value:formatDateForDisplay(officiel.dateExpirationPasseport)}] : [])]} />
+        <DetailCard title="Identifiants" icon={Fingerprint} fields={[{label:"ID national",value:officiel.idNational},{label:"ID FIVB",value:officiel.idFivb},{label:"Statut",value:officiel.statut}]} />
         <DetailCard title="Observations" icon={MessageSquareText} fields={[{label:"Notes",value:shown(officiel.observations)}]} />
       </div></TabsContent>
       <TabsContent value="mandats"><AffiliationsPanel kind="officiel" actorId={officiel.idOfficiel} /></TabsContent>

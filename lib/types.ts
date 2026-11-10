@@ -307,6 +307,8 @@ export interface TypeAutreActeur {
 }
 
 export interface AutreActeur {
+  entite: string
+  role: string
   idAutreActeur: string
   nomComplet: string
   idSexe: string

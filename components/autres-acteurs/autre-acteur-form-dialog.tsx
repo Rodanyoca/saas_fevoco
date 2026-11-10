@@ -27,6 +27,7 @@ export function AutreActeurFormDialog({ acteur, sexes, types, onSaved }: { acteu
     telephone: acteur?.telephone ?? "", email: acteur?.email ?? "", adresse: acteur?.adresse ?? "", numeroPasseport: acteur?.numeroPasseport ?? "",
     dateDelivrancePasseport: compactDateFromSheet(acteur?.dateDelivrancePasseport ?? ""), dateExpirationPasseport: compactDateFromSheet(acteur?.dateExpirationPasseport ?? ""),
     statut: acteur?.statut?.toUpperCase() === "INACTIF" ? "INACTIF" : "ACTIF", observations: acteur?.observations ?? "",
+    entite: acteur?.entite ?? "", role: acteur?.role ?? "",
   })
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
@@ -60,20 +61,30 @@ export function AutreActeurFormDialog({ acteur, sexes, types, onSaved }: { acteu
   }
 
   const dateField = (key: "dateNaissance" | "dateDelivrancePasseport" | "dateExpirationPasseport", label: string) => <div className="space-y-2"><Label htmlFor={`autre-${key}`}>{label}</Label><CompactDateInput id={`autre-${key}`} optional value={form[key]} onValueChange={(value) => set(key, value)} aria-invalid={Boolean(errors[key])} />{fieldError(key)}</div>
+  const textField = (key: keyof AutreActeurFormValues, label: string, type = "text") => <div className="space-y-2"><Label htmlFor={`autre-${key}`}>{label}</Label><Input id={`autre-${key}`} type={type} value={form[key] ?? ""} onChange={(event) => set(key, event.target.value)} aria-invalid={Boolean(errors[key])} />{fieldError(key)}</div>
   return <Sheet open={open} onOpenChange={(next) => { if (!pending) { if (next) { setForm(initial()); setErrors({}); setError("") } setOpen(next) } }}>
     <SheetTrigger asChild><Button className={editing ? undefined : "bg-brand-gold text-[#071827] hover:bg-brand-gold/90"} variant={editing ? "outline" : "default"}>{editing ? <><Pencil className="mr-2 size-4" />Modifier</> : "Ajouter un autre acteur"}</Button></SheetTrigger>
     <SheetContent className="w-full overflow-y-auto sm:max-w-2xl"><SheetHeader><SheetTitle>{editing ? "Modifier l’autre acteur" : "Ajouter un autre acteur"}</SheetTitle><SheetDescription>L’identifiant est généré automatiquement et reste immuable.</SheetDescription></SheetHeader>
-      <form onSubmit={submit} className="space-y-6 px-4 pb-8"><div className="grid gap-4 md:grid-cols-2">
+      <form onSubmit={submit} className="space-y-6 px-4 pb-8">
+        <fieldset className="grid gap-4 md:grid-cols-2"><legend className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Identification</legend>
         {editing && <div className="space-y-2"><Label>Identifiant</Label><Input disabled value={acteur!.idAutreActeur} /></div>}
         <div className="space-y-2"><Label htmlFor="autre-nom">Nom complet *</Label><Input id="autre-nom" required value={form.nomComplet} onChange={(event) => set("nomComplet", event.target.value)} aria-invalid={Boolean(errors.nomComplet)} />{fieldError("nomComplet")}</div>
         <div className="space-y-2"><Label>Sexe *</Label><Select required value={form.idSexe} onValueChange={(value) => set("idSexe", value)}><SelectTrigger aria-invalid={Boolean(errors.idSexe)}><SelectValue placeholder="Sélectionner" /></SelectTrigger><SelectContent>{sexes.map((item) => <SelectItem key={item.id} value={item.id}>{item.nom}</SelectItem>)}</SelectContent></Select>{fieldError("idSexe")}</div>
-        <div className="space-y-2"><Label>Type d’autre acteur *</Label><Select required value={form.idTypeAutreActeur} onValueChange={(value) => set("idTypeAutreActeur", value)}><SelectTrigger aria-invalid={Boolean(errors.idTypeAutreActeur)}><SelectValue placeholder="Sélectionner" /></SelectTrigger><SelectContent>{selectableTypes.map((item) => <SelectItem key={item.id} value={item.id}>{item.nom}</SelectItem>)}</SelectContent></Select>{fieldError("idTypeAutreActeur")}</div>
         {dateField("dateNaissance", "Date de naissance")}
-        {([['lieuNaissance','Lieu de naissance'],['nationalite','Nationalité'],['telephone','Téléphone'],['email','Adresse e-mail'],['adresse','Adresse'],['numeroPasseport','Numéro de passeport']] as const).map(([key, label]) => <div key={key} className="space-y-2"><Label htmlFor={`autre-${key}`}>{label}</Label><Input id={`autre-${key}`} type={key === "email" ? "email" : key === "telephone" ? "tel" : "text"} value={form[key]} onChange={(event) => set(key, event.target.value)} aria-invalid={Boolean(errors[key])} />{fieldError(key)}</div>)}
-        {dateField("dateDelivrancePasseport", "Date de délivrance du passeport")}{dateField("dateExpirationPasseport", "Date d’expiration du passeport")}
+        {textField("lieuNaissance", "Lieu de naissance")}
+        {textField("nationalite", "Nationalité")}
         <div className="space-y-2"><Label>Statut</Label><Select value={form.statut} onValueChange={(value) => set("statut", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ACTIF">Actif</SelectItem><SelectItem value="INACTIF">Inactif</SelectItem></SelectContent></Select></div>
+        {textField("role", "Rôle")}
+        </fieldset>
+        <fieldset className="grid gap-4 md:grid-cols-2"><legend className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Coordonnées</legend>
+        {textField("telephone", "Téléphone", "tel")}{textField("email", "Courriel", "email")}{textField("adresse", "Adresse")}
+        </fieldset>
+        <fieldset className="grid gap-4 md:grid-cols-2"><legend className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Complément</legend>
         <div className="space-y-2 md:col-span-2"><Label htmlFor="autre-observations">Observations{form.idTypeAutreActeur === "TAU099" ? " *" : ""}</Label><Textarea id="autre-observations" value={form.observations} onChange={(event) => set("observations", event.target.value)} aria-invalid={Boolean(errors.observations)} />{fieldError("observations")}</div>
-      </div>{error && <p className="text-sm text-destructive" role="alert">{error}</p>}<SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button disabled={pending} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement…" : "Enregistrer"}</Button></SheetFooter></form>
+        {textField("entite", "Entité")}
+        <div className="space-y-2"><Label>Type d’autre acteur *</Label><Select required value={form.idTypeAutreActeur} onValueChange={(value) => set("idTypeAutreActeur", value)}><SelectTrigger aria-invalid={Boolean(errors.idTypeAutreActeur)}><SelectValue placeholder="Sélectionner" /></SelectTrigger><SelectContent>{selectableTypes.map((item) => <SelectItem key={item.id} value={item.id}>{item.nom}</SelectItem>)}</SelectContent></Select>{fieldError("idTypeAutreActeur")}</div>
+        </fieldset>
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}<SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button disabled={pending} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement…" : "Enregistrer"}</Button></SheetFooter></form>
     </SheetContent>
   </Sheet>
 }

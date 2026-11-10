@@ -21,6 +21,7 @@ export function AutreActeurDetail({ acteur, sexes, types, onBack, onUpdated }: {
       <DetailCard title="Identité" icon={User} fields={[
         { label: "Identifiant", value: acteur.idAutreActeur },
         { label: "Nom complet", value: acteur.nomComplet },
+        { label: "Rôle", value: acteur.role },
         { label: "Sexe", value: acteur.sexe },
         { label: "Date de naissance", value: formatDateForDisplay(acteur.dateNaissance) || "Non renseignée" },
         { label: "Lieu de naissance", value: acteur.lieuNaissance },
@@ -33,7 +34,7 @@ export function AutreActeurDetail({ acteur, sexes, types, onBack, onUpdated }: {
           { label: "Passeport expirant le", value: formatDateForDisplay(acteur.dateExpirationPasseport) || "Non renseignée" },
         ] : []),
       ]} />
-      <DetailCard title="Coordonnées" icon={Contact} fields={[{ label: "Téléphone", value: acteur.telephone }, { label: "Courriel", value: acteur.email }, { label: "Adresse", value: acteur.adresse }]} />
+      <DetailCard title="Coordonnées" icon={Contact} fields={[{ label: "Téléphone", value: acteur.telephone }, { label: "Courriel", value: acteur.email }, { label: "Adresse", value: acteur.adresse }, { label: "Entité", value: acteur.entite }]} />
       <DetailCard title="Observations" icon={Info} fields={[{ label: "Remarques", value: acteur.observations }]} />
     </div></TabsContent>
     <TabsContent value="affiliations"><AffiliationsPanel kind="autre" actorId={acteur.idAutreActeur} /></TabsContent></Tabs>
