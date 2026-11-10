@@ -1,0 +1,202 @@
+{
+  "general": {
+    "buttons": [
+      "",
+      "Structure territoriale",
+      "Acteurs",
+      "Licences",
+      "Compétitions",
+      "Équipes nationales",
+      "Administration",
+      "Clôturer l’édition",
+      "Modifier"
+    ],
+    "metrics": {
+      "x": 256,
+      "y": 73,
+      "width": 1184,
+      "padding": "24px",
+      "gap": "normal",
+      "font": "geist, \"geist Fallback\", Geist, \"Geist Fallback\", sans-serif"
+    },
+    "mobileOverflow": false
+  },
+  "epreuves": {
+    "buttons": [
+      "",
+      "Structure territoriale",
+      "Acteurs",
+      "Licences",
+      "Compétitions",
+      "Équipes nationales",
+      "Administration",
+      "Clôturer l’édition",
+      "Créer une épreuve",
+      ""
+    ],
+    "metrics": {
+      "x": 256,
+      "y": 73,
+      "width": 1184,
+      "padding": "24px",
+      "gap": "normal",
+      "font": "geist, \"geist Fallback\", Geist, \"Geist Fallback\", sans-serif"
+    },
+    "mobileOverflow": false
+  },
+  "structure": {
+    "buttons": [
+      "",
+      "Structure territoriale",
+      "Acteurs",
+      "Licences",
+      "Compétitions",
+      "Équipes nationales",
+      "Administration",
+      "Clôturer l’édition",
+      "Ajouter la phase",
+      "Ajouter"
+    ],
+    "metrics": {
+      "x": 256,
+      "y": 73,
+      "width": 1184,
+      "padding": "24px",
+      "gap": "normal",
+      "font": "geist, \"geist Fallback\", Geist, \"Geist Fallback\", sans-serif"
+    },
+    "mobileOverflow": false
+  },
+  "unites": {
+    "buttons": [
+      "",
+      "Structure territoriale",
+      "Acteurs",
+      "Licences",
+      "Compétitions",
+      "Équipes nationales",
+      "Administration",
+      "Clôturer l’édition",
+      "Engager une unité"
+    ],
+    "metrics": {
+      "x": 256,
+      "y": 73,
+      "width": 1184,
+      "padding": "24px",
+      "gap": "normal",
+      "font": "geist, \"geist Fallback\", Geist, \"Geist Fallback\", sans-serif"
+    },
+    "mobileOverflow": false
+  },
+  "intervenants": {
+    "buttons": [
+      "",
+      "Structure territoriale",
+      "Acteurs",
+      "Licences",
+      "Compétitions",
+      "Équipes nationales",
+      "Administration",
+      "Clôturer l’édition",
+      "Ajouter un intervenant"
+    ],
+    "metrics": {
+      "x": 256,
+      "y": 73,
+      "width": 1184,
+      "padding": "24px",
+      "gap": "normal",
+      "font": "geist, \"geist Fallback\", Geist, \"Geist Fallback\", sans-serif"
+    },
+    "mobileOverflow": false
+  },
+  "matchs": {
+    "buttons": [
+      "",
+      "Structure territoriale",
+      "Acteurs",
+      "Licences",
+      "Compétitions",
+      "Équipes nationales",
+      "Administration",
+      "Clôturer l’édition",
+      "Programmer"
+    ],
+    "metrics": {
+      "x": 256,
+      "y": 73,
+      "width": 1184,
+      "padding": "24px",
+      "gap": "normal",
+      "font": "geist, \"geist Fallback\", Geist, \"Geist Fallback\", sans-serif"
+    },
+    "mobileOverflow": false
+  },
+  "resultats": {
+    "buttons": [
+      "",
+      "Structure territoriale",
+      "Acteurs",
+      "Licences",
+      "Compétitions",
+      "Équipes nationales",
+      "Administration",
+      "Clôturer l’édition"
+    ],
+    "metrics": {
+      "x": 256,
+      "y": 73,
+      "width": 1184,
+      "padding": "24px",
+      "gap": "normal",
+      "font": "geist, \"geist Fallback\", Geist, \"Geist Fallback\", sans-serif"
+    },
+    "mobileOverflow": false
+  },
+  "classements": {
+    "buttons": [
+      "",
+      "Structure territoriale",
+      "Acteurs",
+      "Licences",
+      "Compétitions",
+      "Équipes nationales",
+      "Administration",
+      "Clôturer l’édition",
+      "Qualifier",
+      "Recalculer"
+    ],
+    "metrics": {
+      "x": 256,
+      "y": 73,
+      "width": 1184,
+      "padding": "24px",
+      "gap": "normal",
+      "font": "geist, \"geist Fallback\", Geist, \"Geist Fallback\", sans-serif"
+    },
+    "mobileOverflow": false
+  },
+  "distinctions": {
+    "buttons": [
+      "",
+      "Structure territoriale",
+      "Acteurs",
+      "Licences",
+      "Compétitions",
+      "Équipes nationales",
+      "Administration",
+      "Clôturer l’édition",
+      "Attribuer une distinction"
+    ],
+    "metrics": {
+      "x": 256,
+      "y": 73,
+      "width": 1184,
+      "padding": "24px",
+      "gap": "normal",
+      "font": "geist, \"geist Fallback\", Geist, \"Geist Fallback\", sans-serif"
+    },
+    "mobileOverflow": false
+  }
+}

@@ -13,8 +13,9 @@ const statuses = new Set(["actif", "inactif", "active", "inactive"])
 
 type CoachInput = {
   idNational: string; idFivb: string; nomComplet: string; idSexe: string
-  dateNaissance: string; nationalite: string; idNiveau: string
+  dateNaissance: string; lieuNaissance: string; nationalite: string; idNiveau: string
   telephone: string; email: string; adresse: string; statut: string
+  observation: string
 }
 
 function normalizeInput(payload: Record<string, unknown>): CoachInput {
@@ -22,6 +23,8 @@ function normalizeInput(payload: Record<string, unknown>): CoachInput {
     idNational: text(payload.idNational), idFivb: text(payload.idFivb),
     nomComplet: text(payload.nomComplet), idSexe: text(payload.idSexe),
     dateNaissance: text(payload.dateNaissance), nationalite: text(payload.nationalite),
+    lieuNaissance: text(payload.lieuNaissance),
+    observation: text(payload.observation),
     idNiveau: text(payload.idNiveau), telephone: text(payload.telephone),
     email: text(payload.email), adresse: text(payload.adresse),
     statut: text(payload.statut).toLowerCase() || "actif",
@@ -53,6 +56,8 @@ export async function createCoach(payload: Record<string, unknown>) {
     id_coach: idCoach, id_national: input.idNational, id_fivb: input.idFivb,
     nom_complet: input.nomComplet, id_sexe: input.idSexe,
     date_naissance: input.dateNaissance, nationalite: input.nationalite,
+    lieu_naissance: input.lieuNaissance,
+    observation: input.observation,
     id_niveau: input.idNiveau, telephone: input.telephone, email: input.email,
     adresse: input.adresse, statut: input.statut,
   })
@@ -71,6 +76,8 @@ export async function updateCoach(idCoach: string, payload: Record<string, unkno
     id_national: input.idNational, id_fivb: input.idFivb,
     nom_complet: input.nomComplet, id_sexe: input.idSexe,
     date_naissance: input.dateNaissance, nationalite: input.nationalite,
+    lieu_naissance: input.lieuNaissance,
+    observation: input.observation,
     id_niveau: input.idNiveau, telephone: input.telephone, email: input.email,
     adresse: input.adresse, statut: input.statut,
   })

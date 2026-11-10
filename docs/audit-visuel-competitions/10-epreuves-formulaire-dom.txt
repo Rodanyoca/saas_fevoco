@@ -1,0 +1,16 @@
+- dialog "Créer une épreuve":
+  - heading "Créer une épreuve" [level=2]
+  - paragraph: Les valeurs proposées proviennent du référentiel FEVOCO.
+  - text: Nom
+  - textbox
+  - text: Discipline
+  - combobox: Sélectionner
+  - text: Catégorie
+  - combobox: Sélectionner
+  - text: Sexe
+  - combobox: Sélectionner
+  - text: Observations
+  - textbox
+  - button "Annuler"
+  - button "Créer"
+  - button "Fermer"

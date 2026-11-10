@@ -12,6 +12,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const statuses = new Set(["actif", "inactif", "active", "inactive"])
 
 type MedecinInput = {
+  lieuNaissance: string; observations: string
   idNational: string; idFivb: string; nomComplet: string; idSexe: string
   dateNaissance: string; nationalite: string; idSpecialite: string
   telephone: string; email: string; adresse: string; numeroPasseport: string
@@ -20,6 +21,7 @@ type MedecinInput = {
 
 function normalizeInput(payload: Record<string, unknown>): MedecinInput {
   return {
+    lieuNaissance: text(payload.lieuNaissance), observations: text(payload.observations),
     idNational: text(payload.idNational), idFivb: text(payload.idFivb), nomComplet: text(payload.nomComplet),
     idSexe: text(payload.idSexe), dateNaissance: text(payload.dateNaissance), nationalite: text(payload.nationalite),
     idSpecialite: text(payload.idSpecialite), telephone: text(payload.telephone), email: text(payload.email),
@@ -54,6 +56,7 @@ async function validateInput(input: MedecinInput) {
 
 function sheetRecord(input: MedecinInput) {
   return {
+    lieu_naissance: input.lieuNaissance, observations: input.observations,
     id_national: input.idNational, id_fivb: input.idFivb, nom_complet: input.nomComplet,
     id_sexe: input.idSexe, date_naissance: input.dateNaissance ? formatDateForSheet(input.dateNaissance) : "",
     nationalite: input.nationalite, id_specialite: input.idSpecialite, telephone: input.telephone,
@@ -91,6 +94,7 @@ export async function updateMedecin(idMedecin: string, payload: Record<string, u
   const current = (await getMedecins()).find((item) => item.idMedecin === idMedecin)
   if (!current) throw new Error("Médecin introuvable.")
   const input = normalizeInput({
+    lieuNaissance: current.lieuNaissance, observations: current.observations,
     idNational: current.idNational, idFivb: current.idFivb, nomComplet: current.nomComplet,
     idSexe: current.idSexe, dateNaissance: current.dateDeNaissance, nationalite: current.nationalite,
     idSpecialite: current.idSpecialite, telephone: current.telephone, email: current.email, adresse: current.adresse,

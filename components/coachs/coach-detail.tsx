@@ -120,9 +120,9 @@ export function CoachDetail({ coach, licences, sexes, levels, onUpdated, onBack 
               ]}
             />
             <DetailCard
-              title="Remarque"
+              title="Observation"
               icon={Info}
-              fields={[{ label: "Remarque", value: "Non renseignée" }]}
+              fields={[{ label: "Observation", value: shown(coach.observation, "Non renseignée") }]}
             />
           </div>
         </TabsContent>

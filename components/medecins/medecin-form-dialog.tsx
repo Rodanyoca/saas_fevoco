@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { AvatarFileField, uploadAvatarFile } from "@/components/actors/avatar-file-field"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -16,6 +17,8 @@ import type { Medecin } from "@/lib/types"
 export type SavedMedecin = Pick<Medecin, "idMedecin" | "idNational" | "idFivb" | "idSexe" | "idSpecialite" | "nomComplet" | "sexe" | "dateDeNaissance" | "nationalite" | "telephone" | "email" | "adresse" | "specialite" | "numeroPasseport" | "dateDelivrancePasseport" | "dateExpirationPasseport" | "statut"> & {
   avatarDriveId?: string
   avatarDriveUrl?: string
+  lieuNaissance?: string
+  observations?: string
 }
 
 type FieldErrors = Partial<Record<"nomComplet" | "idSexe" | "dateNaissance" | "dateDelivrancePasseport" | "dateExpirationPasseport" | "email", string>>
@@ -36,6 +39,7 @@ export function MedecinFormDialog({ medecin, sexes, specialties, onSaved }: {
     idNational: medecin?.idNational ?? "", idFivb: medecin?.idFivb ?? "", nomComplet: medecin?.nomComplet ?? "",
     idSexe: sexes.find((option) => option.id === medecin?.idSexe || option.nom === medecin?.sexe)?.id ?? medecin?.idSexe ?? "",
     dateNaissance: compactDateFromSheet(medecin?.dateDeNaissance ?? ""), nationalite: medecin?.nationalite ?? "",
+    lieuNaissance: medecin?.lieuNaissance ?? "", observations: medecin?.observations ?? "",
     idSpecialite: specialties.find((option) => option.id === medecin?.idSpecialite || option.nom === medecin?.specialite)?.id ?? medecin?.idSpecialite ?? "",
     telephone: medecin?.telephone ?? "", email: medecin?.email ?? "", adresse: medecin?.adresse ?? "",
     numeroPasseport: medecin?.numeroPasseport ?? "", dateDelivrancePasseport: compactDateFromSheet(medecin?.dateDelivrancePasseport ?? ""),
@@ -109,6 +113,7 @@ export function MedecinFormDialog({ medecin, sexes, specialties, onSaved }: {
           <div className="space-y-2"><Label htmlFor="medecin-nom">Nom complet *</Label><Input id="medecin-nom" required value={form.nomComplet} onChange={(event) => setForm({ ...form, nomComplet: event.target.value })} aria-invalid={Boolean(errors.nomComplet)} />{errors.nomComplet && <p className="text-xs text-destructive">{errors.nomComplet}</p>}</div>
           <div className="space-y-2"><Label>Sexe *</Label><Select required value={form.idSexe} onValueChange={(value) => setForm({ ...form, idSexe: value })} disabled={!sexes.length}><SelectTrigger className="w-full" aria-invalid={Boolean(errors.idSexe)}><SelectValue placeholder={sexes.length ? "Sélectionner le sexe" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{sexes.map((option) => <SelectItem key={option.id} value={option.id}>{option.nom}</SelectItem>)}</SelectContent></Select>{errors.idSexe && <p className="text-xs text-destructive">{errors.idSexe}</p>}</div>
           {dateField("dateNaissance", "Date de naissance")}
+          <div className="space-y-2"><Label htmlFor="medecin-lieu-naissance">Lieu de naissance</Label><Input id="medecin-lieu-naissance" value={form.lieuNaissance} onChange={(event) => setForm({ ...form, lieuNaissance: event.target.value })} /></div>
           <div className="space-y-2"><Label>Nationalité</Label><Input value={form.nationalite} onChange={(event) => setForm({ ...form, nationalite: event.target.value })} /></div>
           <div className="space-y-2"><Label>ID national</Label><Input value={form.idNational} onChange={(event) => setForm({ ...form, idNational: event.target.value })} /></div>
           <div className="space-y-2"><Label>ID FIVB</Label><Input value={form.idFivb} onChange={(event) => setForm({ ...form, idFivb: event.target.value })} /></div>
@@ -120,9 +125,8 @@ export function MedecinFormDialog({ medecin, sexes, specialties, onSaved }: {
           <div className="space-y-2"><Label>Adresse e-mail</Label><Input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} aria-invalid={Boolean(errors.email)} />{errors.email && <p className="text-xs text-destructive">{errors.email}</p>}</div>
           <div className="space-y-2 md:col-span-2"><Label>Adresse</Label><Input value={form.adresse} onChange={(event) => setForm({ ...form, adresse: event.target.value })} /></div>
         </fieldset>
-        <fieldset className="grid gap-4 md:grid-cols-2"><legend className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground md:col-span-2">Passeport et média</legend>
-          <div className="space-y-2"><Label>Numéro de passeport</Label><Input value={form.numeroPasseport} onChange={(event) => setForm({ ...form, numeroPasseport: event.target.value })} /></div>
-          {dateField("dateDelivrancePasseport", "Date de délivrance")}{dateField("dateExpirationPasseport", "Date d’expiration")}
+        <div className="space-y-2"><Label htmlFor="medecin-observations">Observations</Label><Textarea id="medecin-observations" value={form.observations} onChange={(event) => setForm({ ...form, observations: event.target.value })} /></div>
+        <fieldset className="grid gap-4 md:grid-cols-2"><legend className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground md:col-span-2">Média</legend>
           <AvatarFileField editing={editing} onFileChange={setAvatarFile} />
         </fieldset>
         {error && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}

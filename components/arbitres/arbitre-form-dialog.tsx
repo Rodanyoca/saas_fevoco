@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { AvatarFileField, uploadAvatarFile } from "@/components/actors/avatar-file-field"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -16,6 +17,8 @@ import type { Arbitre } from "@/lib/types"
 export type SavedArbitre = Pick<Arbitre, "idArbitre" | "idNational" | "idFivb" | "idSexe" | "idGrade" | "nomComplet" | "sexe" | "dateDeNaissance" | "nationalite" | "niveau" | "grade" | "telephone" | "email" | "adresse" | "statut"> & {
   avatarDriveId?: string
   avatarDriveUrl?: string
+  lieuNaissance?: string
+  observations?: string
 }
 
 function formatDateInput(value: string) {
@@ -43,6 +46,7 @@ export function ArbitreFormDialog({ arbitre, sexes, grades, onSaved }: {
     nomComplet: arbitre?.nomComplet ?? "",
     idSexe: sexes.find((option) => option.id === arbitre?.idSexe || option.nom === arbitre?.sexe)?.id ?? "",
     dateNaissance: initialDateValue(arbitre?.dateDeNaissance), nationalite: arbitre?.nationalite ?? "",
+    lieuNaissance: arbitre?.lieuNaissance ?? "", observations: arbitre?.observations ?? "",
     idGrade: grades.find((option) => option.id === arbitre?.idGrade || option.nom === arbitre?.grade)?.id ?? "",
     telephone: arbitre?.telephone ?? "", email: arbitre?.email ?? "", adresse: arbitre?.adresse ?? "",
     statut: arbitre?.statut || "actif",
@@ -96,11 +100,13 @@ export function ArbitreFormDialog({ arbitre, sexes, grades, onSaved }: {
             <div className="space-y-2"><Label>ID national</Label><Input value={form.idNational} onChange={(event) => setForm({ ...form, idNational: event.target.value })} /></div>
             <div className="space-y-2"><Label>ID FIVB</Label><Input value={form.idFivb} onChange={(event) => setForm({ ...form, idFivb: event.target.value })} /></div>
             <div className="space-y-2"><Label>Date de naissance</Label><Input type="text" inputMode="numeric" autoComplete="off" maxLength={10} pattern="(?:[0-9]{2}/[0-9]{2}/[0-9]{4})?" title="Saisissez uniquement 8 chiffres ; les séparateurs sont ajoutés automatiquement" value={form.dateNaissance} onChange={(event) => setForm({ ...form, dateNaissance: formatDateInput(event.target.value) })} placeholder="JJMMAAAA" /></div>
+            <div className="space-y-2"><Label htmlFor="arbitre-lieu-naissance">Lieu de naissance</Label><Input id="arbitre-lieu-naissance" value={form.lieuNaissance} onChange={(event) => setForm({ ...form, lieuNaissance: event.target.value })} /></div>
             <div className="space-y-2"><Label>Nationalité</Label><Input value={form.nationalite} onChange={(event) => setForm({ ...form, nationalite: event.target.value })} /></div>
             <div className="space-y-2"><Label>Grade</Label><Select value={form.idGrade} onValueChange={(value) => setForm({ ...form, idGrade: value })} disabled={!grades.length}><SelectTrigger className="w-full"><SelectValue placeholder={grades.length ? "Sélectionner le grade" : "Référentiel non configuré"} /></SelectTrigger><SelectContent>{grades.map((option) => <SelectItem key={option.id} value={option.id}>{option.nom}</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-2"><Label>Téléphone</Label><Input type="tel" value={form.telephone} onChange={(event) => setForm({ ...form, telephone: event.target.value })} /></div>
             <div className="space-y-2"><Label>Adresse e-mail</Label><Input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></div>
             <div className="space-y-2"><Label>Adresse</Label><Input value={form.adresse} onChange={(event) => setForm({ ...form, adresse: event.target.value })} /></div>
+            <div className="space-y-2 md:col-span-2"><Label htmlFor="arbitre-observations">Observations</Label><Textarea id="arbitre-observations" value={form.observations} onChange={(event) => setForm({ ...form, observations: event.target.value })} /></div>
             <AvatarFileField editing={editing} onFileChange={setAvatarFile} />
             <div className="space-y-2"><Label>Statut</Label><Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="inactif">Inactif</SelectItem></SelectContent></Select></div>
           </div>

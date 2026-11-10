@@ -1,3 +1,5 @@
+import { getUnavailableModule } from "@/lib/module-availability"
+import { ComingSoonPage } from "@/components/dashboard/coming-soon-page"
 import { EquipeNationaleClient } from "@/components/equipe-nationale/equipe-nationale-client"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
@@ -9,6 +11,9 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export default async function EquipeNationalePage() {
+  const unavailable = getUnavailableModule("/equipe-nationale")
+  if (unavailable) return <ComingSoonPage {...unavailable} />
+
   const loaded = await Promise.allSettled([
     getEquipeNationale(),
     getEquipeNationaleSelections(),

@@ -1,3 +1,5 @@
+import { getUnavailableModule } from "@/lib/module-availability"
+import { ComingSoonPage } from "@/components/dashboard/coming-soon-page"
 import { Header } from "@/components/dashboard/header"
 import { DocumentsClient } from "@/components/documents/documents-client"
 import { loadDocuments } from "@/lib/documents"
@@ -6,6 +8,9 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export default async function DocumentsPage() {
+  const unavailable = getUnavailableModule("/documents")
+  if (unavailable) return <ComingSoonPage {...unavailable} />
+
   let bundle: Awaited<ReturnType<typeof loadDocuments>> = { documents: [], typeOptions: [] }
   let error = ""
   try { bundle = await loadDocuments() } catch (reason) { error = reason instanceof Error ? reason.message : "Lecture des documents impossible." }

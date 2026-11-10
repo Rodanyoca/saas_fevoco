@@ -1,0 +1,16 @@
+- dialog "Ajouter un intervenant":
+  - heading "Ajouter un intervenant" [level=2]
+  - paragraph: La licence est contrôlée à titre informatif et ne bloque pas l’inscription.
+  - text: Type d’acteur
+  - combobox: Sélectionner
+  - text: Personne
+  - combobox: Sélectionner
+  - text: Unité (facultatif)
+  - combobox: Sélectionner
+  - text: Rôle
+  - textbox
+  - text: Observations
+  - textbox
+  - button "Annuler"
+  - button "Inscrire"
+  - button "Fermer"

@@ -25,6 +25,8 @@ export function mapMedecinRow(row: SheetRow): Medecin {
     idFivb: str(row, "id_fivb"),
     sexe: str(row, "nom_sexe") || str(row, "sexe"),
     dateDeNaissance: str(row, "date_naissance") || str(row, "date_de_naissance"),
+    lieuNaissance: str(row, "lieu_naissance"),
+    observations: str(row, "observations"),
     nationalite: str(row, "nationalite"),
     avatarDriveId: str(row, "avatar_drive_id"),
     avatarDriveUrl: str(row, "avatar_drive_url"),

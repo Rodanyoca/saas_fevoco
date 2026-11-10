@@ -3,7 +3,7 @@
 import { AffiliationsPanel } from "@/components/actors/affiliations-panel"
 
 import { useState } from "react"
-import { Activity, ArrowLeft, Contact, FileKey, Stethoscope } from "lucide-react"
+import { Activity, ArrowLeft, Contact, Info, Stethoscope } from "lucide-react"
 import { LicenceSection } from "@/components/actors/record-sections"
 import type { MedecinStructureOption } from "@/components/medecins/medecin-affiliation-form-dialog"
 import { MedecinFormDialog, type SavedMedecin } from "@/components/medecins/medecin-form-dialog"
@@ -35,8 +35,6 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, specialt
   const [activeTab, setActiveTab] = useState("general")
   const avatarUrl = getActorAvatarUrl(medecin.avatarDriveUrl, medecin.avatarDriveId)
   const age = calculateAge(medecin.dateDeNaissance)
-  const hasContact = Boolean(medecin.telephone || medecin.email || medecin.adresse)
-  const hasPassport = Boolean(medecin.numeroPasseport || medecin.dateDelivrancePasseport || medecin.dateExpirationPasseport)
 
   return <div className="w-full space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button>{activeTab === "general" && <MedecinFormDialog medecin={medecin} sexes={sexes} specialties={specialties} onSaved={onUpdated} />}</div>
@@ -47,11 +45,11 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, specialt
 
     <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
       <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="general">Général</TabsTrigger><TabsTrigger value="affiliations">Transferts</TabsTrigger><TabsTrigger value="licences">Licences</TabsTrigger></TabsList>
-      <TabsContent value="general"><div className="grid w-full grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6">
-        <DetailCard title="Identité" icon={Stethoscope} fields={[{ label: "ID médecin", value: medecin.idMedecin }, { label: "Nom complet", value: medecin.nomComplet }, { label: "Sexe", value: sexeLabel(medecin.sexe) }, { label: "Date de naissance", value: formatDateForDisplay(medecin.dateDeNaissance) || "Non renseignée" }, { label: "Âge", value: age === null ? "Non renseigné" : `${age} ans` }, { label: "Nationalité", value: medecin.nationalite }]} />
+      <TabsContent value="general"><div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
+        <DetailCard title="Identité" icon={Stethoscope} fields={[{ label: "ID médecin", value: medecin.idMedecin }, { label: "Nom complet", value: medecin.nomComplet }, { label: "Sexe", value: sexeLabel(medecin.sexe) }, { label: "Date de naissance", value: formatDateForDisplay(medecin.dateDeNaissance) || "Non renseignée" }, { label: "Lieu de naissance", value: medecin.lieuNaissance }, { label: "Âge", value: age === null ? "Non renseigné" : `${age} ans` }, { label: "Nationalité", value: medecin.nationalite }]} />
         <DetailCard title="Profil" icon={Activity} fields={[{ label: "Spécialité", value: medecin.specialite }, { label: "ID national", value: medecin.idNational }, { label: "ID FIVB", value: medecin.idFivb }, { label: "Statut", value: medecin.statut }]} />
-        {hasContact && <DetailCard title="Contact" icon={Contact} fields={[{ label: "Téléphone", value: medecin.telephone }, { label: "E-mail", value: medecin.email }, { label: "Adresse", value: medecin.adresse }]} />}
-        {hasPassport && <DetailCard title="Passeport" icon={FileKey} fields={[{ label: "Numéro", value: medecin.numeroPasseport }, { label: "Délivré le", value: formatDateForDisplay(medecin.dateDelivrancePasseport) || "Non renseignée" }, { label: "Expire le", value: formatDateForDisplay(medecin.dateExpirationPasseport) || "Non renseignée" }]} />}
+        <DetailCard title="Contact" icon={Contact} fields={[{ label: "Téléphone", value: medecin.telephone }, { label: "E-mail", value: medecin.email }, { label: "Adresse", value: medecin.adresse }]} />
+        <DetailCard title="Observations" icon={Info} fields={[{ label: "Observations", value: medecin.observations || "Non renseignées" }]} />
       </div></TabsContent>
       <TabsContent value="affiliations"><AffiliationsPanel kind="medecin" actorId={medecin.idMedecin} /></TabsContent>
       <TabsContent value="licences" className="[&>section]:border-t-0 [&>section]:pt-0"><LicenceSection licences={licences} actorId={medecin.idMedecin} showId={false} action={<MedecinLicenceFormDialog medecin={medecin} hasAffiliation={affiliations.some((item) => item.actorId === medecin.idMedecin)} onSaved={onLicenceCreated} />} /></TabsContent>

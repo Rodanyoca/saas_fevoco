@@ -1,0 +1,18 @@
+- dialog "Qualifier une unité":
+  - heading "Qualifier une unité" [level=2]
+  - paragraph: Le classement utilise uniquement les résultats joués et le barème du référentiel.
+  - text: Phase source
+  - combobox: Sélectionner
+  - text: Unité
+  - combobox: Sélectionner
+  - text: Phase destination
+  - combobox: Sélectionner
+  - text: Match source (facultatif)
+  - combobox: Sélectionner
+  - text: Date d’affectation
+  - textbox "JJMMAAAA"
+  - text: Observations
+  - textbox
+  - button "Annuler"
+  - button "Qualifier"
+  - button "Fermer"

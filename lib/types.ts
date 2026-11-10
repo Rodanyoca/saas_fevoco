@@ -189,6 +189,7 @@ export interface Coach {
   specialisation: string
   dateAffiliation: string
   statut: Statut
+  observation?: string
 }
 
 export interface BaseActorAffiliation {
@@ -376,6 +377,8 @@ export interface Medecin {
 }
 
 export interface Arbitre {
+  lieuNaissance?: string
+  observations?: string
   idArbitre: string
   idSexe: string
   idGrade: string

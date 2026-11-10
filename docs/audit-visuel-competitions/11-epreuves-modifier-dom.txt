@@ -1,0 +1,18 @@
+- dialog "Modifier l’épreuve":
+  - heading "Modifier l’épreuve" [level=2]
+  - paragraph: Les valeurs proposées proviennent du référentiel FEVOCO.
+  - text: Nom
+  - textbox: INDOOR MESSIEURS
+  - text: Discipline
+  - combobox [disabled]: VOLLEYBALL INDOOR
+  - text: Catégorie
+  - combobox [disabled]: SENIORS
+  - text: Sexe
+  - combobox [disabled]: MASCULIN
+  - text: Statut
+  - combobox: Actif
+  - text: Observations
+  - textbox
+  - button "Annuler"
+  - button "Enregistrer"
+  - button "Fermer"

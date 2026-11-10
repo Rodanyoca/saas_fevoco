@@ -1,0 +1,19 @@
+{
+  "result": "PASS",
+  "results": [
+    {
+      "viewport": "desktop",
+      "reads": 1,
+      "writesSimulated": 2,
+      "stableRetry": true
+    },
+    {
+      "viewport": "mobile",
+      "reads": 1,
+      "writesSimulated": 2,
+      "stableRetry": true
+    }
+  ],
+  "errors": [],
+  "synthetic": true
+}

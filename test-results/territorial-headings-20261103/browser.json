@@ -1,0 +1,94 @@
+{
+  "checks": [
+    {
+      "file": "components/ligues/ligues-client.tsx",
+      "device": "desktop",
+      "headers": [
+        "ID",
+        "LIGUE",
+        "PROVINCE",
+        "STATUT",
+        "Actions"
+      ],
+      "uppercase": true,
+      "noOverflow": true
+    },
+    {
+      "file": "components/ligues/ligues-client.tsx",
+      "device": "mobile",
+      "headers": [
+        "ID",
+        "LIGUE",
+        "PROVINCE",
+        "STATUT",
+        "Actions"
+      ],
+      "uppercase": true,
+      "noOverflow": true
+    },
+    {
+      "file": "components/ententes/ententes-client.tsx",
+      "device": "desktop",
+      "headers": [
+        "ID",
+        "ENTENTE",
+        "PSEUDO",
+        "LIGUE",
+        "STATUT",
+        "Actions"
+      ],
+      "uppercase": true,
+      "noOverflow": true
+    },
+    {
+      "file": "components/ententes/ententes-client.tsx",
+      "device": "mobile",
+      "headers": [
+        "ID",
+        "ENTENTE",
+        "PSEUDO",
+        "LIGUE",
+        "STATUT",
+        "Actions"
+      ],
+      "uppercase": true,
+      "noOverflow": true
+    },
+    {
+      "file": "components/clubs/clubs-client.tsx",
+      "device": "desktop",
+      "headers": [
+        "ID",
+        "LOGO",
+        "CLUB",
+        "CATÉGORIE",
+        "VERSION",
+        "ENTENTE",
+        "LIGUE",
+        "STATUT",
+        "Actions"
+      ],
+      "uppercase": true,
+      "noOverflow": true
+    },
+    {
+      "file": "components/clubs/clubs-client.tsx",
+      "device": "mobile",
+      "headers": [
+        "ID",
+        "LOGO",
+        "CLUB",
+        "CATÉGORIE",
+        "VERSION",
+        "ENTENTE",
+        "LIGUE",
+        "STATUT",
+        "Actions"
+      ],
+      "uppercase": true,
+      "noOverflow": true
+    }
+  ],
+  "emptyDataOnly": true,
+  "noGoogle": true
+}

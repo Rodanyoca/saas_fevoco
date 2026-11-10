@@ -67,6 +67,7 @@ export function ArbitreDetail({ arbitre, licences, sexes, grades, onUpdated, onB
           <DetailCard title="Identité" icon={Flag} fields={[
             { label: "ID", value: arbitre.idArbitre }, { label: "Nom complet", value: arbitre.nomComplet },
             { label: "Sexe", value: sexeLabel(arbitre.sexe) }, { label: "Date de naissance", value: birthDate === "-" ? "—" : birthDate },
+            { label: "Lieu de naissance", value: arbitre.lieuNaissance },
             { label: "Âge", value: age === null ? "—" : `${age} ans` }, { label: "Nationalité", value: arbitre.nationalite },
           ]} />
           <DetailCard title="Contact" icon={Contact} fields={[
@@ -76,8 +77,8 @@ export function ArbitreDetail({ arbitre, licences, sexes, grades, onUpdated, onB
             { label: "ID national", value: arbitre.idNational }, { label: "ID FIVB", value: arbitre.idFivb },
             { label: "Grade", value: arbitre.grade }, { label: "Statut", value: arbitre.statut },
           ]} />
-          <DetailCard title="Observation" icon={Info} fields={[
-            { label: "Observation", value: "Non renseignée" },
+          <DetailCard title="Observations" icon={Info} fields={[
+            { label: "Observations", value: shown(arbitre.observations, "Non renseignées") },
           ]} />
         </div></TabsContent>
         <TabsContent value="licence" className="[&>section]:border-t-0 [&>section]:pt-0">

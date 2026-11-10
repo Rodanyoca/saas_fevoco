@@ -1,3 +1,5 @@
+import { getUnavailableModule } from "@/lib/module-availability"
+import { ComingSoonPage } from "@/components/dashboard/coming-soon-page"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -64,6 +66,9 @@ function getWinnerSide(resultat: EquipeNationaleResultat) {
 }
 
 export default async function SuiviEquipeNationalePage() {
+  const unavailable = getUnavailableModule("/suivi-equipe-nationale")
+  if (unavailable) return <ComingSoonPage {...unavailable} />
+
   const loaded = await Promise.allSettled([getEquipeNationaleResultats()])
   const resultats = loaded[0].status === "fulfilled" ? loaded[0].value : []
 

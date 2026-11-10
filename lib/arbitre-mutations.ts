@@ -12,6 +12,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const statuses = new Set(["actif", "inactif", "active", "inactive"])
 
 type ArbitreInput = {
+  lieuNaissance: string; observations: string
   idNational: string; idFivb: string; nomComplet: string; idSexe: string
   dateNaissance: string; nationalite: string; idGrade: string
   telephone: string; email: string; adresse: string; statut: string
@@ -19,6 +20,7 @@ type ArbitreInput = {
 
 function normalizeInput(payload: Record<string, unknown>): ArbitreInput {
   return {
+    lieuNaissance: text(payload.lieuNaissance), observations: text(payload.observations),
     idNational: text(payload.idNational), idFivb: text(payload.idFivb),
     nomComplet: text(payload.nomComplet), idSexe: text(payload.idSexe),
     dateNaissance: text(payload.dateNaissance), nationalite: text(payload.nationalite),
@@ -51,6 +53,7 @@ export async function createArbitre(payload: Record<string, unknown>) {
   await formatSheetDateColumn(env.googleSheets.acteursSpreadsheetId, "ARBITRES", "date_naissance")
   await appendSheetRecord(env.googleSheets.acteursSpreadsheetId, "ARBITRES", {
     id_arbitre: idArbitre, id_national: input.idNational, id_fivb: input.idFivb,
+    lieu_naissance: input.lieuNaissance, observations: input.observations,
     nom_complet: input.nomComplet, id_sexe: input.idSexe, date_naissance: input.dateNaissance,
     nationalite: input.nationalite, id_niveau: input.idGrade, telephone: input.telephone,
     email: input.email, adresse: input.adresse, statut: input.statut,
@@ -70,6 +73,7 @@ export async function updateArbitre(idArbitre: string, payload: Record<string, u
   await formatSheetDateColumn(env.googleSheets.acteursSpreadsheetId, "ARBITRES", "date_naissance")
   await updateSheetRecordById(env.googleSheets.acteursSpreadsheetId, "ARBITRES", "id_arbitre", idArbitre, {
     id_national: input.idNational, id_fivb: input.idFivb, nom_complet: input.nomComplet,
+    lieu_naissance: input.lieuNaissance, observations: input.observations,
     id_sexe: input.idSexe, date_naissance: input.dateNaissance,
     nationalite: input.nationalite, id_niveau: input.idGrade, telephone: input.telephone,
     email: input.email, adresse: input.adresse, statut: input.statut,

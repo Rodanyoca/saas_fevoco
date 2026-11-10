@@ -7,6 +7,7 @@ import { routePolicy } from "@/lib/auth/route-policy"
 import { isMutationOriginAllowed, publicRequestOrigin } from "@/lib/auth/request-origin"
 import { getAuthorizationsForUser, getUserById } from "@/lib/users/data"
 import { authenticationFailurePath } from "@/lib/auth/failure-navigation"
+import { getUnavailableModule } from "@/lib/module-availability"
 
 function deny(request: NextRequest, status = 401) {
   const response = request.nextUrl.pathname.startsWith("/api/")
@@ -38,6 +39,9 @@ export async function proxy(request: NextRequest) {
   if (!policy) return deny(request, 403)
   const decision = await authorizeWithSource({ user: resolution.user, requirement: policy, action: policy.action, loadAuthorizations: () => getAuthorizationsForUser(resolution.user.idUser) })
   if (!decision.allowed) return deny(request, decision.reason === "SOURCE_UNAVAILABLE" ? 503 : 403)
+  if (path.startsWith("/api/") && getUnavailableModule(path)) {
+    return NextResponse.json({ error: "Bientôt disponible", code: "MODULE_UNAVAILABLE" }, { status: 403, headers: { "Cache-Control": "private, no-store" } })
+  }
   const response = NextResponse.next()
   response.headers.set("Cache-Control", "private, no-store")
   return response

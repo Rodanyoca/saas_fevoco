@@ -1,0 +1,18 @@
+- dialog "Attribuer une distinction":
+  - heading "Attribuer une distinction" [level=2]
+  - paragraph: Le bénéficiaire autorisé dépend du type sélectionné.
+  - text: Type
+  - combobox: Sélectionner
+  - text: Épreuve (facultatif)
+  - combobox: Sélectionner
+  - text: Phase (facultatif)
+  - combobox: Sélectionner
+  - text: Match (facultatif)
+  - combobox: Sélectionner
+  - text: Date d’attribution
+  - textbox "JJMMAAAA"
+  - text: Observations
+  - textbox
+  - button "Annuler"
+  - button "Attribuer"
+  - button "Fermer"

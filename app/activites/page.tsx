@@ -1,3 +1,5 @@
+import { getUnavailableModule } from "@/lib/module-availability"
+import { ComingSoonPage } from "@/components/dashboard/coming-soon-page"
 import { Header } from "@/components/dashboard/header"
 import { ActivitiesClient } from "@/components/activities/activities-client"
 import { loadActivities } from "@/lib/activities"
@@ -6,6 +8,9 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export default async function ActivitesPage() {
+  const unavailable = getUnavailableModule("/activites")
+  if (unavailable) return <ComingSoonPage {...unavailable} />
+
   let bundle: Awaited<ReturnType<typeof loadActivities>> = { activities: [], typeOptions: [] }
   let error = ""
   try { bundle = await loadActivities() } catch (reason) { error = reason instanceof Error ? reason.message : "Lecture des activités impossible." }

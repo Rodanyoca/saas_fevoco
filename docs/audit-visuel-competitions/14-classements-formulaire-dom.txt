@@ -1,0 +1,10 @@
+- dialog "Recalculer un classement":
+  - heading "Recalculer un classement" [level=2]
+  - paragraph: Le classement utilise uniquement les résultats joués et le barème du référentiel.
+  - text: Phase de groupes
+  - combobox: Sélectionner
+  - text: Groupe
+  - combobox: Sélectionner
+  - button "Annuler"
+  - button "Recalculer"
+  - button "Fermer"

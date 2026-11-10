@@ -29,6 +29,7 @@ export function mapCoachRow(row: SheetRow): Coach {
     nomComplet: str(row, "nom_complet"),
     dateNaissance: str(row, "date_naissance"),
     lieuNaissance: str(row, "lieu_naissance") || str(row, "lieu_de_naissance"),
+    observation: str(row, "observation"),
     genre: str(row, "nom_sexe") || str(row, "sexe"),
     nationalite: str(row, "nationalite"),
     telephone: str(row, "telephone"),

@@ -1,9 +1,9 @@
-import { CalendarDays, FileText } from "lucide-react"
+import { CalendarDays, FileText, Flag, Settings } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Header } from "@/components/dashboard/header"
 
-const icons = { activity: CalendarDays, document: FileText }
+const icons = { activity: CalendarDays, document: FileText, "national-team": Flag, settings: Settings }
 
 export function ComingSoonPage({ title, description, icon }: { title: string; description: string; icon: keyof typeof icons }) {
   const Icon = icons[icon]

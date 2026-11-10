@@ -9,6 +9,7 @@ import { ArrowRightLeft, BadgeCheck, Building2, Calendar, ChevronDown, ChevronLe
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { hydrationSafePathname, isNavigationItemActive, type NavigationIcon, type NavigationItem } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
+import { getUnavailableModule } from "@/lib/module-availability"
 
 const SIDEBAR_STORAGE_KEY = "fevoco:sidebar-collapsed"
 
@@ -26,6 +27,13 @@ function NavLink({ item, collapsed, pathname, onNavigate }: { item: NavigationIt
   if (!item.icon) return null
   const Icon = icons[item.icon]
   if (!item.href) return null
+  if (getUnavailableModule(item.href)) {
+    const disabledItem = <span role="link" aria-disabled="true" tabIndex={0} aria-label={`${item.name} — Bientôt disponible`} className={cn("flex min-h-10 cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring", collapsed && "justify-center px-2")}>
+      <Icon className="size-5 shrink-0" aria-hidden="true" />
+      {!collapsed && <span className="min-w-0"><span className="block truncate">{item.name}</span><span className="block text-[10px] font-normal">Bientôt disponible</span></span>}
+    </span>
+    return collapsed ? <Tooltip><TooltipTrigger asChild>{disabledItem}</TooltipTrigger><TooltipContent side="right" sideOffset={10}>{item.name} — Bientôt disponible</TooltipContent></Tooltip> : disabledItem
+  }
   const active = isNavigationItemActive(item, pathname)
   const link = (
     <Link href={item.href} onClick={() => { onNavigate?.(); window.dispatchEvent(new CustomEvent("fevoco:navigate", { detail: item.href })) }} aria-current={active ? "page" : undefined} aria-label={collapsed ? item.name : undefined} className={cn("flex min-h-10 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar", active ? "bg-brand-gold text-[#071525]" : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground", collapsed && "justify-center px-2")}>

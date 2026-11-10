@@ -37,7 +37,7 @@ export function CoachsClient({
     setRows((current) => {
       const existing = current.find((coach) => coach.idCoach === saved.idCoach)
       const merged: Coach = {
-        avatarDriveId: "", avatarDriveUrl: "", lieuNaissance: "", specialisation: "", dateAffiliation: "",
+        avatarDriveId: "", avatarDriveUrl: "", specialisation: "", dateAffiliation: "",
         ...existing, ...saved, id: saved.idCoach, genre: saved.sexe,
       }
       return existing ? current.map((coach) => coach.idCoach === saved.idCoach ? merged : coach) : [merged, ...current]

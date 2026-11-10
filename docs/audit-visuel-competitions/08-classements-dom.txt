@@ -1,0 +1,45 @@
+- main:
+  - link "Retour à la liste":
+    - /url: /competitions
+  - button "Clôturer l’édition"
+  - text: Épreuves → Engagements → Phases → Matchs → Résultats → Qualifications → Clôture
+  - paragraph: Engagez des unités avant de programmer les matchs.
+  - navigation "Sections de la compétition":
+    - link "Général":
+      - /url: /competitions/VOL-COMP-2026-001?tab=general
+    - link "Épreuves":
+      - /url: /competitions/VOL-COMP-2026-001?tab=epreuves
+    - link "Phases":
+      - /url: /competitions/VOL-COMP-2026-001?tab=structure
+    - link "Équipes":
+      - /url: /competitions/VOL-COMP-2026-001?tab=unites
+    - link "Participants":
+      - /url: /competitions/VOL-COMP-2026-001?tab=intervenants
+    - link "Matchs":
+      - /url: /competitions/VOL-COMP-2026-001?tab=matchs
+    - link "Résultats":
+      - /url: /competitions/VOL-COMP-2026-001?tab=resultats
+    - link "Classement":
+      - /url: /competitions/VOL-COMP-2026-001?tab=classements
+    - link "Distinctions":
+      - /url: /competitions/VOL-COMP-2026-001?tab=distinctions
+  - button "Qualifier"
+  - button "Recalculer"
+  - heading "Classements et qualifications" [level=2]
+  - table:
+    - rowgroup:
+      - row "Phase Groupe Rang Unité MJ V D +/- sets Ratio sets Ratio points Points":
+        - columnheader "Phase"
+        - columnheader "Groupe"
+        - columnheader "Rang"
+        - columnheader "Unité"
+        - columnheader "MJ"
+        - columnheader "V"
+        - columnheader "D"
+        - columnheader "+/- sets"
+        - columnheader "Ratio sets"
+        - columnheader "Ratio points"
+        - columnheader "Points"
+    - rowgroup:
+      - row "Aucune donnée enregistrée.":
+        - cell "Aucune donnée enregistrée."
