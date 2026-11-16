@@ -1,5 +1,8 @@
 "use client"
 
+import type { AthleteTerritorialLink } from "@/lib/territorial-hierarchy"
+
+import { useMemo } from "react"
 import { ArrowLeft, Pencil, Shield, ShieldCheck, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,15 +11,17 @@ import { DetailCard } from "@/components/dashboard/detail-card"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { EditEntenteDialog, type SavedEntente } from "@/components/ententes/entente-form-dialog"
-import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
+import type { Club, Entente, Ligue } from "@/lib/types"
 import { formatDateForDisplay } from "@/lib/compact-date"
 import { countAthletesByClub } from "@/lib/territorial-hierarchy"
 
-export function EntenteDetail({ entente, ligues, clubs, athletes, onBack, onUpdated }: { entente: Entente; ligues: Ligue[]; clubs: Club[]; athletes: Athlete[]; onBack: () => void; onUpdated: (entente: SavedEntente) => void }) {
-  const relatedClubs = clubs.filter((club) => club.idEntente === entente.idEntente || club.ententeId === entente.idEntente)
-  const clubIds = new Set(relatedClubs.map((club) => club.idClub))
-  const relatedAthletes = athletes.filter((athlete) => clubIds.has(athlete.clubId))
-  const athleteCounts = countAthletesByClub(relatedAthletes)
+export function EntenteDetail({ entente, ligues, clubs, athletes, onBack, onUpdated }: { entente: Entente; ligues: Ligue[]; clubs: Club[]; athletes: AthleteTerritorialLink[]; onBack: () => void; onUpdated: (entente: SavedEntente) => void }) {
+  const { relatedClubs, relatedAthletes, athleteCounts } = useMemo(() => {
+    const relatedClubs = clubs.filter((club) => club.idEntente === entente.idEntente || club.ententeId === entente.idEntente)
+    const clubIds = new Set(relatedClubs.map((club) => club.idClub))
+    const relatedAthletes = athletes.filter((athlete) => clubIds.has(athlete.clubId))
+    return { relatedClubs, relatedAthletes, athleteCounts: countAthletesByClub(relatedAthletes) }
+  }, [clubs, athletes, entente.idEntente])
   const columns: Column<Club>[] = [
     { key: "idClub", header: "ID", className: "font-mono text-sm" },
     { key: "nomClub", header: "Club", className: "font-medium" },

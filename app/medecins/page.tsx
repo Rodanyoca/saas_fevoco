@@ -7,6 +7,7 @@ import { ActorsConfigNotice } from "@/components/actors/actors-config-notice"
 import { getMedecinAffiliations, getMedecinLicences } from "@/lib/actor-records"
 import { getActorAffiliationTypes, getActorSexes, getMedecinSpecialties } from "@/lib/actor-references"
 import { ActorsLoadNotice } from "@/components/actors/actors-load-notice"
+import { firstIndex } from "@/lib/first-index"
 import { safeDataLoad } from "@/lib/safe-data-load"
 
 export const runtime = "nodejs"
@@ -17,10 +18,10 @@ export default async function MedecinsPage() {
     safeDataLoad(getMedecins, []), safeDataLoad(getMedecinAffiliations, []), safeDataLoad(getMedecinLicences, []), safeDataLoad(getActorSexes, []),
     safeDataLoad(getClubs, []), safeDataLoad(getEquipeNationale, []), safeDataLoad(getActorAffiliationTypes, []), safeDataLoad(getMedecinSpecialties, []),
   ])
-  const structures = [
+  const structures = [...firstIndex([
     ...clubs.data.map((item) => ({ key: `club:${item.idClub}`, id: item.idClub, nom: item.nomClub, type: "Club" })),
     ...equipes.data.map((item) => ({ key: `equipe:${item.idEquipeNationale}`, id: item.idEquipeNationale, nom: item.nomEquipeNationale, type: "Equipe nationale" })),
-  ].filter((item, index, all) => item.id && item.nom && all.findIndex((candidate) => candidate.key === item.key) === index)
+  ], item => item.key).values()].filter(item => item.id && item.nom)
 
   return (
     <DashboardLayout>

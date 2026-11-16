@@ -52,7 +52,7 @@ test("un ancien wrapper de page ne remonte pas un deuxième cadre de navigation"
 })
 
 test("les pages publiques conservent leur présentation sans sidebar", () => {
-  for (const pathname of ["/login", "/activation", "/service-indisponible", "/acces-refuse", "/mon-compte"]) {
+  for (const pathname of ["/login", "/activation", "/acces-refuse", "/mon-compte"]) {
     const { DashboardShell } = loadLayout(pathname)
     assert.ok(DashboardShell)
     const html = renderToStaticMarkup(React.createElement(DashboardShell, { navigation: items }, "page"))
@@ -65,4 +65,13 @@ test("le layout racine fournit la navigation filtrée par les droits existants",
   assert.match(root, /<DashboardShell navigation=\{navigation\}/)
   assert.match(root, /filterNavigation\(dashboardNavigation,/)
   assert.match(root, /getNavigationAccess\(session\)/)
+})
+
+test("une indisponibilite conserve la navigation et son repli Tableau de bord", () => {
+  const { DashboardShell } = loadLayout("/service-indisponible")
+  const html = renderToStaticMarkup(React.createElement(DashboardShell, { navigation: items }, "indisponible"))
+  assert.match(html, /<aside>/)
+  assert.match(html, /indisponible/)
+  const fallback = renderToStaticMarkup(React.createElement(DashboardShell, null, "indisponible"))
+  assert.match(fallback, /Tableau de bord/)
 })

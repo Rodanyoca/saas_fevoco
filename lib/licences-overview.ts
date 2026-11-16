@@ -14,11 +14,11 @@ export type { ActorLicenceView } from "@/lib/actor-licences-model"
 async function sources() {
   if (!env.googleSheets.licencesSpreadsheetId) throw new Error("Le classeur 04_FEVOCO_LICENCE n’est pas configuré.")
   const [licences, affiliations, actors, structures, refs] = await Promise.all([
-    getSheetsDataFrom(env.googleSheets.licencesSpreadsheetId, ["ATHLETE_LICENCES!A:ZZ", "ACTEURS_LICENCES!A:ZZ"]),
-    getSheetsDataFrom(env.googleSheets.affiliationsSpreadsheetId, ["ATHLETE_AFFILIATIONS!A:ZZ", "COACH_AFFILIATIONS!A:ZZ", "MEDECIN_AFFILIATIONS!A:ZZ", "OFFICIELS_AFFILIATIONS!A:ZZ"]),
-    getSheetsDataFrom(env.googleSheets.acteursSpreadsheetId, ["ATHLETES!A:ZZ", "COACHS!A:ZZ", "OFFICIELS!A:ZZ", "ARBITRES!A:ZZ", "MEDECINS!A:ZZ"]),
+    getSheetsDataFrom(env.googleSheets.licencesSpreadsheetId, ["ATHLETE_LICENCES!A:ZZ"]),
+    getSheetsDataFrom(env.googleSheets.affiliationsSpreadsheetId, ["ATHLETE_AFFILIATIONS!A:ZZ"]),
+    getSheetsDataFrom(env.googleSheets.acteursSpreadsheetId, ["ATHLETES!A:ZZ"]),
     getSheetsDataFrom(env.googleSheets.territorialSpreadsheetId, ["CLUBS!A:ZZ", "ENTENTES!A:ZZ", "LIGUES!A:ZZ"]),
-    getSheetsDataFrom(env.googleSheets.referentielsSpreadsheetId, ["SAISON!A:ZZ", "SEXES!A:ZZ", "STATUT_LICENCE!A:ZZ", "CYCLES_LICENCES!A:ZZ", "TYPES_ACTEURS!A:ZZ"]),
+    getSheetsDataFrom(env.googleSheets.referentielsSpreadsheetId, ["SAISON!A:ZZ", "SEXES!A:ZZ", "STATUT_LICENCE!A:ZZ"]),
   ])
   return { licences, affiliations, actors, structures, refs }
 }

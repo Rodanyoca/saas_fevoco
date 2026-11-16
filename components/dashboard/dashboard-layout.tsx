@@ -13,13 +13,13 @@ interface DashboardLayoutProps {
 }
 
 const DashboardFrameContext = createContext(false)
-const standaloneRoutes = new Set(["/confidentialite", "/conditions-utilisation", "/login", "/activation", "/service-indisponible", "/acces-refuse", "/mon-compte"])
+const standaloneRoutes = new Set(["/confidentialite", "/conditions-utilisation", "/login", "/activation", "/acces-refuse", "/mon-compte"])
 
 /** The root layout owns this shell, so route transitions retain its state. */
 export function DashboardShell({ children, navigation = [] }: DashboardLayoutProps) {
   const pathname = usePathname()
   if (standaloneRoutes.has(pathname)) return <>{children}</>
-  return <DashboardLayout navigation={navigation}>{children}</DashboardLayout>
+  return <DashboardLayout navigation={pathname === "/service-indisponible" && !navigation.length ? [{ name: "Tableau de bord", href: "/", icon: "dashboard" }] : navigation}>{children}</DashboardLayout>
 }
 
 /** Existing page/loading wrappers reuse the root frame instead of mounting one. */

@@ -17,10 +17,14 @@ export function AutresActeursClient({ acteurs, types, sexes }: { acteurs: AutreA
   useEffect(() => setRows(acteurs), [acteurs])
   useEffect(() => { const back = (event: Event) => { if ((event as CustomEvent<string>).detail === "/autres-acteurs") setSelected(null) }; window.addEventListener("fevoco:navigate", back); return () => window.removeEventListener("fevoco:navigate", back) }, [])
   const save = (saved: AutreActeur) => { setRows((current) => current.some((item) => item.idAutreActeur === saved.idAutreActeur) ? current.map((item) => item.idAutreActeur === saved.idAutreActeur ? saved : item) : [saved, ...current]); setSelected((current) => current?.idAutreActeur === saved.idAutreActeur ? saved : current) }
-  const filtered = useMemo(() => rows.filter((item) => {
+  const sortedRows = useMemo(() => [...rows].sort((left, right) => compareLabels(left.nomComplet, right.nomComplet)), [rows])
+
+  const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
+    return sortedRows.filter((item) => {
     return !term || `${item.idAutreActeur} ${item.nomComplet} ${item.telephone} ${item.typeAutreActeur}`.toLowerCase().includes(term)
-  }).sort((a, b) => compareLabels(a.nomComplet, b.nomComplet)), [rows, search])
+    })
+  }, [sortedRows, search])
   if (selected) return <AutreActeurDetail acteur={selected} sexes={sexes} types={types} onBack={() => setSelected(null)} onUpdated={save} />
   return <div className="space-y-6"><div className="flex justify-end"><AutreActeurFormDialog sexes={sexes} types={types} onSaved={save} /></div>
     <div className="flex flex-wrap items-center gap-4"><div className="relative min-w-[200px] max-w-md flex-1"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input type="search" aria-label="Rechercher un autre acteur" className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un autre acteur..." /></div>

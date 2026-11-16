@@ -1,5 +1,7 @@
 "use client"
 
+import type { AthleteTerritorialLink } from "@/lib/territorial-hierarchy"
+
 import { useMemo } from "react"
 import { ArrowLeft, Building2, MapPin, Network, Pencil, Shield, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,11 +12,11 @@ import { StatCard } from "@/components/dashboard/stat-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { LigueFormDialog, type SavedLigue } from "@/components/ligues/ligue-form-dialog"
 import { buildLigueHierarchy } from "@/lib/territorial-hierarchy"
-import type { Athlete, Club, Entente, Ligue, Province } from "@/lib/types"
+import type { Club, Entente, Ligue, Province } from "@/lib/types"
 import type { LigueResponsable } from "@/lib/ligue-responsables-model"
 
 export function LigueDetail({ ligue, ententes, clubs, athletes, provinces, onBack, onUpdated, relationsReady, responsables, responsablesReady }: {
-  ligue: Ligue; ententes: Entente[]; clubs: Club[]; athletes: Athlete[]; provinces: Province[]
+  ligue: Ligue; ententes: Entente[]; clubs: Club[]; athletes: AthleteTerritorialLink[]; provinces: Province[]
   onBack: () => void; onUpdated: (ligue: SavedLigue) => void; relationsReady: boolean
   responsables: LigueResponsable[]; responsablesReady: boolean
 }) {

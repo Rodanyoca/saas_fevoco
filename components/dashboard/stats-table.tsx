@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import type { Province } from "@/lib/types"
 
 export function StatsTable({ provinces }: { provinces: Province[] }) {
@@ -17,7 +16,6 @@ export function StatsTable({ provinces }: { provinces: Province[] }) {
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground">Ligues</th>
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground">Clubs</th>
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground">Athletes</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Completude</th>
               </tr>
             </thead>
             <tbody>
@@ -27,12 +25,6 @@ export function StatsTable({ provinces }: { provinces: Province[] }) {
                   <td className="px-4 py-3 text-center text-muted-foreground">{province.ligues}</td>
                   <td className="px-4 py-3 text-center text-muted-foreground">{province.clubs}</td>
                   <td className="px-4 py-3 text-center text-muted-foreground">{province.athletes}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <Progress value={province.completude} className="h-2 flex-1" />
-                      <span className="w-10 text-xs text-muted-foreground">{province.completude}%</span>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>

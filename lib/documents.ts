@@ -8,9 +8,9 @@ export type DocumentView = { id: string; typeId: string; type: string; title: st
 export type DocumentOption = { id: string; label: string }
 const text = (row: SheetRow, key: string) => String(row[key] ?? "").trim()
 
-export async function loadDocuments() {
+export async function loadDocuments({ includeRelations = true }: { includeRelations?: boolean } = {}) {
   const [business, refs] = await Promise.all([
-    getSheetsDataFrom(env.googleSheets.documentsSpreadsheetId, ["DOCUMENTS!A:Z", "DOCUMENTS_FICHIERS!A:Z", "DOCUMENTS_RELATIONS!A:Z"]),
+    getSheetsDataFrom(env.googleSheets.documentsSpreadsheetId, includeRelations ? ["DOCUMENTS!A:Z", "DOCUMENTS_FICHIERS!A:Z", "DOCUMENTS_RELATIONS!A:Z"] : ["DOCUMENTS!A:Z"]),
     getSheetsDataFrom(env.googleSheets.referentielsSpreadsheetId, ["TYPES_DOCUMENT!A:Z"]),
   ])
   const typeOptions: DocumentOption[] = (refs.TYPES_DOCUMENT ?? []).map((row) => ({ id: text(row, "id_type_document"), label: text(row, "nom_type_document") })).filter((item) => item.id && item.label)

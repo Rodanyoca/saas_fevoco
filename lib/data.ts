@@ -22,12 +22,7 @@ import { mapEquipeNationaleCompetitionRow } from "@/lib/mappers/equipe-nationale
 import { mapEquipeNationaleResultatRow } from "@/lib/mappers/equipe-nationale-resultats"
 import { mapEquipeNationaleStaffRow } from "@/lib/mappers/equipe-nationale-staff"
 import { getActorSexes, getArbitreGrades, getCoachLevels, getMedecinSpecialties } from "@/lib/actor-references"
-
-function computeProvinceCompletude(p: Province): number {
-  const fields: Array<string> = [p.id, p.nom, p.chefLieu, p.responsable, p.telephone, p.email, String(p.statut)]
-  const filled = fields.filter((v) => String(v).trim().length > 0).length
-  return Math.round((filled / fields.length) * 100)
-}
+import type { AthleteTerritorialLink } from "@/lib/territorial-hierarchy"
 
 const cell = (row: SheetRow | undefined, key: string) => String(row?.[key] ?? "").trim()
 
@@ -119,7 +114,6 @@ export async function getProvinces(): Promise<Province[]> {
         coachs: 0,
         arbitres: provinceArbitres.length,
         medecins: provinceMedecins.length,
-        completude: computeProvinceCompletude(p),
       }
 
       return withCounts
@@ -159,6 +153,18 @@ export async function getAthletes(): Promise<Athlete[]> {
   return rows
     .map((row) => mapAthleteRow({ ...row, nom_sexe: sexesById.get(cell(row, "id_sexe")) ?? "" }))
     .filter((a) => a.id && a.nomComplet)
+}
+
+// Territorial details only count memberships. Keep the established mapper and
+// validity rules, without loading sexes or serializing full athlete profiles.
+export async function getAthleteTerritorialLinks(): Promise<AthleteTerritorialLink[]> {
+  const rows = await getSheetDataFrom(env.googleSheets.acteursSpreadsheetId, "ATHLETES!A:ZZ")
+  const links: AthleteTerritorialLink[] = []
+  for (const row of rows) {
+    const athlete = mapAthleteRow(row)
+    if (athlete.id && athlete.nomComplet) links.push({ idAthlete: athlete.idAthlete, clubId: athlete.clubId })
+  }
+  return links
 }
 
 export async function getCoachs(): Promise<Coach[]> {

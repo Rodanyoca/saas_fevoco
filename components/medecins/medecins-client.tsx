@@ -72,10 +72,12 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes, struct
   const activeLicenceNumbers = useMemo(() => activeActorLicenceNumbers(licenceRows,
     new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Kinshasa", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())), [licenceRows])
 
+  const sortedRows = useMemo(() => [...rows].sort((left, right) => compareLabels(left.nomComplet, right.nomComplet)), [rows])
+
   const filteredMedecins = useMemo(() => {
     const term = search.trim().toLowerCase()
 
-    return rows.filter((medecin) => {
+    return sortedRows.filter((medecin) => {
       if (sexe !== "all" && medecin.sexe !== sexe) return false
       if (specialite !== "all" && medecin.specialite !== specialite) return false
       if (statut !== "all" && medecin.statut !== statut) return false
@@ -87,8 +89,8 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes, struct
       }
 
       return true
-    }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, activeLicenceNumbers, search, sexe, specialite, statut])
+    })
+  }, [sortedRows, activeLicenceNumbers, search, sexe, specialite, statut])
 
   return (
     <div className="space-y-6">

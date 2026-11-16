@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   Table,
   TableBody,
@@ -28,6 +28,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { formatDateField } from "@/lib/date-format"
 import { getDataTableRowKey } from "@/lib/data-table-row-key"
+import { filterDataTableRows } from "@/lib/data-table-filter"
 
 export interface Column<T> {
   key: keyof T | string
@@ -94,24 +95,10 @@ export function DataTable<T extends object>({
     setUncontrolledFilterValues(next)
   }
 
-  // Filter and search data
-  const filteredData = data.filter((item) => {
-    // Search filter
-    const searchMatch = Object.values(item as Record<string, unknown>).some((value) =>
-      String(value).toLowerCase().includes(search.toLowerCase())
-    )
-    if (!searchMatch) return false
-
-    // Apply filters
-    for (const [key, filterValue] of Object.entries(filterValues)) {
-      if (filterValue && filterValue !== "all") {
-        if (String(getValue(item, key)) !== filterValue) {
-          return false
-        }
-      }
-    }
-    return true
-  })
+  const filteredData = useMemo(
+    () => filterDataTableRows(data, search, filterValues, String(idKey)),
+    [data, search, filterValues, idKey],
+  )
 
   // Pagination
   const totalPages = Math.ceil(filteredData.length / pageSize)

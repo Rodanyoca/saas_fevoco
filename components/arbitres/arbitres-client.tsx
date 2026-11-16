@@ -8,6 +8,7 @@ import { ArbitreDetail } from "@/components/arbitres/arbitre-detail"
 import { ArbitreFormDialog } from "@/components/arbitres/arbitre-form-dialog"
 import type { SavedArbitre } from "@/components/arbitres/arbitre-form-dialog"
 import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
+import { licenceNumbersByActor } from "@/lib/actor-search-index"
 import { compareLabels } from "@/lib/sort-utils"
 
 export function ArbitresClient({ arbitres, licences, sexes, grades }: {
@@ -43,27 +44,27 @@ export function ArbitresClient({ arbitres, licences, sexes, grades }: {
       : current)
   }
 
+  const licenceSearch = useMemo(() => licenceNumbersByActor(licences), [licences])
+  const sortedRows = useMemo(() => [...rows].sort((left, right) => compareLabels(left.nomComplet, right.nomComplet)), [rows])
+
   const filteredArbitres = useMemo(() => {
     const term = search.trim().toLowerCase()
 
-    return rows.filter((arbitre) => {
+    return sortedRows.filter((arbitre) => {
       if (equipeNationale !== "all" && arbitre.equipeNational !== equipeNationale) return false
       if (grade !== "all" && arbitre.grade !== grade) return false
       if (statut !== "all" && arbitre.statut !== statut) return false
 
       if (term) {
-        const licenceNumbers = licences
-          .filter((licence) => licence.actorId === arbitre.idArbitre)
-          .map((licence) => licence.numeroLicence)
-          .join(" ")
+        const licenceNumbers = licenceSearch.get(arbitre.idArbitre) || ""
         const haystack = `${arbitre.nomComplet} ${licenceNumbers}`.toLowerCase()
 
         if (!haystack.includes(term)) return false
       }
 
       return true
-    }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, licences, equipeNationale, grade, search, statut])
+    })
+  }, [sortedRows, licenceSearch, equipeNationale, grade, search, statut])
 
   return (
     <div className="space-y-6">

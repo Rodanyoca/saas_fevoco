@@ -35,6 +35,5 @@ export function mapProvinceRow(row: SheetRow): Province {
     coachs: 0,
     arbitres: 0,
     medecins: 0,
-    completude: 0,
   }
 }

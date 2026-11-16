@@ -8,6 +8,7 @@ import { CoachDetail } from "@/components/coachs/coach-detail"
 import { CoachFormDialog } from "@/components/coachs/coach-form-dialog"
 import type { SavedCoach } from "@/components/coachs/coach-form-dialog"
 import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
+import { licenceNumbersByActor } from "@/lib/actor-search-index"
 import { compareLabels } from "@/lib/sort-utils"
 import { activeActorLicenceNumbers } from "@/lib/active-actor-licences"
 
@@ -47,25 +48,25 @@ export function CoachsClient({
       : current)
   }
 
+  const licenceSearch = useMemo(() => licenceNumbersByActor(licenceRows), [licenceRows])
+  const sortedRows = useMemo(() => [...rows].sort((left, right) => compareLabels(left.nomComplet, right.nomComplet)), [rows])
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
 
-    return rows.filter((coach) => {
+    return sortedRows.filter((coach) => {
       if (niveau !== "all" && coach.niveau !== niveau) return false
       if (statut !== "all" && coach.statut !== statut) return false
 
       if (s) {
-        const licenceNumbers = licenceRows
-          .filter((licence) => licence.actorId === coach.idCoach)
-          .map((licence) => licence.numeroLicence)
-          .join(" ")
+        const licenceNumbers = licenceSearch.get(coach.idCoach) || ""
         const haystack = `${coach.nomComplet} ${licenceNumbers}`.toLowerCase()
         if (!haystack.includes(s)) return false
       }
 
       return true
-    }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, licenceRows, niveau, search, statut])
+    })
+  }, [sortedRows, licenceSearch, niveau, search, statut])
 
   return (
     <div className="space-y-6">

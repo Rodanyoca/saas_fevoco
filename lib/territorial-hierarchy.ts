@@ -1,11 +1,13 @@
 import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
 
-export interface LigueHierarchy {
+export type AthleteTerritorialLink = Pick<Athlete, "idAthlete" | "clubId">
+
+export interface LigueHierarchy<T extends AthleteTerritorialLink = Athlete> {
   ententes: Entente[]
   clubs: Club[]
-  athletes: Athlete[]
+  athletes: T[]
   clubsByEntenteId: Map<string, Club[]>
-  athletesByClubId: Map<string, Athlete[]>
+  athletesByClubId: Map<string, T[]>
   diagnostics: string[]
 }
 
@@ -25,12 +27,12 @@ function uniqueById<T>(items: T[], getId: (item: T) => string): T[] {
   })
 }
 
-export function buildLigueHierarchy(
+export function buildLigueHierarchy<T extends AthleteTerritorialLink>(
   ligue: Pick<Ligue, "idLigue">,
   ententes: Entente[],
   clubs: Club[],
-  athletes: Athlete[],
-): LigueHierarchy {
+  athletes: T[],
+): LigueHierarchy<T> {
   const diagnostics: string[] = []
   const ligueEntentes = uniqueById(
     ententes.filter((entente) => entente.idLigue === ligue.idLigue),
@@ -60,7 +62,7 @@ export function buildLigueHierarchy(
     if (group) group.push(club)
     else clubsByEntenteId.set(club.idEntente, [club])
   }
-  const athletesByClubId = new Map<string, Athlete[]>()
+  const athletesByClubId = new Map<string, T[]>()
   for (const athlete of ligueAthletes) {
     const group = athletesByClubId.get(athlete.clubId)
     if (group) group.push(athlete)

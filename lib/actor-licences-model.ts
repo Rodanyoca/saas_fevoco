@@ -1,4 +1,6 @@
 // @ts-expect-error Node's TypeScript runner requires explicit extensions.
+import { firstIndex } from "./first-index.ts"
+// @ts-expect-error Node's TypeScript runner requires explicit extensions.
 import { formatDateFromSheet } from "./compact-date.ts"
 // @ts-expect-error Node's TypeScript runner requires explicit extensions.
 import { effectiveLicenceStatus } from "./licences-domain.ts"
@@ -37,7 +39,19 @@ export function buildActorLicenceData(data: ActorLicenceSources, today: string) 
     cycles: options(data.refs.CYCLES_LICENCES, "id_cycle_licence", "nom_cycle_licence"),
     statuses: options(data.refs.STATUT_LICENCE, "id_statut_licence", "nom_statut_licence"), actors: [], affiliations: [],
   }
-  const label = (items: LicenceOption[], id: string) => items.find(item => item.id === id)?.label || id || "—"
+  const labelIndexes = new Map<LicenceOption[], Map<string, LicenceOption>>()
+  const labelsFor = (items: LicenceOption[]) => {
+    let index = labelIndexes.get(items)
+    if (!index) { index = firstIndex(items, item => item.id); labelIndexes.set(items, index) }
+    return index
+  }
+  const structureIndexes = {
+    LIGUE: firstIndex(data.structures.LIGUES || [], row => licenceText(row.id_ligue)),
+    ENTENTE: firstIndex(data.structures.ENTENTES || [], row => licenceText(row.id_entente)),
+    FEDERATION: firstIndex(data.structures.FEDERATION || [], row => licenceText(row.id_federation)),
+  }
+  const affiliationStatuses = firstIndex(data.refs.STATUTS_AFFILIATION || [], row => licenceText(row.id_statut_affiliation))
+  const label = (items: LicenceOption[], id: string) => labelsFor(items).get(id)?.label || id || "—"
   const clubs = new Map((data.structures.CLUBS || []).map(row => [licenceText(row.id_club), licenceText(row.nom_club)]))
   const entityTypes = new Map((data.refs.TYPES_STRUCTURES || []).map(row => [licenceText(row.id_type_structure), licenceText(row.nom_type_structure).toUpperCase()]))
   for (const [typeId, config] of Object.entries(actorLicenceKinds)) {
@@ -47,18 +61,21 @@ export function buildActorLicenceData(data: ActorLicenceSources, today: string) 
       if (!id || !actorId) continue
       const entityType = config.kind === "officiel" ? entityTypes.get(licenceText(row.id_type_entite)) : "CLUB"
       const entityId = licenceText(config.kind === "officiel" ? row.id_entite : row.id_club)
-      const structure = entityType === "CLUB" ? clubs.get(entityId) : ["LIGUE", "ENTENTE", "FEDERATION"].includes(entityType || "") ? (data.structures[entityType === "LIGUE" ? "LIGUES" : entityType === "ENTENTE" ? "ENTENTES" : "FEDERATION"] || []).find(item => licenceText(item[entityType === "LIGUE" ? "id_ligue" : entityType === "ENTENTE" ? "id_entente" : "id_federation"]) === entityId) : undefined
+      const structure = entityType === "CLUB" ? clubs.get(entityId) : ["LIGUE", "ENTENTE", "FEDERATION"].includes(entityType || "") ? structureIndexes[entityType as keyof typeof structureIndexes].get(entityId) : undefined
       const federation = config.kind === "officiel" && entityType === "FEDERATION"
       const structureLabel = federation ? licenceText((data.structures.FEDERATION || [])[0]?.nom_officiel) || "FEDERATION" : typeof structure === "string" ? structure : structure ? licenceText(structure.nom_ligue || structure.nom_entente || structure.nom_officiel) : ""
-      const statusId = licenceText(row.id_statut_affiliation), status = (data.refs.STATUTS_AFFILIATION || []).find(item => licenceText(item.id_statut_affiliation) === statusId)
+      const statusId = licenceText(row.id_statut_affiliation), status = affiliationStatuses.get(statusId)
       refs.affiliations.push({ id, actorId, typeId, label: `${structureLabel || entityId || "Structure introuvable"} · ${id}`, dateDebut: licenceReadDate(row.date_debut), dateFin: licenceText(row.date_fin) ? licenceReadDate(row.date_fin) || "0000-01-01" : "", statusId, status: licenceText(status?.nom_statut_affiliation) || statusId, targetExists: federation || Boolean(structure) })
     }
   }
+  const actorIndex = firstIndex(refs.actors, item => JSON.stringify([item.typeId, item.id]))
+  const affiliationIndex = firstIndex(refs.affiliations, item => JSON.stringify([item.typeId, item.actorId, item.id]))
+  const todayTime = Date.parse(today)
   const rows: ActorLicenceView[] = data.licences.filter(row => licenceText(row.id_licence)).map(row => {
     const typeId = licenceText(row.id_type_acteur), actorId = licenceText(row.id_acteur), cycleId = licenceText(row.id_cycle_licence), statusId = licenceText(row.id_statut_licence), affiliationId = licenceText(row.id_affiliation_acteur)
     const dateDebut = licenceReadDate(row.date_debut_validite), dateExpiration = licenceReadDate(row.date_fin_validite), statut = label(refs.statuses, statusId)
     const validDates = Boolean(dateDebut && dateExpiration && dateDebut <= dateExpiration)
-    return { id: licenceText(row.id_licence), actorId, acteur: refs.actors.find(item => item.typeId === typeId && item.id === actorId)?.label || actorId, typeId, type: label(refs.types, typeId), numero: licenceText(row.numero_licence) || "—", cycleId, cycle: label(refs.cycles, cycleId), affiliationId, affiliation: typeId === "TAC004" ? "Non applicable" : refs.affiliations.find(item => item.id === affiliationId && item.typeId === typeId && item.actorId === actorId)?.label || "Affiliation historique non renseignée", dateDebut, dateExpiration, dateDelivrance: licenceReadDate(row.date_delivrance), periode: `${dateDebut || "—"} — ${dateExpiration || "—"}`, statusId, statut, statutEffectif: validDates ? effectiveLicenceStatus(statut, dateDebut, dateExpiration, today) : "DATES_INVALIDES", remainingDays: dateExpiration ? Math.round((Date.parse(dateExpiration) - Date.parse(today)) / 86400000) : null, observations: licenceText(row.observations) }
+    return { id: licenceText(row.id_licence), actorId, acteur: actorIndex.get(JSON.stringify([typeId, actorId]))?.label || actorId, typeId, type: label(refs.types, typeId), numero: licenceText(row.numero_licence) || "—", cycleId, cycle: label(refs.cycles, cycleId), affiliationId, affiliation: typeId === "TAC004" ? "Non applicable" : affiliationIndex.get(JSON.stringify([typeId, actorId, affiliationId]))?.label || "Affiliation historique non renseignée", dateDebut, dateExpiration, dateDelivrance: licenceReadDate(row.date_delivrance), periode: `${dateDebut || "—"} — ${dateExpiration || "—"}`, statusId, statut, statutEffectif: validDates ? effectiveLicenceStatus(statut, dateDebut, dateExpiration, today) : "DATES_INVALIDES", remainingDays: dateExpiration ? Math.round((Date.parse(dateExpiration) - todayTime) / 86400000) : null, observations: licenceText(row.observations) }
   })
   return { rows, references: refs }
 }

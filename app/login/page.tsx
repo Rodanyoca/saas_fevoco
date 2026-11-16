@@ -73,12 +73,10 @@ export default function LoginPage() {
   return (
     <main className={styles.page}>
       <section className={styles.hero} aria-labelledby="institution-title">
-        <Image unoptimized src="/img-20250901-wa01791.jpg" alt="Célébration d’une victoire au volleyball" fill priority sizes="(max-width: 1023px) 100vw, 62vw" className={styles.heroImage} />
-        <div className={styles.heroShade} />
         <div className={styles.heroInner}>
           <div className={styles.brandLockup}>
             <div className={styles.brandLogo}>
-              <Image unoptimized src="/logo-fevoco.png" alt="Logo de la Fédération de Volleyball du Congo" fill sizes="64px" className={styles.brandLogoImage} />
+              <Image unoptimized src="/logo-fevoco.png" alt="Logo de la Fédération de Volleyball du Congo" fill priority sizes="(max-width: 1023px) 240px, (max-width: 1440px) 48vw, 660px" className={styles.brandLogoImage} />
             </div>
             <div>
               <p className={styles.brandName}>FEVOCO</p>
@@ -95,7 +93,7 @@ export default function LoginPage() {
 
       <aside className={styles.loginPanel} aria-labelledby="login-title">
         <div className={styles.panelContent}>
-          <div className={styles.mobileBrand}><Image unoptimized src="/logo-fevoco.png" alt="FEVOCO" width={48} height={48} /><strong>FEVOCO</strong></div>
+          <div className={styles.mobileBrand}><Image unoptimized src="/logo-fevoco.png" alt="FEVOCO" width={240} height={240} /></div>
           <div className={styles.welcome}>
             <p className={styles.panelEyebrow}>Fédération de Volleyball du Congo</p>
             <h2 id="login-title">Espace institutionnel</h2>

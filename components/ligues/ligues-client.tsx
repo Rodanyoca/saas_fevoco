@@ -1,5 +1,7 @@
 "use client"
 
+import type { AthleteTerritorialLink } from "@/lib/territorial-hierarchy"
+
 import { useEffect, useMemo, useState } from "react"
 import { Eye, MapPin, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,11 +10,11 @@ import { StatusBadge } from "@/components/dashboard/status-badge"
 import { LigueDetail } from "@/components/ligues/ligue-detail"
 import { LigueFormDialog, type SavedLigue } from "@/components/ligues/ligue-form-dialog"
 import { Header } from "@/components/dashboard/header"
-import type { Athlete, Club, Entente, Ligue, Province } from "@/lib/types"
+import type { Club, Entente, Ligue, Province } from "@/lib/types"
 import type { LigueResponsables } from "@/lib/ligue-responsables-model"
 
 export function LiguesClient({ ligues, ententes, clubs, athletes, provinceOptions, relationsReady, responsables, responsablesReady }: {
-  ligues: Ligue[]; ententes: Entente[]; clubs: Club[]; athletes: Athlete[]
+  ligues: Ligue[]; ententes: Entente[]; clubs: Club[]; athletes: AthleteTerritorialLink[]
   provinceOptions: Province[]; relationsReady: boolean
   responsables: LigueResponsables; responsablesReady: boolean
 }) {

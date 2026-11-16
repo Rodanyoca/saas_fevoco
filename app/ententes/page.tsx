@@ -1,7 +1,8 @@
+import type { AthleteTerritorialLink } from "@/lib/territorial-hierarchy"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { EntentesClient } from "@/components/ententes/ententes-client"
-import { getAthletes, getTerritorialHierarchy } from "@/lib/data"
-import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
+import { getAthleteTerritorialLinks, getTerritorialHierarchy } from "@/lib/data"
+import type { Club, Entente, Ligue } from "@/lib/types"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -9,11 +10,11 @@ export const dynamic = "force-dynamic"
 export default async function EntentesPage() {
   const loaded = await Promise.allSettled([
     getTerritorialHierarchy(),
-    getAthletes(),
+    getAthleteTerritorialLinks(),
   ])
   const hierarchy = loaded[0].status === "fulfilled" ? loaded[0].value : { ententes: [], clubs: [], ligues: [] }
   const { ententes, clubs, ligues } = hierarchy as { ententes: Entente[]; clubs: Club[]; ligues: Ligue[] }
-  const athletes = loaded[1].status === "fulfilled" ? loaded[1].value as Athlete[] : []
+  const athletes = loaded[1].status === "fulfilled" ? loaded[1].value as AthleteTerritorialLink[] : []
 
   return (
     <DashboardLayout>

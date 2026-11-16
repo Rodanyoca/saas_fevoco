@@ -8,6 +8,8 @@ import { OfficielDetail } from "@/components/officiels/officiel-detail"
 import { OfficielFormDialog } from "@/components/officiels/officiel-form-dialog"
 import type { SavedOfficiel } from "@/components/officiels/officiel-form-dialog"
 import type { ActorSexOption, CoachReferenceOption } from "@/lib/actor-references"
+import { firstIndex } from "@/lib/first-index"
+import { licenceNumbersByActor } from "@/lib/actor-search-index"
 import { compareLabels } from "@/lib/sort-utils"
 import type { OfficielStructureOption } from "@/components/officiels/officiel-affiliation-form-dialog"
 
@@ -59,27 +61,28 @@ export function OfficielsClient({ officiels, affiliations, licences, sexes, stru
     ])
   }
 
+  const licenceSearch = useMemo(() => licenceNumbersByActor(licenceRows), [licenceRows])
+  const affiliationSearch = useMemo(() => firstIndex(affiliationRows, item => item.actorId), [affiliationRows])
+  const sortedRows = useMemo(() => [...rows].sort((left, right) => compareLabels(left.nomComplet, right.nomComplet)), [rows])
+
   const filteredOfficiels = useMemo(() => {
     const term = search.trim().toLowerCase()
 
-    return rows.filter((officiel) => {
+    return sortedRows.filter((officiel) => {
       if (sexe !== "all" && officiel.sexe !== sexe) return false
       if (statut !== "all" && officiel.statut !== statut) return false
 
       if (term) {
-        const licenceNumbers = licenceRows
-          .filter((licence) => licence.actorId === officiel.idOfficiel)
-          .map((licence) => licence.numeroLicence)
-          .join(" ")
-        const mandat = affiliationRows.find((item) => item.actorId === officiel.idOfficiel)
+        const licenceNumbers = licenceSearch.get(officiel.idOfficiel) || ""
+        const mandat = affiliationSearch.get(officiel.idOfficiel)
         const haystack = `${officiel.nomComplet} ${officiel.idOfficiel} ${officiel.idNational} ${licenceNumbers} ${mandat?.fonction ?? ""} ${mandat?.nomStructure ?? ""}`.toLowerCase()
 
         if (!haystack.includes(term)) return false
       }
 
       return true
-    }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [affiliationRows, licenceRows, rows, search, sexe, statut])
+    })
+  }, [affiliationSearch, licenceSearch, sortedRows, search, sexe, statut])
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,6 @@
 import type { AffiliationKind, AffiliationRow } from "./affiliations-domain"
+// @ts-expect-error Node's TypeScript runner requires explicit extensions.
+import { firstIndex } from "./first-index.ts"
 
 export type AffiliationOption = { id: string; label: string }
 export type AffiliationReferences = {
@@ -42,6 +44,22 @@ export function writeAffiliationRow(row: AffiliationRow, statusLabel: string): R
 
 export function affiliationView(row: AffiliationRow, refs: AffiliationReferences): ActorAffiliationView {
   const find = (options: AffiliationOption[], id: string) => options.find(item => item.id === id)?.label || ""
+  return renderAffiliationView(row, refs, find)
+}
+
+// Indexes live for one loaded reference snapshot, never across requests or writes.
+export function createAffiliationView(refs: AffiliationReferences) {
+  const indexes = new Map<AffiliationOption[], Map<string, AffiliationOption>>()
+  const find = (options: AffiliationOption[], id: string) => {
+    if (!options.length) return ""
+    let index = indexes.get(options)
+    if (!index) { index = firstIndex(options, item => item.id); indexes.set(options, index) }
+    return index.get(id)?.label || ""
+  }
+  return (row: AffiliationRow) => renderAffiliationView(row, refs, find)
+}
+
+function renderAffiliationView(row: AffiliationRow, refs: AffiliationReferences, find: (options: AffiliationOption[], id: string) => string): ActorAffiliationView {
   const federation = isOfficialFederation(row.kind, row.entityTypeId, refs.entityTypes)
   const structure = federation ? (find(refs.entities[row.entityTypeId] || [], row.entityId) || refs.entities[row.entityTypeId]?.[0]?.label || find(refs.entityTypes, row.entityTypeId)) : usesEntity(row.kind) ? find(refs.entities[row.entityTypeId] || [], row.entityId) : find(refs.clubs, row.clubId)
   const statut = find(refs.statuses, row.statusId)

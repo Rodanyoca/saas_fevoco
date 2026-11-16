@@ -66,10 +66,12 @@ export function AthletesClient({
   const activeLicenceNumbers = useMemo(() => activeActorLicenceNumbers(licences,
     new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Kinshasa", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())), [licences])
 
+  const sortedRows = useMemo(() => [...rows].sort((left, right) => compareLabels(left.nomComplet, right.nomComplet)), [rows])
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
 
-    return rows.filter((athlete) => {
+    return sortedRows.filter((athlete) => {
       if (genre !== "all" && athlete.genre !== genre) return false
       if (statut !== "all" && athlete.statut !== statut) return false
 
@@ -79,8 +81,8 @@ export function AthletesClient({
       }
 
       return true
-    }).sort((left, right) => compareLabels(left.nomComplet, right.nomComplet))
-  }, [rows, activeLicenceNumbers, genre, search, statut])
+    })
+  }, [sortedRows, activeLicenceNumbers, genre, search, statut])
 
   const pagination = paginateRows(filtered, page, pageSize)
 

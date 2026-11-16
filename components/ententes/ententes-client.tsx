@@ -1,5 +1,7 @@
 "use client"
 
+import type { AthleteTerritorialLink } from "@/lib/territorial-hierarchy"
+
 import { useEffect, useMemo, useState } from "react"
 import { Eye, Network } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,9 +11,9 @@ import { CreateEntenteDialog, EditEntenteDialog, type SavedEntente } from "@/com
 import { EntenteDetail } from "@/components/ententes/entente-detail"
 import { Header } from "@/components/dashboard/header"
 import { DataLoadNotice } from "@/components/dashboard/data-load-notice"
-import type { Athlete, Club, Entente, Ligue } from "@/lib/types"
+import type { Club, Entente, Ligue } from "@/lib/types"
 
-export function EntentesClient({ ententes, ligues, clubs, athletes, dataLoadError = false }: { ententes: Entente[]; ligues: Ligue[]; clubs: Club[]; athletes: Athlete[]; dataLoadError?: boolean }) {
+export function EntentesClient({ ententes, ligues, clubs, athletes, dataLoadError = false }: { ententes: Entente[]; ligues: Ligue[]; clubs: Club[]; athletes: AthleteTerritorialLink[]; dataLoadError?: boolean }) {
   const [rows, setRows] = useState(ententes)
   const [selectedEntente, setSelectedEntente] = useState<Entente | null>(null)
 

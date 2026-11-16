@@ -18,7 +18,6 @@ export interface Province {
   coachs: number
   arbitres: number
   medecins: number
-  completude: number
 }
 
 export interface Ligue {

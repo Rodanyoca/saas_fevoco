@@ -4,7 +4,7 @@ import { env } from "@/lib/env"
 import { appendSheetRecord, formatSheetDateColumns, getSheetDataFrom, getSheetsDataFrom, updateSheetRecordById, type SheetRow } from "@/lib/google-sheets"
 import { formatDateForSheet } from "@/lib/compact-date"
 import { AffiliationDomainError, createAffiliationDomain, type AffiliationKind, type AffiliationStore } from "@/lib/affiliations-domain"
-import { isOfficialFederation, affiliationSheets, affiliationView, readAffiliationRow, writeAffiliationRow, type AffiliationReferences } from "@/lib/actor-affiliation-schema"
+import { isOfficialFederation, affiliationSheets, affiliationView, createAffiliationView, readAffiliationRow, writeAffiliationRow, type AffiliationReferences } from "@/lib/actor-affiliation-schema"
 import { mutateAthleteTransfer } from "@/lib/sports-mutations"
 import { sportsWritesEnabled, sportsWriteBlockReason } from "@/lib/sports-atomic-store"
 import { sportsToday, temporalState } from "@/lib/sports-model"
@@ -27,8 +27,13 @@ async function context(kind: AffiliationKind, includeSports = false) {
   const entitySources = { FEDERATION: options(reference.FEDERATION || [], "id_federation", "nom_officiel"), LIGUE: options(territory.LIGUES || [], "id_ligue", "nom_ligue"), ENTENTE: options(territory.ENTENTES || [], "id_entente", "nom_entente"), CLUB: clubs }
   const entityTypes = options(reference.TYPES_STRUCTURES || [], "id_type_structure", "nom_type_structure").filter(item => Object.hasOwn(entitySources, normalized(item.label)))
   const refs: AffiliationReferences = { clubs, statuses: options(reference.STATUTS_AFFILIATION || [], "id_statut_affiliation", "nom_statut_affiliation"), functions: options(reference.FONCTION_OFFICIEL || [], "id_fonction", "nom_fonction"), seasons: options(reference.SAISON || [], "id_saison", "nom_saison"), entityTypes, entities: Object.fromEntries(entityTypes.map(item => [item.id, entitySources[normalized(item.label) as keyof typeof entitySources]])) }
+  const readRows = async (fresh = false, actorId?: string) => {
+    const rows = await getSheetDataFrom(config.affiliationsSpreadsheetId, `${definition.sheet}!A:ZZ`, { fresh })
+    const selected = actorId === undefined ? rows : rows.filter(row => text(row[definition.actor]) === actorId)
+    return selected.map(row => readAffiliationRow(kind, row, refs.statuses, formatDateForSheet)).filter(row => row.id && row.actorId)
+  }
   const store: AffiliationStore = {
-    async list(_kind, fresh = false) { return (await getSheetDataFrom(config.affiliationsSpreadsheetId, `${definition.sheet}!A:ZZ`, { fresh })).map(row => readAffiliationRow(kind, row, refs.statuses, formatDateForSheet)).filter(row => row.id && row.actorId) },
+    list: async (_kind, fresh = false) => readRows(fresh),
     actorExists: async (_kind, id) => actors.some(row => text(row[definition.actor]) === id),
     clubExists: async id => clubs.some(item => item.id === id),
     isFederationType: async type => isOfficialFederation(kind, type, refs.entityTypes),
@@ -47,20 +52,22 @@ async function context(kind: AffiliationKind, includeSports = false) {
   }
   if (kind === "athlete") Object.assign(refs, { transferTypes: options(reference.TYPES_TRANSFERT || [], "id_type_transfert", "nom_transfert"), sportsWritesEnabled: sportsWritesEnabled(), sportsWriteBlockReason })
   const names = new Map(actors.map(row => [text(row[definition.actor]), text(row.nom_complet)]))
-  return { refs, store, actorName: (id: string) => names.get(id) || "" }
+  return { refs, store, actorName: (id: string) => names.get(id) || "", actorRows: (id: string) => readRows(false, id) }
 }
 
 export async function listActorAffiliations(kind: AffiliationKind, actorId: string) {
-  const { refs, store } = await context(kind, true)
+  const { refs, store, actorRows } = await context(kind, true)
   if (!actorId || !(await store.actorExists(kind, actorId))) throw new AffiliationDomainError("ACTEUR_INTROUVABLE", "Acteur introuvable.", 404)
-  const rows = (await store.list(kind)).filter(row => row.actorId === actorId).sort((a, b) => b.dateDebut.localeCompare(a.dateDebut))
+  const rows = (await actorRows(actorId)).sort((a, b) => b.dateDebut.localeCompare(a.dateDebut))
+  const view = rows.length > 1 ? createAffiliationView(refs) : (row: typeof rows[number]) => affiliationView(row, refs)
   const raw = rows.map(row => writeAffiliationRow(row, row.statusId)), byId = new Map(raw.map(row => [row.id_affiliation_athlete, row]))
-  return { affiliations: rows.map((row, index) => ({ ...affiliationView(row, refs), ...(kind === "athlete" ? { temporalState: temporalState(raw[index], sportsToday()), transferRole: transferRole(raw[index], byId) } : {}) })), references: refs }
+  return { affiliations: rows.map((row, index) => ({ ...view(row), ...(kind === "athlete" ? { temporalState: temporalState(raw[index], sportsToday()), transferRole: transferRole(raw[index], byId) } : {}) })), references: refs }
 }
 
 export async function allActorAffiliationViews(kind: AffiliationKind, includeSports = false) {
   const { refs, store, actorName } = await context(kind, includeSports)
-  return (await store.list(kind)).map(row => ({ ...affiliationView(row, refs), actorName: actorName(row.actorId), ...(kind === "athlete" && includeSports ? { temporalState: temporalState(writeAffiliationRow(row, row.statusId), sportsToday()) } : {}) }))
+  const view = createAffiliationView(refs)
+  return (await store.list(kind)).map(row => ({ ...view(row), actorName: actorName(row.actorId), ...(kind === "athlete" && includeSports ? { temporalState: temporalState(writeAffiliationRow(row, row.statusId), sportsToday()) } : {}) }))
 }
 
 // Sérialise les écritures dans une instance ; les UUID évitent les collisions entre instances.
