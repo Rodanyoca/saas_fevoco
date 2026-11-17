@@ -6,6 +6,8 @@ import { buildClubActorIndex, type ClubActorsBundle } from "@/lib/club-actors-mo
 import { mapAthleteLicence, mapLicence } from "@/lib/mappers/actor-records"
 import { activeActorLicenceNumbers } from "@/lib/active-actor-licences"
 
+const licenceOrder = new Intl.Collator("fr", { numeric: true })
+
 export async function loadClubActors(clubId?: string): Promise<ClubActorsBundle> {
   const config = env.googleSheets
   if (!config.acteursSpreadsheetId || !config.affiliationsSpreadsheetId || !config.referentielsSpreadsheetId || !config.clientEmail || !config.privateKey) throw new Error("Les sources des acteurs et affiliations ne sont pas configurées.")
@@ -40,6 +42,11 @@ export async function loadClubActors(clubId?: string): Promise<ClubActorsBundle>
     .map(row => mapLicence(row, "coach")), today)
   for (const group of groups) {
     for (const actor of group.athletes) actor.numeroLicence = athletes.get(actor.id) || ""
+    group.athletes.sort((a, b) => {
+      const left = a.numeroLicence || "", right = b.numeroLicence || ""
+      if (!left || !right) return Number(!left) - Number(!right)
+      return licenceOrder.compare(left, right)
+    })
     for (const actor of group.coachs) actor.numeroLicence = coaches.get(actor.id) || ""
   }
   return result
