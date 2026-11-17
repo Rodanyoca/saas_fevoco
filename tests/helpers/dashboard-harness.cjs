@@ -25,7 +25,7 @@ function harness(data = {}, failures = new Set(), sources = {}, overrides = {}) 
     const module = { exports: {} }; cache.set(file, module)
     const source = sources[path.relative(root, file).replaceAll("\\", "/")] ?? fs.readFileSync(file, "utf8")
     const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText
-    vm.runInNewContext(js, { module, exports: module.exports, console, Date, Map, Set, require: name => {
+    vm.runInNewContext(js, { module, exports: module.exports, console, Date, Map, Set, Buffer, Headers, URL, atob, btoa, process, crypto: globalThis.crypto, TextEncoder, TextDecoder, require: name => {
       if (name in mocks) return mocks[name]
       if (name.startsWith('@/components/')) return new Proxy({}, { get: () => () => null })
       if (name.startsWith('@/') || name.startsWith('.')) {

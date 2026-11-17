@@ -7,6 +7,9 @@ import { dashboardNavigation } from "@/lib/navigation"
 import { filterNavigation } from "@/lib/auth/navigation-access"
 import { getNavigationAccess, getSession } from "@/lib/auth"
 import { Toaster } from "@/components/ui/sonner"
+import { headers } from "next/headers"
+import { UNAVAILABLE_PAGE_HEADER } from "@/lib/navigation-snapshot"
+import { getUnavailableNavigation } from "@/lib/unavailable-navigation"
 
 const geist = localFont({
   src: './fonts/geist-latin.woff2',
@@ -38,8 +41,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const session = await getSession()
-  const navigation = filterNavigation(dashboardNavigation, session && !session.doitChangerMotDePasse
+  const unavailable = (await headers()).get(UNAVAILABLE_PAGE_HEADER) === "1"
+  const session = unavailable ? null : await getSession()
+  const navigation = unavailable ? await getUnavailableNavigation() : filterNavigation(dashboardNavigation, session && !session.doitChangerMotDePasse
     ? { estSuperAdmin: session.estSuperAdmin, access: await getNavigationAccess(session) }
     : null)
   return (
