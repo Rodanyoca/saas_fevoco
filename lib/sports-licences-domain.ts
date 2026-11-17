@@ -43,7 +43,15 @@ export function allocateSportsLicences(s: SportsSnapshot, input: SportsLicenceIn
       const attribution = row.id_club_attribution || affiliations.get(row.id_affiliation_athlete)?.id_club
       if (!attribution) throw new SportsError("ATTRIBUTION_INCONNUE", "Un club d’attribution historique doit être vérifié.")
       if (attribution !== aff.id_club) continue
-      const suffix = row.numero_licence?.startsWith(attribution) ? row.numero_licence.slice(attribution.length) : ""
+      let suffix = row.numero_licence?.startsWith(attribution) ? row.numero_licence.slice(attribution.length) : ""
+      if (!suffix && original) {
+        // Retired club prefixes remain immutable. Only a confirmed counter and
+        // a matching stored sequence can establish their already-consumed slot.
+        const historical = /^(\d{7})(\d{3,})$/.exec(row.numero_licence || "")
+        const sequence = row.compteur_saison || ""
+        const prefixInUse = historical && (s.clubs.some(club => club.id_club === historical[1]) || seasonRows.some(other => other.numero_licence?.startsWith(historical[1]) && (other.id_club_attribution || affiliations.get(other.id_affiliation_athlete)?.id_club) !== attribution))
+        if (historical && !prefixInUse && /^\d+$/.test(sequence) && BigInt(sequence) > BigInt(0) && BigInt(historical[2]) === BigInt(sequence) && /^\d+$/.test(original.dernier_compteur) && BigInt(original.dernier_compteur) >= BigInt(sequence)) suffix = historical[2]
+      }
       if (!/^\d{3,}$/.test(suffix) || BigInt(suffix) <= BigInt(0)) throw new SportsError("HISTORIQUE_HORS_FORMAT", "Des numéros historiques empêchent l’initialisation sûre du compteur.")
       if (row.compteur_saison && (!/^\d+$/.test(row.compteur_saison) || BigInt(row.compteur_saison) !== BigInt(suffix))) throw new SportsError("COMPTEUR_INCOHERENT", "Un compteur historique ne correspond pas au numéro.")
       if (BigInt(suffix) > maximum) maximum = BigInt(suffix)

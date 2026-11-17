@@ -48,6 +48,39 @@ test("compteur A_VERIFIER, numéro hors format, club invalide et saisie manuelle
   s.licences.push({ id_licence: "OLD", id_athlete: "OTHER", id_saison: "SAI006", id_club_attribution: "0101001", numero_licence: "HISTORIQUE" })
   assert.throws(() => allocateSportsLicences(s, licence), /historiques/)
 })
+test("ancien prefixe retire : un compteur PRET confirme preserve les numeros et poursuit la sequence", () => {
+  const s = fixture()
+  s.counters.push({ id_compteur_licence: "CPT-SAI006-0101001", id_club: "0101001", id_saison: "SAI006", dernier_compteur: "24", statut_compteur: "PRET" })
+  s.licences.push({ id_licence: "OLD", id_athlete: "ATH00002", id_saison: "SAI006", id_club_attribution: "0101001", numero_licence: "0101099002", compteur_saison: "2" })
+  const before = JSON.stringify(s)
+  const plan = allocateSportsLicences(s, licence)
+  assert.equal(plan.inserts.ATHLETE_LICENCES[0].numero_licence, "0101001025")
+  assert.equal(plan.updates[0].fields.dernier_compteur, "25")
+  assert.equal(JSON.stringify(s), before)
+})
+
+test("ancien prefixe : absence de preuve, autre club, compteur divergent ou insuffisant restent bloques", () => {
+  const s = fixture()
+  const old = { id_licence: "OLD", id_athlete: "ATH00002", id_saison: "SAI006", id_club_attribution: "0101001", numero_licence: "0101099002", compteur_saison: "2" }
+  s.licences.push(old)
+  assert.throws(() => allocateSportsLicences(s, licence), /historiques/)
+  s.counters.push({ id_compteur_licence: "CPT-SAI006-0101001", id_club: "0101001", id_saison: "SAI006", dernier_compteur: "24", statut_compteur: "PRET" })
+  s.clubs.push({ id_club: "0101099" })
+  assert.throws(() => allocateSportsLicences(s, licence), /historiques/)
+  s.clubs.pop()
+  old.compteur_saison = "3"
+  assert.throws(() => allocateSportsLicences(s, licence), /historiques|correspond/)
+  old.compteur_saison = "2"
+  s.counters[0].dernier_compteur = "1"
+  assert.throws(() => allocateSportsLicences(s, licence), /historiques|inférieur/)
+  s.counters[0].dernier_compteur = "24"
+  old.compteur_saison = ""
+  assert.throws(() => allocateSportsLicences(s, licence), /historiques/)
+  old.compteur_saison = "2"
+  s.licences.push({ id_licence: "OTHER", id_athlete: "ATH00003", id_saison: "SAI006", id_club_attribution: "0101002", numero_licence: "0101099003", compteur_saison: "3" })
+  assert.throws(() => allocateSportsLicences(s, licence), /historiques/)
+})
+
 test("transfert futur conserve le rattachement courant jusqu'à D-1", () => {
   const s = fixture(), plan = planAthleteTransfer(s, "ATH00001", { ...transfer, id_type_transfert: "TRF003", date_fin: "" }, "2026-05-01")
   apply(s, plan)
