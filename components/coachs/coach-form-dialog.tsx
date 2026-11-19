@@ -1,4 +1,5 @@
 "use client"
+import { useRecordVersion } from "@/components/actors/record-management"
 
 import { useState } from "react"
 import { toast } from "sonner"
@@ -40,7 +41,7 @@ export function CoachFormDialog({ coach, sexes, levels, onSaved }: {
   onSaved: (coach: SavedCoach) => void
 }) {
   const editing = Boolean(coach)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false); const revision = useRecordVersion("actor", "coach", coach?.idCoach || "", Boolean(coach) && open)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState("")
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -60,7 +61,7 @@ export function CoachFormDialog({ coach, sexes, levels, onSaved }: {
     event.preventDefault(); setPending(true); setError("")
     try {
       const response = await fetch(editing ? `/api/coachs/${encodeURIComponent(coach!.idCoach)}` : "/api/coachs", {
-        method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" },
+        method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json", ...(editing ? {"If-Match":revision.version} : {}) },
         body: JSON.stringify(form),
       })
       const result = await response.json()
@@ -113,7 +114,7 @@ export function CoachFormDialog({ coach, sexes, levels, onSaved }: {
             <div className="space-y-2"><Label>Statut</Label><Select value={form.statut} onValueChange={(value) => setForm({ ...form, statut: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="actif">Actif</SelectItem><SelectItem value="inactif">Inactif</SelectItem></SelectContent></Select></div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement..." : editing ? "Enregistrer" : "Créer le coach"}</Button></SheetFooter>
+          {revision.error && <p role="alert" className="text-sm text-destructive">{revision.error}</p>}<SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending || (editing && !revision.version)} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement..." : editing ? "Enregistrer" : "Créer le coach"}</Button></SheetFooter>
         </form>
       </SheetContent>
     </Sheet>

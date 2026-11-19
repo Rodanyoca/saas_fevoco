@@ -1,0 +1,156 @@
+﻿git diff --stat (inclut les travaux locaux anterieurs)
+
+ app/api/affiliations/[kind]/route.ts               |   6 +-
+ app/api/arbitres/[id]/route.ts                     |   8 +-
+ app/api/athletes/[id]/route.ts                     |   8 +-
+ app/api/athletes/route.ts                          |  18 +-
+ app/api/autres-acteurs/[id]/route.ts               |   8 +-
+ app/api/coachs/[id]/route.ts                       |   8 +-
+ app/api/licences/acteurs/route.ts                  |   5 +-
+ app/api/licences/athletes/route.ts                 |   5 +-
+ app/api/medecins/[id]/route.ts                     |   8 +-
+ app/api/officiels/[id]/route.ts                    |   8 +-
+ components/actors/affiliations-panel.tsx           |  10 +-
+ components/arbitres/arbitre-detail.tsx             |   4 +-
+ components/arbitres/arbitre-form-dialog.tsx        |   7 +-
+ components/arbitres/arbitres-client.tsx            |   6 +
+ components/athletes/athlete-detail.tsx             |   2 +
+ components/athletes/athlete-form-dialog.tsx        | 190 +++++++++++++++------
+ components/athletes/athlete-transfers-panel.tsx    |   8 +-
+ components/athletes/athletes-client.tsx            |  22 ++-
+ components/autres-acteurs/autre-acteur-detail.tsx  |   4 +-
+ .../autres-acteurs/autre-acteur-form-dialog.tsx    |   7 +-
+ .../autres-acteurs/autres-acteurs-client.tsx       |   6 +
+ components/coachs/coach-detail.tsx                 |   4 +-
+ components/coachs/coach-form-dialog.tsx            |   7 +-
+ components/coachs/coachs-client.tsx                |   6 +
+ components/licences/actor-licence-editor.tsx       |  10 +-
+ components/licences/actor-licences-client.tsx      |   8 +-
+ components/licences/athlete-licence-editor.tsx     |   6 +-
+ components/licences/athlete-licences-client.tsx    |   3 +-
+ components/medecins/medecin-detail.tsx             |   4 +-
+ components/medecins/medecin-form-dialog.tsx        |   7 +-
+ components/medecins/medecins-client.tsx            |   6 +
+ components/officiels/officiel-detail.tsx           |   4 +-
+ components/officiels/officiel-form-dialog.tsx      |   7 +-
+ components/officiels/officiels-client.tsx          |   6 +
+ lib/actor-affiliations.ts                          |  14 +-
+ lib/actor-licence-api.test.cjs                     |   7 +-
+ lib/actor-licence-creation.ts                      |  10 +-
+ lib/affiliations-domain.test.ts                    |  15 ++
+ lib/affiliations-domain.ts                         |   7 +
+ lib/arbitre-mutations.ts                           |   3 +-
+ lib/athlete-mutations.ts                           |  56 +-----
+ lib/athlete-transfers-domain.ts                    |   2 +-
+ lib/autres-acteurs-mutations.ts                    |   3 +-
+ lib/autres-acteurs-roundtrip.test.cjs              |   9 +
+ lib/coach-mutations.ts                             |   3 +-
+ lib/google-sheets.ts                               |  66 ++++++-
+ lib/licences-domain.test.ts                        |   5 +-
+ lib/licences-domain.ts                             |   8 +-
+ lib/medecin-mutations.ts                           |   3 +-
+ lib/officiel-mutations.ts                          |   3 +-
+ lib/sheet-update-batch.test.cjs                    |   2 +
+ lib/sports-atomic-store.test.cjs                   |  97 +++--------
+ lib/sports-atomic-store.ts                         |  73 ++++++--
+ lib/sports-licences-domain.ts                      |   4 +-
+ lib/sports-model.ts                                |  15 +-
+ tests/unit/actor-search-cpu.test.cjs               |   2 +-
+ 56 files changed, 543 insertions(+), 290 deletions(-)
+
+git status --short --untracked-files=all
+
+ M app/api/affiliations/[kind]/route.ts
+ M app/api/arbitres/[id]/route.ts
+ M app/api/athletes/[id]/route.ts
+ M app/api/athletes/route.ts
+ M app/api/autres-acteurs/[id]/route.ts
+ M app/api/coachs/[id]/route.ts
+ M app/api/licences/acteurs/route.ts
+ M app/api/licences/athletes/route.ts
+ M app/api/medecins/[id]/route.ts
+ M app/api/officiels/[id]/route.ts
+ M components/actors/affiliations-panel.tsx
+ M components/arbitres/arbitre-detail.tsx
+ M components/arbitres/arbitre-form-dialog.tsx
+ M components/arbitres/arbitres-client.tsx
+ M components/athletes/athlete-detail.tsx
+ M components/athletes/athlete-form-dialog.tsx
+ M components/athletes/athlete-transfers-panel.tsx
+ M components/athletes/athletes-client.tsx
+ M components/autres-acteurs/autre-acteur-detail.tsx
+ M components/autres-acteurs/autre-acteur-form-dialog.tsx
+ M components/autres-acteurs/autres-acteurs-client.tsx
+ M components/clubs/club-form-dialog.tsx
+ M components/coachs/coach-affiliation-form-dialog.tsx
+ M components/coachs/coach-detail.tsx
+ M components/coachs/coach-form-dialog.tsx
+ M components/coachs/coachs-client.tsx
+ M components/ententes/entente-form-dialog.tsx
+ M components/licences/actor-licence-editor.tsx
+ M components/licences/actor-licences-client.tsx
+ M components/licences/athlete-licence-editor.tsx
+ M components/licences/athlete-licences-client.tsx
+ M components/ligues/ligue-form-dialog.tsx
+ M components/medecins/medecin-affiliation-form-dialog.tsx
+ M components/medecins/medecin-detail.tsx
+ M components/medecins/medecin-form-dialog.tsx
+ M components/medecins/medecin-licence-form-dialog.tsx
+ M components/medecins/medecins-client.tsx
+ M components/officiels/officiel-affiliation-form-dialog.tsx
+ M components/officiels/officiel-detail.tsx
+ M components/officiels/officiel-form-dialog.tsx
+ M components/officiels/officiels-client.tsx
+ M components/transferts/transfert-form-dialog.tsx
+ M lib/actor-affiliations.ts
+ M lib/actor-licence-api.test.cjs
+ M lib/actor-licence-creation.ts
+ M lib/affiliations-domain.test.ts
+ M lib/affiliations-domain.ts
+ M lib/arbitre-mutations.ts
+ M lib/athlete-mutations.ts
+ M lib/athlete-transfers-domain.ts
+ M lib/autres-acteurs-mutations.ts
+ M lib/autres-acteurs-roundtrip.test.cjs
+ M lib/coach-mutations.ts
+ M lib/google-sheets.ts
+ M lib/licences-domain.test.ts
+ M lib/licences-domain.ts
+ M lib/medecin-mutations.ts
+ M lib/officiel-mutations.ts
+ M lib/sheet-update-batch.test.cjs
+ M lib/sports-atomic-store.test.cjs
+ M lib/sports-atomic-store.ts
+ M lib/sports-licences-domain.ts
+ M lib/sports-model.ts
+ M tests/unit/actor-search-cpu.test.cjs
+?? app/api/actors/records/route.ts
+?? app/api/athletes/registration/route.ts
+?? components/actors/record-management.tsx
+?? docs/correctif-reservations-affiliations-2026-11-18.md
+?? docs/gestion-acteurs-affiliations-licences.md
+?? docs/parcours-creation-athlete-complet.md
+?? docs/verification/athlete-registration/desktop-identite.png
+?? docs/verification/athlete-registration/desktop-liste.png
+?? docs/verification/athlete-registration/desktop-reprise.png
+?? docs/verification/athlete-registration/mobile-identite.png
+?? docs/verification/athlete-registration/mobile-liste.png
+?? docs/verification/athlete-registration/mobile-reprise.png
+?? docs/verification/athlete-registration/results.json
+?? docs/verification/record-management/desktop-dependances.png
+?? docs/verification/record-management/desktop-verification.png
+?? docs/verification/record-management/mobile-dependances.png
+?? docs/verification/record-management/mobile-verification.png
+?? docs/verification/record-management/results.json
+?? lib/athlete-identity.ts
+?? lib/athlete-registration-api.ts
+?? lib/athlete-registration.test.cjs
+?? lib/athlete-registration.ts
+?? lib/business-write-guard.ts
+?? lib/record-management-api.ts
+?? lib/record-management-model.ts
+?? lib/record-management.test.cjs
+?? lib/record-management.ts
+?? scripts/verify-athlete-registration-ui.cjs
+?? scripts/verify-record-management-ui.cjs
+?? tests/helpers/sports-harness.cjs

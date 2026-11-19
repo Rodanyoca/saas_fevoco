@@ -26,7 +26,7 @@ export function planAthleteTransfer(s: SportsSnapshot, actorId: string, input: S
   if (status === "SAF002" && !end) throw new SportsError("FIN_REQUISE", "Une fin est obligatoire pour un rattachement terminé.", 422)
   if (status === "SAF099" && !input.observations) throw new SportsError("PRECISION_REQUISE", "Précisez le statut Autre.", 422)
   const inserts: SportsRow[] = [], changes = new Map<string, SportsRow>(), claims: string[] = []
-  const ids = nextTechnicalIds(s.affiliations, "id_affiliation_athlete", "AFA", 3)
+  const ids = nextTechnicalIds(s.affiliations, "id_affiliation_athlete", "AFA", 3, s.reservedRecordIds?.ATHLETE_AFFILIATIONS)
   let generated = 0
   const make = (fields: SportsRow) => {
     const row = { id_affiliation_athlete: ids[generated++], id_athlete: actorId, observations: input.observations || "", ...fields }

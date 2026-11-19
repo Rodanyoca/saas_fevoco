@@ -1,4 +1,5 @@
 "use client"
+import { useRecordVersion } from "@/components/actors/record-management"
 
 import { useMemo, useState } from "react"
 import { Pencil } from "lucide-react"
@@ -29,7 +30,7 @@ export function AutreActeurFormDialog({ acteur, sexes, types, onSaved }: { acteu
     statut: acteur?.statut?.toUpperCase() === "INACTIF" ? "INACTIF" : "ACTIF", observations: acteur?.observations ?? "",
     entite: acteur?.entite ?? "", role: acteur?.role ?? "",
   })
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false); const revision = useRecordVersion("actor", "autre", acteur?.idAutreActeur || "", Boolean(acteur) && open)
   const [pending, setPending] = useState(false)
   const [form, setForm] = useState<AutreActeurFormValues>(initial)
   const [errors, setErrors] = useState<Errors>({})
@@ -52,7 +53,7 @@ export function AutreActeurFormDialog({ acteur, sexes, types, onSaved }: { acteu
     }
     setPending(true)
     try {
-      const response = await fetch(editing ? `/api/autres-acteurs/${encodeURIComponent(acteur!.idAutreActeur)}` : "/api/autres-acteurs", { method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) })
+      const response = await fetch(editing ? `/api/autres-acteurs/${encodeURIComponent(acteur!.idAutreActeur)}` : "/api/autres-acteurs", { method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json", ...(editing ? {"If-Match":revision.version} : {}) }, body: JSON.stringify(parsed.data) })
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || "Enregistrement impossible.")
       onSaved(result.acteur); toast.success(result.message); setOpen(false)
@@ -84,7 +85,7 @@ export function AutreActeurFormDialog({ acteur, sexes, types, onSaved }: { acteu
         {textField("entite", "Entité")}
         <div className="space-y-2"><Label>Type d’autre acteur *</Label><Select required value={form.idTypeAutreActeur} onValueChange={(value) => set("idTypeAutreActeur", value)}><SelectTrigger aria-invalid={Boolean(errors.idTypeAutreActeur)}><SelectValue placeholder="Sélectionner" /></SelectTrigger><SelectContent>{selectableTypes.map((item) => <SelectItem key={item.id} value={item.id}>{item.nom}</SelectItem>)}</SelectContent></Select>{fieldError("idTypeAutreActeur")}</div>
         </fieldset>
-      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}<SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button disabled={pending} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement…" : "Enregistrer"}</Button></SheetFooter></form>
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}{revision.error && <p role="alert" className="text-sm text-destructive">{revision.error}</p>}<SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button disabled={pending || (editing && !revision.version)} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement…" : "Enregistrer"}</Button></SheetFooter></form>
     </SheetContent>
   </Sheet>
 }

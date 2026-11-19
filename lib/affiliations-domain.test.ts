@@ -19,6 +19,21 @@ function memoryStore(seed: AffiliationRow[] = []): AffiliationStore & { rows: Af
   }
 }
 
+test("correction affiliation : cible immuable et dates couvrant toutes les licences", async () => {
+  const store = memoryStore(), domain = createAffiliationDomain(store)
+  const input = { id_club: "club-1", date_debut: "01012026", date_fin: "", id_statut_affiliation: "SAF001", observations: "" }
+  const created = await domain.create("coach", "coach-1", input)
+  store.clubExists = async () => true
+  store.linkedLicences = async () => [{ date: "2026-06-01" }]
+  const before = structuredClone(store.rows)
+  await assert.rejects(() => domain.update("coach", "coach-1", created.row.id, { ...input, id_club: "club-2" }))
+  await assert.rejects(() => domain.update("coach", "coach-1", created.row.id, { ...input, date_debut: "02062026" }))
+  await assert.rejects(() => domain.update("coach", "coach-1", created.row.id, { ...input, date_fin: "31052026" }))
+  assert.deepEqual(store.rows, before)
+  const updated = await domain.update("coach", "coach-1", created.row.id, { ...input, observations: "Correction" })
+  assert.equal(updated.row.id, created.row.id); assert.equal(updated.row.observations, "Correction")
+})
+
 test("crée une affiliation d’athlète à un club", async () => {
   const store = memoryStore(), domain = createAffiliationDomain(store)
   const result = await domain.create("athlete", "athlete-1", { id_club: "club-1", date_debut: "01/09/2026", date_fin: "", id_statut_affiliation: "SAF001", observations: "" })

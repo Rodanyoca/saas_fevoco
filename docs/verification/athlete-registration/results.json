@@ -1,0 +1,24 @@
+[
+  {
+    "name": "desktop",
+    "optionsReads": 2,
+    "attempts": 3,
+    "identityCount": 1,
+    "licenceCount": 1,
+    "editOnlyIdentity": true,
+    "historyVisible": true,
+    "duplicateConsultation": true,
+    "errors": 0
+  },
+  {
+    "name": "mobile",
+    "optionsReads": 2,
+    "attempts": 3,
+    "identityCount": 1,
+    "licenceCount": 1,
+    "editOnlyIdentity": true,
+    "historyVisible": true,
+    "duplicateConsultation": true,
+    "errors": 0
+  }
+]

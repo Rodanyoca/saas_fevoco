@@ -1,3 +1,4 @@
+import { reservedBusinessIds } from "@/lib/business-write-guard"
 import "server-only"
 import { env } from "@/lib/env"
 import { appendSheetRecord, formatSheetDateColumns, getSheetDataFrom, getSheetsDataFrom, updateSheetRecordById } from "@/lib/google-sheets"
@@ -10,10 +11,10 @@ async function sources(fresh = false): Promise<ActorLicenceSources> {
   if (![config.licencesSpreadsheetId, config.acteursSpreadsheetId, config.affiliationsSpreadsheetId, config.territorialSpreadsheetId, config.referentielsSpreadsheetId, config.clientEmail, config.privateKey].every(Boolean)) throw new Error("Les sources des licences, acteurs, affiliations et référentiels ne sont pas configurées.")
   const [licences, actors, affiliations, structures, refs] = await Promise.all([
     getSheetDataFrom(config.licencesSpreadsheetId, "ACTEURS_LICENCES!A:ZZ", { fresh }),
-    getSheetsDataFrom(config.acteursSpreadsheetId, ["COACHS", "OFFICIELS", "ARBITRES", "MEDECINS"].map(name => `${name}!A:ZZ`)),
-    getSheetsDataFrom(config.affiliationsSpreadsheetId, ["COACH_AFFILIATIONS", "OFFICIELS_AFFILIATIONS", "MEDECIN_AFFILIATIONS"].map(name => `${name}!A:ZZ`)),
-    getSheetsDataFrom(config.territorialSpreadsheetId, ["CLUBS", "ENTENTES", "LIGUES"].map(name => `${name}!A:ZZ`)),
-    getSheetsDataFrom(config.referentielsSpreadsheetId, ["TYPES_ACTEURS", "CYCLES_LICENCES", "STATUT_LICENCE", "STATUTS_AFFILIATION", "TYPES_STRUCTURES", "FEDERATION"].map(name => `${name}!A:ZZ`)),
+    getSheetsDataFrom(config.acteursSpreadsheetId, ["COACHS", "OFFICIELS", "ARBITRES", "MEDECINS"].map(name => `${name}!A:ZZ`), {fresh}),
+    getSheetsDataFrom(config.affiliationsSpreadsheetId, ["COACH_AFFILIATIONS", "OFFICIELS_AFFILIATIONS", "MEDECIN_AFFILIATIONS"].map(name => `${name}!A:ZZ`), {fresh}),
+    getSheetsDataFrom(config.territorialSpreadsheetId, ["CLUBS", "ENTENTES", "LIGUES"].map(name => `${name}!A:ZZ`), {fresh}),
+    getSheetsDataFrom(config.referentielsSpreadsheetId, ["TYPES_ACTEURS", "CYCLES_LICENCES", "STATUT_LICENCE", "STATUTS_AFFILIATION", "TYPES_STRUCTURES", "FEDERATION"].map(name => `${name}!A:ZZ`), {fresh}),
   ])
   return { licences, actors, affiliations, structures: { ...structures, FEDERATION: refs.FEDERATION || [] }, refs }
 }
@@ -24,6 +25,7 @@ function mutate<T>(run: (store: LicenceStore) => Promise<T>) {
   const task = pending.catch(() => {}).then(async () => {
     const data = await sources(true), { references } = buildActorLicenceData(data, licenceToday())
     const store: LicenceStore = {
+      reservedIds: () => reservedBusinessIds("ACTEURS_LICENCES"),
       async load() { return { athleteLicences: [], actorLicences: stringRows(data.licences).map(row => ({ ...row, date_delivrance: licenceReadDate(row.date_delivrance), date_debut_validite: licenceReadDate(row.date_debut_validite), date_fin_validite: licenceReadDate(row.date_fin_validite) })) } },
       async appendActor(row) {
         await formatSheetDateColumns(config.licencesSpreadsheetId, "ACTEURS_LICENCES", ["date_delivrance", "date_debut_validite", "date_fin_validite"], "yyyy-mm-dd")

@@ -1,0 +1,20 @@
+[
+  {
+    "viewport": "desktop",
+    "blocked": true,
+    "keyboard": true,
+    "doubleClick": true,
+    "lostResponse": true,
+    "sameOperation": true,
+    "confirmedRemoval": true
+  },
+  {
+    "viewport": "mobile",
+    "blocked": true,
+    "keyboard": true,
+    "doubleClick": true,
+    "lostResponse": true,
+    "sameOperation": true,
+    "confirmedRemoval": true
+  }
+]

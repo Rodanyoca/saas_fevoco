@@ -1,3 +1,4 @@
+import { reservedBusinessIds } from "@/lib/business-write-guard"
 import "server-only"
 
 import { env } from "@/lib/env"
@@ -48,7 +49,7 @@ export async function createArbitre(payload: Record<string, unknown>) {
   const input = normalizeInput(payload)
   const references = await validateInput(input)
   const arbitres = await getArbitres()
-  const idArbitre = nextActorId(arbitres.map((item) => item.idArbitre), "ABR")
+  const idArbitre = nextActorId([...arbitres.map((item) => item.idArbitre), ...await reservedBusinessIds("ARBITRES")], "ABR")
   if (arbitres.some((item) => item.idArbitre === idArbitre)) throw new Error("Cet identifiant d’arbitre existe déjà.")
   await formatSheetDateColumn(env.googleSheets.acteursSpreadsheetId, "ARBITRES", "date_naissance")
   await appendSheetRecord(env.googleSheets.acteursSpreadsheetId, "ARBITRES", {

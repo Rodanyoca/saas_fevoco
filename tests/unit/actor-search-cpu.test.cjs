@@ -28,7 +28,7 @@ for (const [kind, component, idKey, dataKey, viewKey] of [
     useEffect() { cursor++ },
     useMemo(fn, deps) { const index = cursor++; if (!memos[index] || deps.some((value, i) => !Object.is(value, memos[index].deps[i]))) memos[index] = { deps, value: fn() }; return memos[index].value },
   }
-  const h = harness({}, new Set(), {}, { react: hooks, '@/lib/sort-utils': { compareLabels: (a, b) => { sortCalls++; return a.localeCompare(b) } } })
+  const h = harness({}, new Set(), {}, { react: hooks, 'next/navigation': { useRouter: () => ({ refresh() {} }) }, '@/lib/sort-utils': { compareLabels: (a, b) => { sortCalls++; return a.localeCompare(b) } } })
   const Client = h.load(`components/${kind}/${kind}-client.tsx`)[component]
   const people = Array.from({ length: 40 }, (_, id) => ({ [idKey]: `P${id}`, nomComplet: `Test ${40 - id}` }))
   const licences = people.map(person => ({ idLicence: `LIC-${person[idKey]}`, get actorId() { licenceReads++; return person[idKey] }, numeroLicence: `LIC-${person[idKey]}`, statutLicence: 'INACTIF', idStatutLicence: 'INACTIF' }))

@@ -1,3 +1,5 @@
+import { managedEditRequest, recordFailure } from "@/lib/record-management-api"
+import type { RecordTarget } from "@/lib/record-management-model"
 import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { isAffiliationKind } from "@/lib/actor-affiliation-schema"
@@ -29,4 +31,6 @@ async function mutate(request: Request, context: { params: Promise<{ kind: strin
   } catch (error) { return failure(error) }
 }
 export const POST = (request: Request, context: { params: Promise<{ kind: string }> }) => mutate(request, context, false)
-export const PUT = (request: Request, context: { params: Promise<{ kind: string }> }) => mutate(request, context, true)
+export const PUT = async (request: Request, context: { params: Promise<{ kind: string }> }) => {
+  try { const {kind} = await context.params; const body = await request.clone().json(); return managedEditRequest(request, {entity:"affiliation",family:kind as RecordTarget["family"],id:String(body.id || "")}, () => mutate(request, context, true)) } catch(error) { return recordFailure(error) }
+}

@@ -1,4 +1,5 @@
 "use client"
+import { DeleteRecordButton, useRecordVersion } from "@/components/actors/record-management"
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -19,13 +20,14 @@ import type { ActorAffiliationView, AffiliationReferences } from "@/lib/actor-af
 const blank = () => ({ id_club: "", id_type_transfert: "", id_affiliation_precedente: "", date_debut: "", date_fin: "", id_statut_affiliation: "SAF001", observations: "" })
 type Values = ReturnType<typeof blank>
 const emptyRefs: AffiliationReferences = { clubs: [], statuses: [], functions: [], entityTypes: [], entities: {}, seasons: [] }
-export function AthleteTransfersPanel({ actorId, onChanged }: { actorId: string; onChanged?: () => Promise<void> }) {
+export function AthleteTransfersPanel({ actorId, onChanged, onAffiliationsLoaded }: { actorId: string; onChanged?: () => Promise<void>; onAffiliationsLoaded?: (items: ActorAffiliationView[]) => void }) {
   const router = useRouter(), controller = useRef<AbortController | null>(null), savingGuard = useRef(false)
   const [items, setItems] = useState<ActorAffiliationView[]>([]), [refs, setRefs] = useState(emptyRefs)
   const [loading, setLoading] = useState(true), [error, setError] = useState("")
   const [open, setOpen] = useState(false), [editing, setEditing] = useState<ActorAffiliationView | null>(null), [viewing, setViewing] = useState(false), [returning, setReturning] = useState(false)
   const [values, setValues] = useState(blank), [errors, setErrors] = useState<Record<string, string>>({}), [saving, setSaving] = useState(false), [uncertain, setUncertain] = useState(false)
   const key = useRef(""), payload = useRef<string | null>(null)
+  const revision = useRecordVersion("affiliation", "athlete", editing?.id || "", open && Boolean(editing) && !viewing)
   const endpoint = `/api/affiliations/athlete?actorId=${encodeURIComponent(actorId)}`
   const load = useCallback(async () => {
     controller.current?.abort(); const request = new AbortController(); controller.current = request
@@ -35,10 +37,10 @@ export function AthleteTransfersPanel({ actorId, onChanged }: { actorId: string;
       if (!response.headers.get("content-type")?.includes("application/json")) throw new Error("Réponse inattendue du service.")
       const data = await response.json()
       if (!response.ok) throw new Error(data.message || "Lecture impossible.")
-      if (!request.signal.aborted) { setItems(data.affiliations); setRefs(data.references) }
+      if (!request.signal.aborted) { setItems(data.affiliations); setRefs(data.references); onAffiliationsLoaded?.(data.affiliations) }
     } catch (failure) { if (!request.signal.aborted) setError(failure instanceof Error ? failure.message : "Lecture impossible.") }
     finally { if (!request.signal.aborted) setLoading(false) }
-  }, [endpoint])
+  }, [endpoint, onAffiliationsLoaded])
   useEffect(() => { void load(); return () => controller.current?.abort() }, [load])
   const start = (item?: ActorAffiliationView, readOnly = false, loanReturn = false) => {
     setEditing(loanReturn ? null : item || null); setViewing(readOnly); setReturning(loanReturn); setErrors({}); setUncertain(false)
@@ -52,7 +54,7 @@ export function AthleteTransfersPanel({ actorId, onChanged }: { actorId: string;
     savingGuard.current = true; setSaving(true); setErrors({})
     if (!payload.current) payload.current = JSON.stringify({ ...values, actorId, idempotency_key: key.current, ...(editing ? { id: editing.id } : {}), ...(returning ? { action: "RETURN" } : {}) })
     try {
-      const response = await fetch("/api/affiliations/athlete", { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: payload.current })
+      const response = await fetch("/api/affiliations/athlete", { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json", ...(editing ? {"If-Match":revision.version} : {}) }, body: payload.current })
       const data = await response.json()
       if (!response.ok) {
         const pending = response.status >= 500 || ["ATHLETE_RESERVE", "RESERVATION_A_REPRENDRE", "RESULTAT_INDETERMINE", "LIBERATION_A_REPRENDRE"].includes(data.code)
@@ -66,7 +68,7 @@ export function AthleteTransfersPanel({ actorId, onChanged }: { actorId: string;
   const select = (field: keyof Values, title: string, options: { id: string; label: string }[], disabled = false) => <div className="space-y-2"><Label htmlFor={`transfer-${field}`}>{title}</Label><Select value={values[field] || "__empty"} onValueChange={value => set(field, value === "__empty" ? "" : value)} disabled={disabled || viewing || saving || uncertain}><SelectTrigger id={`transfer-${field}`} className="w-full"><SelectValue placeholder="Sélectionner" /></SelectTrigger><SelectContent>{!values[field] && <SelectItem value="__empty">{editing ? "Non renseigné" : "Sélectionner"}</SelectItem>}{options.map(option => <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>)}</SelectContent></Select>{errors[field] && <p className="text-sm text-destructive">{errors[field]}</p>}</div>
   const labels = ["Club", "Opération", "Précédent", "Début", "Fin", "Statut d’affiliation", "État"]
   const cells = (item: ActorAffiliationView) => [item.structure || "Structure introuvable", item.transferRole === "RETOUR" ? "Retour de cession" : item.transferRole === "SUSPENSION" ? "Interruption de cession" : item.transferType || "Non renseigné", item.previousAffiliationId || "—", formatDateForDisplay(item.dateDebut), item.dateFin ? formatDateForDisplay(item.dateFin) : "Ouverte", item.statut, item.temporalState || "Non renseigné"]
-  const actions = (item: ActorAffiliationView) => <div className="flex justify-end gap-1"><Button size="icon-sm" variant="ghost" aria-label="Consulter le mouvement" onClick={() => start(item, true)}><Eye /></Button><Button size="icon-sm" variant="ghost" aria-label="Modifier le mouvement" onClick={() => start(item)}><Pencil /></Button>{item.transferRole === "CESSION" && <Button size="icon-sm" variant="ghost" aria-label="Confirmer le retour de cession" onClick={() => start(item, false, true)}><Undo2 /></Button>}</div>
+  const actions = (item: ActorAffiliationView) => <div className="flex justify-end gap-1"><DeleteRecordButton entity="affiliation" family={"athlete"} id={item.id} label={item.structure} onDeleted={() => void load()} iconOnly /><Button size="icon-sm" variant="ghost" aria-label="Consulter le mouvement" onClick={() => start(item, true)}><Eye /></Button><Button size="icon-sm" variant="ghost" aria-label="Modifier le mouvement" onClick={() => start(item)}><Pencil /></Button>{item.transferRole === "CESSION" && <Button size="icon-sm" variant="ghost" aria-label="Confirmer le retour de cession" onClick={() => start(item, false, true)}><Undo2 /></Button>}</div>
   return <Card className="min-w-0"><CardHeader><CardTitle>Transferts</CardTitle><div className="flex flex-wrap gap-2"><Button variant="outline" size="icon" aria-label="Actualiser les transferts" onClick={() => void load()} disabled={loading}><RefreshCw className={loading ? "animate-spin" : ""} /></Button><Button className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" disabled={loading || Boolean(error)} onClick={() => start()}><Plus />Ajouter un mouvement</Button></div></CardHeader><CardContent className="space-y-4">
     {!refs.sportsWritesEnabled && !loading && <p role="status" className="rounded-lg border border-amber-500/40 p-3 text-sm">{refs.sportsWriteBlockReason || "Écritures sportives non activées."}</p>}
     {error ? <p role="alert">{error}</p> : loading ? <p role="status">Chargement des transferts…</p> : !items.length ? <p className="text-sm text-muted-foreground">Aucun rattachement enregistré.</p> : <><div className="space-y-3 md:hidden">{items.map(item => <div key={item.id} className="rounded-lg border p-3">{labels.map((label, index) => <div key={label} className="grid grid-cols-2 gap-2 py-1 text-sm"><span className="text-muted-foreground">{label}</span><span className="break-words">{cells(item)[index]}</span></div>)}{actions(item)}</div>)}</div><div className="hidden overflow-x-auto rounded-lg border md:block"><Table aria-label="Transferts"><TableHeader><TableRow>{labels.map(label => <TableHead key={label}>{label}</TableHead>)}<TableHead>Actions</TableHead></TableRow></TableHeader><TableBody>{items.map(item => <TableRow key={item.id}>{cells(item).map((cell, i) => <TableCell key={i}>{cell}</TableCell>)}<TableCell>{actions(item)}</TableCell></TableRow>)}</TableBody></Table></div></>}
@@ -78,5 +80,5 @@ export function AthleteTransfersPanel({ actorId, onChanged }: { actorId: string;
     <div className="space-y-2"><Label htmlFor="transfer-notes">Observations</Label><Textarea id="transfer-notes" value={values.observations} onChange={event => set("observations", event.target.value)} disabled={viewing || saving || uncertain} /></div>
     {!refs.sportsWritesEnabled && !viewing && <p className="text-sm text-amber-600">{refs.sportsWriteBlockReason}</p>}
     {errors._form && <p role="alert" className="text-sm text-destructive">{errors._form}</p>}{uncertain && <p className="break-all text-xs">Clé de vérification : {key.current}. Sans reçu confirmé, aucune nouvelle écriture ne doit être forcée.</p>}
-    </div><SheetFooter>{!viewing && <Button type="submit" className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" disabled={saving || !refs.sportsWritesEnabled}>{saving ? "Vérification…" : uncertain ? "Vérifier cette tentative" : "Confirmer"}</Button>}<Button type="button" variant="outline" disabled={saving || uncertain} onClick={() => setOpen(false)}>Fermer</Button></SheetFooter></form></SheetContent></Sheet></Card>
+    </div>{revision.error && <p role="alert" className="text-sm text-destructive">{revision.error}</p>}<SheetFooter>{!viewing && <Button type="submit" className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" disabled={saving || !refs.sportsWritesEnabled}>{saving ? "Vérification…" : uncertain ? "Vérifier cette tentative" : "Confirmer"}</Button>}<Button type="button" variant="outline" disabled={saving || uncertain} onClick={() => setOpen(false)}>Fermer</Button></SheetFooter></form></SheetContent></Sheet></Card>
 }

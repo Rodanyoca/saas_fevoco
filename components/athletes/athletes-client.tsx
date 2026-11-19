@@ -13,6 +13,7 @@ import { paginateRows } from "@/lib/list-pagination"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useRouter } from "next/navigation"
 import { compareLabels } from "@/lib/sort-utils"
 
 export function AthletesClient({
@@ -24,7 +25,16 @@ export function AthletesClient({
   licences: AthleteLicence[]
   sexes: ActorSexOption[]
 }) {
+  const router = useRouter()
+  const [licenceRows, setLicenceRows] = useState(licences)
+  useEffect(() => setLicenceRows(licences), [licences])
   const [rows, setRows] = useState(athletes)
+  useEffect(() => {
+    const deleted = (event: Event) => { const target = (event as CustomEvent<{entity:string;family:string;id:string}>).detail; if (target.entity === "actor" && target.family === "athlete") setRows(current => current.filter(row => row.idAthlete !== target.id)) }
+    window.addEventListener("fevoco:record-deleted", deleted)
+    return () => window.removeEventListener("fevoco:record-deleted", deleted)
+  }, [])
+
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -43,7 +53,9 @@ export function AthletesClient({
     return () => window.removeEventListener("fevoco:navigate", returnToList)
   }, [])
 
-  const applySavedAthlete = (saved: SavedAthlete) => {
+  const applySavedAthlete = (saved: SavedAthlete, licence?: AthleteLicence) => {
+    if (licence) setLicenceRows(current => [...current.filter(row => row.idLicence !== licence.idLicence), licence])
+    router.refresh()
     setRows((current) => {
       const existing = current.find((item) => item.idAthlete === saved.idAthlete)
       const merged: Athlete = {
@@ -63,8 +75,8 @@ export function AthletesClient({
       : current)
   }
 
-  const activeLicenceNumbers = useMemo(() => activeActorLicenceNumbers(licences,
-    new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Kinshasa", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())), [licences])
+  const activeLicenceNumbers = useMemo(() => activeActorLicenceNumbers(licenceRows,
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Kinshasa", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())), [licenceRows])
 
   const sortedRows = useMemo(() => [...rows].sort((left, right) => compareLabels(left.nomComplet, right.nomComplet)), [rows])
 
@@ -89,10 +101,10 @@ export function AthletesClient({
   return (
     <div className="space-y-6">
       {selectedAthlete ? (
-        <AthleteDetail athlete={selectedAthlete} licences={licences} sexes={sexes} onUpdated={applySavedAthlete} onBack={() => setSelectedAthlete(null)} />
+        <AthleteDetail athlete={selectedAthlete} licences={licenceRows} sexes={sexes} onUpdated={applySavedAthlete} onBack={() => setSelectedAthlete(null)} />
       ) : (
         <>
-          <div className="flex justify-end"><AthleteFormDialog sexes={sexes} onSaved={applySavedAthlete} /></div>
+          <div className="flex justify-end"><AthleteFormDialog sexes={sexes} onSaved={applySavedAthlete} onViewExisting={id => { const existing = rows.find(row => row.idAthlete === id); if (existing) setSelectedAthlete(existing) }} /></div>
           <AthletesFilters
             athletes={rows}
             search={search}

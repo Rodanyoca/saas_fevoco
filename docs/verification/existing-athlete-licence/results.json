@@ -1,0 +1,38 @@
+[
+  {
+    "viewport": "desktop",
+    "entry": "profile",
+    "athleteDetailHasNoAddLicence": true
+  },
+  {
+    "viewport": "desktop",
+    "entry": "licences",
+    "noIdentityWrite": true,
+    "dateRequired": true,
+    "invalidDateRejected": true,
+    "oneAffiliation": true,
+    "oneLicence": true,
+    "partialRecovery": true,
+    "lostResponse": true,
+    "doubleClick": true,
+    "dedicatedLicenceInterface": true
+  },
+  {
+    "viewport": "mobile",
+    "entry": "profile",
+    "athleteDetailHasNoAddLicence": true
+  },
+  {
+    "viewport": "mobile",
+    "entry": "licences",
+    "noIdentityWrite": true,
+    "dateRequired": true,
+    "invalidDateRejected": true,
+    "oneAffiliation": true,
+    "oneLicence": true,
+    "partialRecovery": true,
+    "lostResponse": true,
+    "doubleClick": true,
+    "dedicatedLicenceInterface": true
+  }
+]

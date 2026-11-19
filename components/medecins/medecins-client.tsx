@@ -25,6 +25,12 @@ export function MedecinsClient({ medecins, affiliations, licences, sexes, struct
   specialties: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(medecins)
+  useEffect(() => {
+    const deleted = (event: Event) => { const target = (event as CustomEvent<{entity:string;family:string;id:string}>).detail; if (target.entity === "actor" && target.family === "medecin") setRows(current => current.filter(row => row.idMedecin !== target.id)) }
+    window.addEventListener("fevoco:record-deleted", deleted)
+    return () => window.removeEventListener("fevoco:record-deleted", deleted)
+  }, [])
+
   const [affiliationRows, setAffiliationRows] = useState(affiliations)
   const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedMedecin, setSelectedMedecin] = useState<Medecin | null>(null)

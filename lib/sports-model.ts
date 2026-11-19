@@ -3,19 +3,26 @@ import { createHash } from "node:crypto"
 import { formatDateForSheet } from "./compact-date.ts"
 
 export type SportsRow = Record<string, string>
-export type SportsBook = "affiliations" | "licences"
+export type LicenceClaimReplacement = { actorSeason: string; key: string; metadataId: number; metadataValue: string; operationId: string; retiredIds: string[] }
+export type SportsBook = "affiliations" | "licences" | "actors"
 export type SportsSnapshot = {
   affiliations: SportsRow[]; licences: SportsRow[]; counters: SportsRow[]; clubs: SportsRow[]
   athletes: SportsRow[]; seasons: SportsRow[]; transferTypes: SportsRow[]; licenceStatuses: SportsRow[]
+  deletedRecords?: Record<string, string[]>; deletedLicenceReservations?: SportsRow[]
+  reservedAthleteSeasons?: string[]; operationActorIds?: string[]; businessWritePending?: boolean
+  recoverableLicenceClaims?: LicenceClaimReplacement[]
   parameters: SportsRow[]
+  reservedRecordIds?: { ATHLETE_AFFILIATIONS?: string[]; ATHLETE_LICENCES?: string[]; ATHLETES?: string[] }
+  sexes?: SportsRow[]; seasonStatuses?: SportsRow[]; affiliationStatuses?: SportsRow[]; ententes?: SportsRow[]; ligues?: SportsRow[]
 }
 export type SportsOperation = { id: string; fingerprint: string }
-export type SportsReceipt = { fingerprint: string; table: string; ids: string[]; context?: TransferContext }
+export type SportsReceipt = { fingerprint: string; table: string; ids: string[]; context?: TransferContext; operationDate?: string; audit?: { userId: string; action: string; at: string } }
 export type TransferContext = { previousEnd: string; previousStatus: string; suspensionId?: string }
 export type SportsPlan = {
-  book: SportsBook; table: "ATHLETE_AFFILIATIONS" | "ATHLETE_LICENCES"
+  claimReplacements?: LicenceClaimReplacement[]
+  book: SportsBook; table: "ATHLETE_AFFILIATIONS" | "ATHLETE_LICENCES" | "ATHLETES"
   inserts: Record<string, SportsRow[]>; updates: Array<{ table: string; key: string; id: string; fields: SportsRow }>
-  claims: string[]; resultIds: string[]; context?: TransferContext
+  claims: string[]; resultIds: string[]; context?: TransferContext; operationDate?: string; audit?: SportsReceipt["audit"]
 }
 export class SportsError extends Error {
   constructor(public code: string, message: string, public status = 409, public fields: Record<string, string> = {}, public uncertain = false) { super(message) }
@@ -72,10 +79,10 @@ export function checkConfiguration(snapshot: SportsSnapshot) {
   const config = new Map(snapshot.parameters.map(row => [row.cle_parametre, row.valeur_parametre]))
   if (config.get("TRANSFERT_AFFILIATION_SANS_CHEVAUCHEMENT")?.toUpperCase() !== "TRUE" || config.get("LICENCE_SPORTIVE_NUMEROTATION") !== "CLUB_COMPTEUR_SAISON" || config.get("LICENCE_SPORTIVE_TRANSFERT_CONSERVATION")?.toUpperCase() !== "TRUE") throw new SportsError("CONFIGURATION_SPORTIVE", "Les paramètres sportifs doivent être vérifiés dans le référentiel.", 503)
 }
-export function nextTechnicalIds(rows: SportsRow[], key: string, prefix: string, count: number) {
+export function nextTechnicalIds(rows: SportsRow[], key: string, prefix: string, count: number, reservedIds: string[] = []) {
   let highest = BigInt(0)
   const pattern = new RegExp(`^${prefix}-(\\d{6,})$`)
-  for (const row of rows) { const match = row[key]?.match(pattern); if (match && BigInt(match[1]) > highest) highest = BigInt(match[1]) }
+  for (const id of [...rows.map(row => row[key]), ...reservedIds]) { const match = id?.match(pattern); if (match && BigInt(match[1]) > highest) highest = BigInt(match[1]) }
   return Array.from({ length: count }, (_, i) => `${prefix}-${(highest + BigInt(i + 1)).toString().padStart(6, "0")}`)
 }
 export function assertNoOverlap(rows: SportsRow[]) {

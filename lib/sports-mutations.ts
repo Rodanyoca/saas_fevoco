@@ -29,7 +29,7 @@ export async function executeSportsMutation(store: SportsStore, book: SportsBook
     const replay = await store.completed(book, op)
     if (replay) return replay
     for (let attempt = 0; attempt < 3; attempt++) {
-      const snapshot = await store.load()
+      const snapshot = await store.load(book === "affiliations" ? "affiliation" : "licence")
       const plan = await planner(snapshot)
       try { return await store.commit(op, plan) }
       catch (error) {
@@ -63,7 +63,7 @@ export async function mutateSeasonalLicence(input: unknown, id?: string) {
   const { strings, ids } = sportsCommand(input), store = createGoogleSportsStore()
   const op = operation(strings.idempotency_key, { id, ...strings, id_affiliations_athletes: ids })
   // Resolve only the actor scope first. Re-read the full mutation snapshot after the durable reservation.
-  const source = id || strings.mode === "CLUB" ? await store.load() : null
+  const source = id || strings.mode === "CLUB" ? await store.load("licence") : null
   const actors = id ? [source?.licences.find(row => row.id_licence === id)?.id_athlete || ""] : strings.mode === "CLUB" ? (ids || []).map(affId => source?.affiliations.find(row => row.id_affiliation_athlete === affId)?.id_athlete || "") : [text(strings.id_athlete)]
   return executeSportsMutation(store, "licences", op, actors, snapshot => id ? modifySportsLicence(snapshot, id, strings) : allocateSportsLicences(snapshot, { ...strings, id_saison: strings.id_saison, date_delivrance: strings.date_delivrance, id_statut_licence: strings.id_statut_licence, id_affiliations_athletes: ids } satisfies SportsLicenceInput))
 }

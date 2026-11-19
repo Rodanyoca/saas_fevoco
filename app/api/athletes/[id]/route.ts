@@ -1,3 +1,4 @@
+import { managedEditRequest } from "@/lib/record-management-api"
 import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 import { updateAthlete } from "@/lib/athlete-mutations"
@@ -5,7 +6,7 @@ import { isActeursGoogleSheetsConfigured } from "@/lib/env"
 
 export const runtime = "nodejs"
 
-export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+async function patchIdentity(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!isActeursGoogleSheetsConfigured()) return NextResponse.json({ message: "Le classeur Acteurs n’est pas configuré." }, { status: 503 })
   try {
     const { id } = await context.params
@@ -16,4 +17,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const message = error instanceof Error ? error.message : "Modification impossible."
     return NextResponse.json({ message }, { status: message === "Athlète introuvable." ? 404 : 400 })
   }
+}
+
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+ const {id} = await context.params
+ return managedEditRequest(request, {entity:"actor",family:"athlete",id:decodeURIComponent(id)}, () => patchIdentity(request, context))
 }

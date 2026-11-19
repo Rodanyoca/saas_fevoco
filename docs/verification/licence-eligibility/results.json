@@ -1,0 +1,24 @@
+[
+  {
+    "viewport": "desktop",
+    "excludedExisting": true,
+    "seasonReset": true,
+    "staleResponse": true,
+    "noReadsPerKeystroke": true,
+    "readFailure": true,
+    "concurrentDelivery": true,
+    "doubleSubmission": true,
+    "lostResponseRetry": true
+  },
+  {
+    "viewport": "mobile",
+    "excludedExisting": true,
+    "seasonReset": true,
+    "staleResponse": true,
+    "noReadsPerKeystroke": true,
+    "readFailure": true,
+    "concurrentDelivery": true,
+    "doubleSubmission": true,
+    "lostResponseRetry": true
+  }
+]

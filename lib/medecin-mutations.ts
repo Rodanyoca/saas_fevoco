@@ -1,3 +1,4 @@
+import { reservedBusinessIds } from "@/lib/business-write-guard"
 import "server-only"
 
 import { getActorSexes, getMedecinSpecialties } from "@/lib/actor-references"
@@ -79,7 +80,7 @@ export async function createMedecin(payload: Record<string, unknown>) {
   const input = normalizeInput(payload)
   const refs = await validateInput(input)
   const medecins = await getMedecins()
-  const idMedecin = nextActorId(medecins.map((item) => item.idMedecin), "MED")
+  const idMedecin = nextActorId([...medecins.map((item) => item.idMedecin), ...await reservedBusinessIds("MEDECINS")], "MED")
   if (medecins.some((item) => item.idMedecin === idMedecin)) throw new Error("Cet identifiant de médecin existe déjà.")
   await formatDateColumns()
   await appendSheetRecord(env.googleSheets.acteursSpreadsheetId, "MEDECINS", { id_medecin: idMedecin, ...sheetRecord(input) }, "OVERWRITE")

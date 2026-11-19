@@ -12,6 +12,12 @@ import type { AutreActeur, TypeAutreActeur } from "@/lib/types"
 
 export function AutresActeursClient({ acteurs, types, sexes }: { acteurs: AutreActeur[]; types: TypeAutreActeur[]; sexes: ActorSexOption[] }) {
   const [rows, setRows] = useState(acteurs)
+  useEffect(() => {
+    const deleted = (event: Event) => { const target = (event as CustomEvent<{entity:string;family:string;id:string}>).detail; if (target.entity === "actor" && target.family === "autre") setRows(current => current.filter(row => row.idAutreActeur !== target.id)) }
+    window.addEventListener("fevoco:record-deleted", deleted)
+    return () => window.removeEventListener("fevoco:record-deleted", deleted)
+  }, [])
+
   const [selected, setSelected] = useState<AutreActeur | null>(null)
   const [search, setSearch] = useState("")
   useEffect(() => setRows(acteurs), [acteurs])

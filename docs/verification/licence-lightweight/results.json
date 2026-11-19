@@ -1,0 +1,42 @@
+[
+  {
+    "viewport": "desktop",
+    "scenario": "normal",
+    "optionsRequests": 1,
+    "automaticNumber": "0101001001",
+    "noSeasonOpeningGate": true,
+    "noFetchOnClubSeasonSearch": true,
+    "noExtraAffiliation": true,
+    "repeatedRequest": true
+  },
+  {
+    "viewport": "desktop",
+    "scenario": "orphan",
+    "optionsRequests": 1,
+    "automaticNumber": "0101001002",
+    "noSeasonOpeningGate": true,
+    "noFetchOnClubSeasonSearch": true,
+    "noExtraAffiliation": true,
+    "repeatedRequest": true
+  },
+  {
+    "viewport": "mobile",
+    "scenario": "normal",
+    "optionsRequests": 1,
+    "automaticNumber": "0101001001",
+    "noSeasonOpeningGate": true,
+    "noFetchOnClubSeasonSearch": true,
+    "noExtraAffiliation": true,
+    "repeatedRequest": true
+  },
+  {
+    "viewport": "mobile",
+    "scenario": "orphan",
+    "optionsRequests": 1,
+    "automaticNumber": "0101001002",
+    "noSeasonOpeningGate": true,
+    "noFetchOnClubSeasonSearch": true,
+    "noExtraAffiliation": true,
+    "repeatedRequest": true
+  }
+]

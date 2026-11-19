@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-11-19T01:16:48.630Z",
+  "transport": "Google Sheets readonly scope; actual eligibility service",
+  "writes": 0,
+  "results": [
+    { "athleteId": "ATH00584", "eligible": false, "reasons": ["DELIVRANCE_RESERVEE"] },
+    { "athleteId": "ATH00586", "eligible": false, "reasons": ["LICENCE_EXISTANTE"] }
+  ],
+  "confirmedMissingReceiptResult": "VOL-LIC-2026-000372",
+  "activeLocks": [],
+  "technicalTracesRemoved": [],
+  "retainedClaimMetadataId": 826591147
+}

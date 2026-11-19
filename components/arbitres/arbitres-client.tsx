@@ -18,6 +18,12 @@ export function ArbitresClient({ arbitres, licences, sexes, grades }: {
   grades: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(arbitres)
+  useEffect(() => {
+    const deleted = (event: Event) => { const target = (event as CustomEvent<{entity:string;family:string;id:string}>).detail; if (target.entity === "actor" && target.family === "arbitre") setRows(current => current.filter(row => row.idArbitre !== target.id)) }
+    window.addEventListener("fevoco:record-deleted", deleted)
+    return () => window.removeEventListener("fevoco:record-deleted", deleted)
+  }, [])
+
   const [selectedArbitre, setSelectedArbitre] = useState<Arbitre | null>(null)
   const [search, setSearch] = useState("")
   const [equipeNationale, setEquipeNationale] = useState("all")

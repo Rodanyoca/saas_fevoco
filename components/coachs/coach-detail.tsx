@@ -1,4 +1,5 @@
 "use client"
+import { DeleteRecordButton } from "@/components/actors/record-management"
 
 import { AffiliationsPanel } from "@/components/actors/affiliations-panel"
 
@@ -56,7 +57,8 @@ export function CoachDetail({ coach, licences, sexes, levels, onUpdated, onBack 
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la liste
         </Button>
-        {activeTab === "general" && <CoachFormDialog coach={coach} sexes={sexes} levels={levels} onSaved={onUpdated} />}
+        {activeTab === "general" && <div className="flex gap-2"><DeleteRecordButton entity="actor" family="coach" id={coach.idCoach} label={coach.nomComplet} onDeleted={onBack} />
+        <CoachFormDialog coach={coach} sexes={sexes} levels={levels} onSaved={onUpdated} /></div>}
       </div>
 
       <Card>

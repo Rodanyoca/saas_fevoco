@@ -24,6 +24,12 @@ export function CoachsClient({
   levels: CoachReferenceOption[]
 }) {
   const [rows, setRows] = useState(coachs)
+  useEffect(() => {
+    const deleted = (event: Event) => { const target = (event as CustomEvent<{entity:string;family:string;id:string}>).detail; if (target.entity === "actor" && target.family === "coach") setRows(current => current.filter(row => row.idCoach !== target.id)) }
+    window.addEventListener("fevoco:record-deleted", deleted)
+    return () => window.removeEventListener("fevoco:record-deleted", deleted)
+  }, [])
+
   const [licenceRows, setLicenceRows] = useState(licences)
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null)
   const [search, setSearch] = useState("")

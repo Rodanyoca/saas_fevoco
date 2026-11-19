@@ -1,4 +1,5 @@
 "use client"
+import { DeleteRecordButton } from "@/components/actors/record-management"
 
 import { AffiliationsPanel } from "@/components/actors/affiliations-panel"
 
@@ -37,7 +38,8 @@ export function MedecinDetail({ medecin, affiliations, licences, sexes, specialt
   const age = calculateAge(medecin.dateDeNaissance)
 
   return <div className="w-full space-y-6">
-    <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button>{activeTab === "general" && <MedecinFormDialog medecin={medecin} sexes={sexes} specialties={specialties} onSaved={onUpdated} />}</div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button>{activeTab === "general" && <div className="flex gap-2"><DeleteRecordButton entity="actor" family="medecin" id={medecin.idMedecin} label={medecin.nomComplet} onDeleted={onBack} />
+        <MedecinFormDialog medecin={medecin} sexes={sexes} specialties={specialties} onSaved={onUpdated} /></div>}</div>
     <Card><CardContent className="p-6"><div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex min-w-0 items-center gap-4"><Avatar className="size-20 shrink-0">{avatarUrl && <AvatarImage src={avatarUrl} alt={medecin.nomComplet} />}<AvatarFallback className="text-lg">{initials(medecin.nomComplet)}</AvatarFallback></Avatar><div className="min-w-0"><h2 className="break-words text-2xl font-bold">{shown(medecin.nomComplet)}</h2><p className="mt-1 text-sm text-muted-foreground">{shown(medecin.specialite)}</p></div></div>
       <div className="flex flex-col items-end gap-2"><StatusBadge status={medecin.statut} /><p className="font-mono text-sm text-muted-foreground">{shown(medecin.idMedecin)}</p></div>

@@ -1,0 +1,8 @@
+{
+  "checkedAt": "2026-11-19T19:44:15.111Z",
+  "writes": 0,
+  "results": [
+    { "athleteId": "ATH00584", "eligible": true, "reasons": [] },
+    { "athleteId": "ATH00586", "eligible": false, "reasons": ["LICENCE_EXISTANTE"] }
+  ]
+}

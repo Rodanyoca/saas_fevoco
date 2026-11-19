@@ -1,3 +1,5 @@
+import { withBusinessWrite, assertRecordsAlive } from "@/lib/business-write-guard"
+import { RecordManagementError, families } from "@/lib/record-management-model"
 import { env, isGoogleSheetsConfigured } from "@/lib/env"
 import { revalidateTag, unstable_cache } from "next/cache"
 import { withBoundedRetry } from "@/lib/google-sheets-resilience"
@@ -243,7 +245,7 @@ export async function appendSheetRecord(
   return appendSheetRecords(spreadsheetId, sheetName, [record], insertDataOption)
 }
 
-export async function appendSheetRecords(
+async function appendSheetRecordsUnlocked(
   spreadsheetId: string,
   sheetName: string,
   records: Record<string, string>[],
@@ -257,6 +259,16 @@ export async function appendSheetRecords(
   })
   const headers = (headerResult.data.values?.[0] ?? []).map(normalizeHeader)
   if (!headers.length) throw new Error(`En-têtes absents dans ${sheetName}`)
+  const idHeader = Object.values(families).find(family => family.table === sheetName)?.key
+  if (idHeader) {
+    const letter = columnLetter(headers.indexOf(idHeader))
+    const existing = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${sheetName}!${letter}2:${letter}` })
+    const used = new Set((existing.data.values || []).map(row => String(row[0] ?? "").trim()))
+    for (const record of records) {
+      if (used.has(record[idHeader])) throw new RecordManagementError("IDENTIFIANT_EXISTANT", "Un identifiant a été attribué entre-temps. Rechargez puis réessayez.")
+      used.add(record[idHeader])
+    }
+  }
   await sheets.spreadsheets.values.append({
     spreadsheetId,
     range: `${sheetName}!A:${columnLetter(headers.length - 1)}`,
@@ -267,7 +279,7 @@ export async function appendSheetRecords(
   invalidateSheet(spreadsheetId, sheetName)
 }
 
-export async function updateSheetRecordById(
+async function updateSheetRecordByIdUnlocked(
   spreadsheetId: string,
   sheetName: string,
   idHeader: string,
@@ -311,7 +323,7 @@ export type SheetRecordMutation = {
   dateHeaders?: string[]; create?: boolean
 }
 
-export async function updateSheetRecordsBatch(
+async function updateSheetRecordsBatchUnlocked(
   spreadsheetId: string,
   records: SheetRecordMutation[],
   validateRows?: (tables: Record<string, SheetRow[]>) => void,
@@ -355,7 +367,7 @@ export async function updateSheetRecordsBatch(
   names.forEach(name => invalidateSheet(spreadsheetId, name))
 }
 
-export async function deleteSheetRecordById(
+async function deleteSheetRecordByIdUnlocked(
   spreadsheetId: string,
   sheetName: string,
   idHeader: string,
@@ -380,7 +392,7 @@ export async function deleteSheetRecordById(
   invalidateSheet(spreadsheetId, sheetName)
 }
 
-export async function appendSheetRecordsBatch(
+async function appendSheetRecordsBatchUnlocked(
   spreadsheetId: string,
   records: Array<{ sheetName: string; record: Record<string, string> }>,
 ): Promise<void> {
@@ -470,4 +482,48 @@ export async function formatSheetDateColumns(
       })),
     },
   })
+}
+
+export async function appendSheetRecords(
+  spreadsheetId: string,
+  sheetName: string,
+  records: Record<string, string>[],
+  insertDataOption: "INSERT_ROWS" | "OVERWRITE" = "INSERT_ROWS",
+): Promise<void> {
+  return withBusinessWrite(async () => { await assertRecordsAlive([{ table: sheetName, rows: records }]); return appendSheetRecordsUnlocked(spreadsheetId, sheetName, records, insertDataOption) })
+}
+
+export async function updateSheetRecordById(
+  spreadsheetId: string,
+  sheetName: string,
+  idHeader: string,
+  id: string,
+  record: Record<string, string>,
+): Promise<void> {
+  return withBusinessWrite(async () => { await assertRecordsAlive([{ table: sheetName, rows: [{ ...record, [idHeader]: id }] }]); return updateSheetRecordByIdUnlocked(spreadsheetId, sheetName, idHeader, id, record) })
+}
+
+export async function updateSheetRecordsBatch(
+  spreadsheetId: string,
+  records: SheetRecordMutation[],
+  validateRows?: (tables: Record<string, SheetRow[]>) => void,
+  additionalSheets: string[] = [],
+): Promise<void> {
+  return withBusinessWrite(async () => { await assertRecordsAlive(records.map(item => ({ table: item.sheetName, rows: [{ ...Object.fromEntries(Object.entries(item.record).map(([key, value]) => [key, String(value)])), [item.idHeader]: item.id }] }))); return updateSheetRecordsBatchUnlocked(spreadsheetId, records, validateRows, additionalSheets) })
+}
+
+export async function deleteSheetRecordById(
+  spreadsheetId: string,
+  sheetName: string,
+  idHeader: string,
+  id: string,
+): Promise<void> {
+  return withBusinessWrite(async () => { return deleteSheetRecordByIdUnlocked(spreadsheetId, sheetName, idHeader, id) })
+}
+
+export async function appendSheetRecordsBatch(
+  spreadsheetId: string,
+  records: Array<{ sheetName: string; record: Record<string, string> }>,
+): Promise<void> {
+  return withBusinessWrite(async () => { await assertRecordsAlive(records.map(item => ({ table: item.sheetName, rows: [item.record] }))); return appendSheetRecordsBatchUnlocked(spreadsheetId, records) })
 }

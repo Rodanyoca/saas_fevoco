@@ -1,3 +1,4 @@
+import { reservedBusinessIds } from "@/lib/business-write-guard"
 import "server-only"
 
 import { env } from "@/lib/env"
@@ -49,7 +50,7 @@ export async function createCoach(payload: Record<string, unknown>) {
   const input = normalizeInput(payload)
   const { selectedSex, selectedLevel } = await validateInput(input)
   const coachs = await getCoachs()
-  const idCoach = nextActorId(coachs.map((coach) => coach.idCoach), "TRN")
+  const idCoach = nextActorId([...coachs.map((coach) => coach.idCoach), ...await reservedBusinessIds("COACHS")], "TRN")
   if (coachs.some((coach) => coach.idCoach === idCoach)) throw new Error("Cet identifiant de coach existe déjà.")
   await formatSheetDateColumn(env.googleSheets.acteursSpreadsheetId, "COACHS", "date_naissance")
   await appendSheetRecord(env.googleSheets.acteursSpreadsheetId, "COACHS", {

@@ -67,8 +67,9 @@ test("modification entourage : conserve identifiant et acteur, contrôle le chev
   const memory = store(), domain = createLicenceDomain(memory)
   memory.updateActor = async (id, row) => { memory.actorLicences[memory.actorLicences.findIndex(item => item.id_licence === id)] = row }
   const original = await domain.createActor(coachLicence)
-  const row = await domain.updateActor(original.id_licence, { ...coachLicence, id_acteur: "OTHER", numero_licence: "NEW" })
-  assert.equal(row.id_licence, original.id_licence); assert.equal(row.id_acteur, "COA001"); assert.equal(row.numero_licence, "NEW")
+  for (const change of [{ id_acteur: "OTHER" }, { numero_licence: "NEW" }, { id_affiliation_acteur: "OTHER" }, { id_cycle_licence: "OTHER" }]) await assert.rejects(() => domain.updateActor(original.id_licence, { ...coachLicence, ...change }))
+  const row = await domain.updateActor(original.id_licence, { ...coachLicence, observations: "Correction" })
+  assert.equal(row.id_licence, original.id_licence); assert.equal(row.id_acteur, "COA001"); assert.equal(row.numero_licence, coachLicence.numero_licence)
   await domain.createActor({ ...coachLicence, date_debut_validite: "01/01/2027", date_fin_validite: "31/12/2027" })
   await assert.rejects(() => domain.updateActor(original.id_licence, { ...coachLicence, date_fin_validite: "01/01/2027" }), /chevauche/i)
   assert.equal(memory.actorLicences[0].date_fin_validite, "2026-12-31")

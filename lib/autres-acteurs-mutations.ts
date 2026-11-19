@@ -1,3 +1,4 @@
+import { reservedBusinessIds } from "@/lib/business-write-guard"
 import "server-only"
 
 import { env } from "@/lib/env"
@@ -76,7 +77,7 @@ export async function createAutreActeur(payload: Record<string, unknown>) {
   const input = parsePayload(payload)
   const bundle = await loadAutresActeurs()
   const type = assertReferences(input, bundle.sexes, bundle.types)
-  const idAutreActeur = nextAutreActeurId(bundle.acteurs.map((item) => item.idAutreActeur))
+  const idAutreActeur = nextAutreActeurId([...bundle.acteurs.map((item) => item.idAutreActeur), ...await reservedBusinessIds("AUTRES")])
   if (bundle.acteurs.some((item) => item.idAutreActeur === idAutreActeur)) throw new Error("Cet identifiant existe déjà.")
   await formatDateColumns()
   await appendSheetRecord(env.googleSheets.acteursSpreadsheetId, "AUTRES", { id_autre_acteur: idAutreActeur, ...sheetRecord(input) }, "OVERWRITE")

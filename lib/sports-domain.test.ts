@@ -123,12 +123,12 @@ test("transfert ne modifie pas une licence, numéro immuable en modification", (
   assert.equal(JSON.stringify(s.licences), history)
   assert.throws(() => modifySportsLicence(s, s.licences[0].id_licence, { numero_licence: "CHANGED" }), /immuables/)
 })
-test("clé de tentative canonique, dates impossibles et saisons incompatibles", () => {
+test("clé de tentative, dates civiles et saison référencée sans contrôle d’ouverture", () => {
   const key = "11111111-1111-4111-8111-111111111111"
   assert.equal(operation(key, { a: 1, b: 2 }).fingerprint, operation(key, { b: 2, a: 1 }).fingerprint)
   assert.throws(() => operation("", {}), /tentative/)
   assert.throws(() => allocateSportsLicences(fixture(), { ...licence, date_delivrance: "31/02/2026" }), /date/)
-  assert.throws(() => allocateSportsLicences(fixture(), { ...licence, date_delivrance: "01/01/2027" }), /saison/)
+  assert.equal(allocateSportsLicences(fixture(), { ...licence, date_delivrance: "01/01/2027" }).inserts.ATHLETE_LICENCES.length, 1)
 })
 
 test("renouvellement groupé, compteurs indépendants et compteur périmé", () => {

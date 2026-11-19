@@ -1,4 +1,5 @@
 "use client"
+import { DeleteRecordButton } from "@/components/actors/record-management"
 
 import { useState } from "react"
 import { ArrowLeft, Contact, Fingerprint, Flag, Info } from "lucide-react"
@@ -50,7 +51,8 @@ export function ArbitreDetail({ arbitre, licences, sexes, grades, onUpdated, onB
     <div className="w-full space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" /> Retour à la liste</Button>
-        {activeTab === "general" && <ArbitreFormDialog arbitre={arbitre} sexes={sexes} grades={grades} onSaved={onUpdated} />}
+        {activeTab === "general" && <div className="flex gap-2"><DeleteRecordButton entity="actor" family="arbitre" id={arbitre.idArbitre} label={arbitre.nomComplet} onDeleted={onBack} />
+        <ArbitreFormDialog arbitre={arbitre} sexes={sexes} grades={grades} onSaved={onUpdated} /></div>}
       </div>
 
       <Card><CardContent className="p-6"><div className="flex flex-wrap items-start justify-between gap-4">

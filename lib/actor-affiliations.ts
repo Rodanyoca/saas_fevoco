@@ -14,14 +14,14 @@ const text = (value: unknown) => String(value ?? "").trim()
 const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
 const options = (rows: SheetRow[], id: string, label: string) => rows.map(row => ({ id: text(row[id]), label: text(row[label]) })).filter(item => item.id && item.label)
 
-async function context(kind: AffiliationKind, includeSports = false) {
+async function context(kind: AffiliationKind, includeSports = false, fresh = false, referencesOnly = false) {
   const config = env.googleSheets, definition = affiliationSheets[kind]
   if (!config.affiliationsSpreadsheetId || !config.acteursSpreadsheetId || !config.territorialSpreadsheetId || !config.referentielsSpreadsheetId || !config.clientEmail || !config.privateKey) throw new AffiliationDomainError("SOURCE_INDISPONIBLE", "Les classeurs des affiliations ne sont pas configurés.", 503)
   const entity = kind === "officiel" || kind === "autre"
   const [reference, territory, actors] = await Promise.all([
-    getSheetsDataFrom(config.referentielsSpreadsheetId, ["STATUTS_AFFILIATION", ...(kind === "athlete" && includeSports ? ["TYPES_TRANSFERT"] : []), ...(entity ? ["TYPES_STRUCTURES", "FEDERATION"] : []), ...(kind === "officiel" ? ["FONCTION_OFFICIEL"] : []), ...(kind === "autre" ? ["SAISON"] : [])].map(name => `${name}!A:ZZ`)),
-    getSheetsDataFrom(config.territorialSpreadsheetId, (entity ? ["CLUBS", "LIGUES", "ENTENTES"] : ["CLUBS"]).map(name => `${name}!A:ZZ`)),
-    getSheetDataFrom(config.acteursSpreadsheetId, `${definition.actorSheet}!A:ZZ`),
+    getSheetsDataFrom(config.referentielsSpreadsheetId, ["STATUTS_AFFILIATION", ...(kind === "athlete" && includeSports ? ["TYPES_TRANSFERT"] : []), ...(entity ? ["TYPES_STRUCTURES", "FEDERATION"] : []), ...(kind === "officiel" ? ["FONCTION_OFFICIEL"] : []), ...(kind === "autre" ? ["SAISON"] : [])].map(name => `${name}!A:ZZ`), {fresh}),
+    getSheetsDataFrom(config.territorialSpreadsheetId, (entity ? ["CLUBS", "LIGUES", "ENTENTES"] : ["CLUBS"]).map(name => `${name}!A:ZZ`), {fresh}),
+    referencesOnly ? Promise.resolve([]) : getSheetDataFrom(config.acteursSpreadsheetId, `${definition.actorSheet}!A:ZZ`, {fresh}),
   ])
   const clubs = options(territory.CLUBS || [], "id_club", "nom_club")
   const entitySources = { FEDERATION: options(reference.FEDERATION || [], "id_federation", "nom_officiel"), LIGUE: options(territory.LIGUES || [], "id_ligue", "nom_ligue"), ENTENTE: options(territory.ENTENTES || [], "id_entente", "nom_entente"), CLUB: clubs }
@@ -33,6 +33,10 @@ async function context(kind: AffiliationKind, includeSports = false) {
     return selected.map(row => readAffiliationRow(kind, row, refs.statuses, formatDateForSheet)).filter(row => row.id && row.actorId)
   }
   const store: AffiliationStore = {
+    async linkedLicences(_kind, affiliationId) {
+      const data = await getSheetsDataFrom(config.licencesSpreadsheetId, ["ATHLETE_LICENCES!A:ZZ", "ACTEURS_LICENCES!A:ZZ"], {fresh:true})
+      return [...(data.ATHLETE_LICENCES || []).filter(row => text(row.id_affiliation_athlete) === affiliationId).map(row => ({date:text(row.date_delivrance)})), ...(data.ACTEURS_LICENCES || []).filter(row => text(row.id_affiliation_acteur) === affiliationId).flatMap(row => [{date:text(row.date_delivrance)}, {date:text(row.date_debut_validite)}])]
+    },
     list: async (_kind, fresh = false) => readRows(fresh),
     actorExists: async (_kind, id) => actors.some(row => text(row[definition.actor]) === id),
     clubExists: async id => clubs.some(item => item.id === id),
@@ -75,12 +79,12 @@ const pending = new Map<string, Promise<unknown>>()
 export async function saveActorAffiliation(kind: AffiliationKind, actorId: string, input: unknown, id?: string) {
   if (kind === "athlete") {
     const row = await mutateAthleteTransfer(actorId, input, id)
-    const { refs } = await context(kind, true)
+    const { refs } = await context(kind, true, false, true)
     return { affiliation: affiliationView(readAffiliationRow(kind, row, refs.statuses, formatDateForSheet), refs), created: !id }
   }
   const key = `${kind}:${actorId}`, previous = pending.get(key) || Promise.resolve()
   const task = previous.catch(() => {}).then(async () => {
-    const { refs, store } = await context(kind), domain = createAffiliationDomain(store)
+    const { refs, store } = await context(kind, false, true), domain = createAffiliationDomain(store)
     const result = id ? await domain.update(kind, actorId, id, input) : await domain.create(kind, actorId, input)
     return { affiliation: affiliationView(result.row, refs), created: result.created }
   })

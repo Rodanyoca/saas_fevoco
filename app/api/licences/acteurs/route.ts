@@ -1,3 +1,4 @@
+import { managedLicenceEditRequest } from "@/lib/record-management-api"
 import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { createActorLicence, updateActorLicence, transitionActorLicence } from "@/lib/actor-licence-creation"
@@ -24,5 +25,5 @@ async function mutate(request: Request, method: "POST" | "PUT" | "PATCH") {
   }
 }
 export const POST = (request: Request) => mutate(request, "POST")
-export const PUT = (request: Request) => mutate(request, "PUT")
-export const PATCH = (request: Request) => mutate(request, "PATCH")
+export const PUT = (request: Request) => managedLicenceEditRequest(request, false, () => mutate(request, "PUT"))
+export const PATCH = (request: Request) => managedLicenceEditRequest(request, false, () => mutate(request, "PATCH"))

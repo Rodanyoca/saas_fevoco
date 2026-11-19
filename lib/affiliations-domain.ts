@@ -9,6 +9,7 @@ export type AffiliationRow = {
   transferTypeId?: string; previousAffiliationId?: string
 }
 export type AffiliationStore = {
+  linkedLicences?(kind: AffiliationKind, id: string): Promise<Array<{ date: string }>>
   list(kind: AffiliationKind, fresh?: boolean): Promise<AffiliationRow[]>
   save(row: AffiliationRow, mode: "create" | "update"): Promise<void>
   actorExists(kind: AffiliationKind, id: string): Promise<boolean>
@@ -79,6 +80,12 @@ export function createAffiliationDomain(store: AffiliationStore) {
     if (kind === "autre" && (!values.id_saison || !(await store.seasonExists(values.id_saison)))) throw new AffiliationDomainError("SAISON_INVALIDE", "Sélectionnez une saison du référentiel.", 422, { id_saison: "Saison inconnue." })
     const rows = await store.list(kind, true), current = currentId ? rows.find((row) => row.id === currentId && row.actorId === actorId) : undefined
     if (currentId && !current) throw new AffiliationDomainError("INTROUVABLE", "Affiliation introuvable pour cet acteur.", 404)
+    if (current && !sameTarget(current, values.id_club, values.id_type_entite, values.id_entite, federation)) throw new AffiliationDomainError("CIBLE_IMMUABLE", "Un changement de club ou d'affectation exige un nouveau mouvement. Le rattachement historique reste conservé.", 409)
+    if (current && store.linkedLicences) for (const licence of await store.linkedLicences(kind, currentId!)) {
+      let anchor = ""
+      try { anchor = formatDateForSheet(licence.date) } catch { throw new AffiliationDomainError("REFERENCE_LICENCE", "Une licence liée comporte une date à vérifier.", 409) }
+      if (!anchor || values.date_debut > anchor || (values.date_fin && values.date_fin < anchor)) throw new AffiliationDomainError("REFERENCE_LICENCE", "Ces dates excluraient la délivrance ou le début de validité d'une licence liée.", 409)
+    }
     const candidate: AffiliationRow = { id: currentId || store.generateId?.(kind) || nextId(kind, rows), kind, actorId, clubId: entity ? "" : values.id_club, entityTypeId: entity ? values.id_type_entite : "", entityId: entity ? values.id_entite : "", functionId: official ? values.id_fonction : "", dateDebut: values.date_debut, dateFin: values.date_fin, statusId: values.id_statut_affiliation, observations: values.observations, seasonId: kind === "autre" ? values.id_saison : "" }
     const exact = rows.find((row) => row.id !== currentId && (Object.keys(candidate) as Array<keyof AffiliationRow>).filter(key => key !== "id" && !(federation && key === "entityId")).every(key => (row[key] || "") === (candidate[key] || "")))
     if (!currentId && exact) return { row: exact, created: false }

@@ -1,4 +1,5 @@
 "use client"
+import { DeleteRecordButton, useRecordVersion } from "@/components/actors/record-management"
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -24,8 +25,8 @@ const blank = () => ({ id_club: "", id_type_entite: "", id_entite: "", id_foncti
 type Values = ReturnType<typeof blank>
 const labels: Record<AffiliationKind, string> = { athlete: "l’athlète", coach: "l’entraîneur", medecin: "le médecin", officiel: "l’officiel", autre: "l’acteur" }
 
-export function AffiliationsPanel({ kind, actorId, onChanged }: { kind: AffiliationKind; actorId: string; onChanged?: () => Promise<void> }) {
-  return kind === "athlete" ? <AthleteTransfersPanel key={actorId} actorId={actorId} onChanged={onChanged} /> : <GenericAffiliationsPanel kind={kind} actorId={actorId} onChanged={onChanged} />
+export function AffiliationsPanel({ kind, actorId, onChanged, onAffiliationsLoaded }: { kind: AffiliationKind; actorId: string; onChanged?: () => Promise<void>; onAffiliationsLoaded?: (items: ActorAffiliationView[]) => void }) {
+  return kind === "athlete" ? <AthleteTransfersPanel key={actorId} actorId={actorId} onChanged={onChanged} onAffiliationsLoaded={onAffiliationsLoaded} /> : <GenericAffiliationsPanel kind={kind} actorId={actorId} onChanged={onChanged} />
 }
 function GenericAffiliationsPanel({ kind, actorId, onChanged }: { kind: AffiliationKind; actorId: string; onChanged?: () => Promise<void> }) {
   const router = useRouter(), guard = useRef(false)
@@ -34,6 +35,7 @@ function GenericAffiliationsPanel({ kind, actorId, onChanged }: { kind: Affiliat
   const [open, setOpen] = useState(false), [editing, setEditing] = useState<ActorAffiliationView | null>(null), [viewing, setViewing] = useState(false)
   const [values, setValues] = useState(blank), [errors, setErrors] = useState<Record<string, string>>({}), [saving, setSaving] = useState(false)
   const federation = isOfficialFederation(kind, values.id_type_entite, refs.entityTypes)
+  const revision = useRecordVersion("affiliation", kind, editing?.id || "", open && Boolean(editing) && !viewing)
   const endpoint = `/api/affiliations/${kind}`
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true); setLoadError("")
@@ -55,7 +57,7 @@ function GenericAffiliationsPanel({ kind, actorId, onChanged }: { kind: Affiliat
     event.preventDefault(); if (viewing || guard.current) return
     guard.current = true; setSaving(true); setErrors({})
     try {
-      const response = await fetch(endpoint, { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...values, actorId, ...(editing ? { id: editing.id } : {}) }) }), data = await response.json()
+      const response = await fetch(endpoint, { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json", ...(editing ? {"If-Match":revision.version} : {}) }, body: JSON.stringify({ ...values, actorId, ...(editing ? { id: editing.id } : {}) }) }), data = await response.json()
       if (!response.ok) { setErrors({ ...data.fields, _form: data.message || "Enregistrement impossible." }); return }
       const saved: ActorAffiliationView = data.affiliation
       setItems(current => [saved, ...current.filter(item => item.id !== saved.id)].sort((a, b) => b.dateDebut.localeCompare(a.dateDebut)))
@@ -64,10 +66,10 @@ function GenericAffiliationsPanel({ kind, actorId, onChanged }: { kind: Affiliat
     } catch { setErrors({ _form: "Service temporairement indisponible. Réessayez." }) }
     finally { guard.current = false; setSaving(false) }
   }
-  const select = (key: keyof Values, label: string, options: AffiliationOption[], searchable = false) => <div className="space-y-2"><Label htmlFor={`affiliation-${key}`}>{label}</Label>{searchable ? <SearchSelect id={`affiliation-${key}`} value={values[key]} onValueChange={value => set(key, value)} options={options} placeholder="Rechercher une structure" disabled={saving || viewing || !options.length} /> : <Select value={values[key]} onValueChange={value => set(key, value)} disabled={saving || viewing || !options.length}><SelectTrigger className="w-full" id={`affiliation-${key}`} aria-invalid={Boolean(errors[key])}><SelectValue placeholder={options.length ? "Sélectionner" : "Aucune option disponible"} /></SelectTrigger><SelectContent>{options.map(option => <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>)}</SelectContent></Select>}{errors[key] && <p className="text-sm text-destructive">{errors[key]}</p>}</div>
+  const select = (key: keyof Values, label: string, options: AffiliationOption[], searchable = false) => <div className="space-y-2"><Label htmlFor={`affiliation-${key}`}>{label}</Label>{searchable ? <SearchSelect id={`affiliation-${key}`} value={values[key]} onValueChange={value => set(key, value)} options={options} placeholder="Rechercher une structure" disabled={saving || viewing || !options.length || (Boolean(editing) && ["id_club", "id_type_entite", "id_entite"].includes(key))} /> : <Select value={values[key]} onValueChange={value => set(key, value)} disabled={saving || viewing || !options.length || (Boolean(editing) && ["id_club", "id_type_entite", "id_entite"].includes(key))}><SelectTrigger className="w-full" id={`affiliation-${key}`} aria-invalid={Boolean(errors[key])}><SelectValue placeholder={options.length ? "Sélectionner" : "Aucune option disponible"} /></SelectTrigger><SelectContent>{options.map(option => <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>)}</SelectContent></Select>}{errors[key] && <p className="text-sm text-destructive">{errors[key]}</p>}</div>
   const headers = usesEntity(kind) ? ["Entité", "Type", ...(kind === "officiel" ? ["Fonction"] : ["Saison"]), "Date de début", "Date de fin", "Statut"] : ["Club", "Date de début", "Date de fin", "Statut"]
   const cells = (item: ActorAffiliationView) => [item.structure || "Structure introuvable", ...(usesEntity(kind) ? [item.entityType || "Non renseigné", kind === "officiel" ? item.fonction || "Non renseignée" : item.saison || "Non renseignée"] : []), formatDateForDisplay(item.dateDebut) || "Non renseignée", item.dateFin ? formatDateForDisplay(item.dateFin) : "En cours", item.statut]
-  const actions = (item: ActorAffiliationView) => <div className="flex justify-center gap-1"><Button variant="ghost" size="icon-sm" onClick={() => start(item, true)} aria-label="Consulter l’affiliation"><Eye className="size-4" /></Button><Button variant="ghost" size="icon-sm" onClick={() => start(item)} aria-label="Modifier l’affiliation"><Pencil className="size-4" /></Button></div>
+  const actions = (item: ActorAffiliationView) => <div className="flex justify-center gap-1"><DeleteRecordButton entity="affiliation" family={kind} id={item.id} label={item.structure} onDeleted={() => void load()} iconOnly /><Button variant="ghost" size="icon-sm" onClick={() => start(item, true)} aria-label="Consulter l’affiliation"><Eye className="size-4" /></Button><Button variant="ghost" size="icon-sm" onClick={() => start(item)} aria-label="Modifier l’affiliation"><Pencil className="size-4" /></Button></div>
   return <Card className="min-w-0"><CardHeader className="items-start gap-4"><CardTitle>Affiliations</CardTitle><div className="flex flex-wrap items-center gap-2"><Button variant="outline" size="icon" onClick={() => void load()} disabled={loading} aria-label="Actualiser les affiliations"><RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} /></Button><Button className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" onClick={() => start()} disabled={loading || Boolean(loadError)}><Plus className="size-4" />Ajouter une affiliation</Button></div></CardHeader><CardContent>
     {loadError ? <div role="alert" className="rounded-lg border border-destructive/30 p-4"><p>{loadError}</p><Button variant="outline" className="mt-3" onClick={() => void load()}>Réessayer</Button></div> : loading ? <p className="text-muted-foreground"><Loader2 className="mr-2 inline size-4 animate-spin" />Chargement…</p> : <>
       {items.some(item => item.anomaly) && <p role="alert" className="mb-4 rounded-lg border border-amber-500/30 p-3 text-sm">Certaines affiliations comportent une référence introuvable. Consultez-les pour vérifier leurs données.</p>}
@@ -82,5 +84,5 @@ function GenericAffiliationsPanel({ kind, actorId, onChanged }: { kind: Affiliat
     <div className="space-y-2"><Label htmlFor="affiliation-observations">Observations</Label><Textarea id="affiliation-observations" value={values.observations} onChange={event => set("observations", event.target.value)} disabled={saving || viewing} />{errors.observations && <p className="text-sm text-destructive">{errors.observations}</p>}</div>
     {viewing && editing?.anomaly && <p role="alert" className="text-sm text-amber-600">{editing.anomaly}</p>}
     {errors._form && <p role="alert" className="text-sm text-destructive">{errors._form}</p>}
-  </div><SheetFooter>{!viewing && <Button type="submit" className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" disabled={saving}>{saving && <Loader2 className="size-4 animate-spin" />}{editing ? "Enregistrer" : "Créer"}</Button>}<Button type="button" variant="outline" disabled={saving} onClick={() => setOpen(false)}>Fermer</Button></SheetFooter></form></SheetContent></Sheet></Card>
+  </div>{revision.error && <p role="alert" className="text-sm text-destructive">{revision.error}</p>}<SheetFooter>{!viewing && <Button type="submit" className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" disabled={saving || (Boolean(editing) && !revision.version)}>{saving && <Loader2 className="size-4 animate-spin" />}{editing ? "Enregistrer" : "Créer"}</Button>}<Button type="button" variant="outline" disabled={saving} onClick={() => setOpen(false)}>Fermer</Button></SheetFooter></form></SheetContent></Sheet></Card>
 }

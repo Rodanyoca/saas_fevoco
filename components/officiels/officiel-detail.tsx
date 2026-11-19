@@ -1,4 +1,5 @@
 "use client"
+import { DeleteRecordButton } from "@/components/actors/record-management"
 
 import { AffiliationsPanel } from "@/components/actors/affiliations-panel"
 
@@ -35,7 +36,8 @@ export function OfficielDetail({ officiel, licences, sexes, onUpdated, onBack }:
   const age = calculateAge(officiel.dateDeNaissance)
 
   return <div className="w-full space-y-6">
-    <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button>{activeTab === "general" && <OfficielFormDialog officiel={officiel} sexes={sexes} onSaved={onUpdated} />}</div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 size-4" />Retour à la liste</Button>{activeTab === "general" && <div className="flex gap-2"><DeleteRecordButton entity="actor" family="officiel" id={officiel.idOfficiel} label={officiel.nomComplet} onDeleted={onBack} />
+        <OfficielFormDialog officiel={officiel} sexes={sexes} onSaved={onUpdated} /></div>}</div>
     <Card><CardContent className="p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-4"><Avatar className="size-20 shrink-0">{avatarUrl && <AvatarImage src={avatarUrl} alt={officiel.nomComplet} />}<AvatarFallback className="text-lg">{initials(officiel.nomComplet)}</AvatarFallback></Avatar><div className="min-w-0"><h2 className="break-words text-2xl font-bold">{shown(officiel.nomComplet)}</h2><p className="mt-1 text-muted-foreground">{shown(officiel.idNational || officiel.idOfficiel)}</p><div className="mt-2"><StatusBadge status={officiel.statut} /></div></div></div><div className="text-right"><p className="text-sm text-muted-foreground">Code Officiel</p><p className="font-mono font-medium">{shown(officiel.idOfficiel)}</p></div></div></CardContent></Card>
     <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
       <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="general">Général</TabsTrigger><TabsTrigger value="mandats">Transferts</TabsTrigger><TabsTrigger value="licences">Licences</TabsTrigger></TabsList>

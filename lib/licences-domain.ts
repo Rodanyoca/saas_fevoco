@@ -5,6 +5,7 @@ import { formatDateForSheet } from "./compact-date.ts"
 type LicenceSource = { athleteLicences: Record<string, string>[]; actorLicences: Record<string, string>[] }
 type AffiliationSnapshot = { id: string; actorId: string; activeFrom: string; activeUntil: string; statusId: string; targetExists: boolean; clubId?: string }
 export type LicenceStore = {
+  reservedIds?(): Promise<string[]>
   load(fresh?: boolean): Promise<LicenceSource>
   appendAthlete(rows: Record<string, string>[]): Promise<void>; appendActor(row: Record<string, string>): Promise<void>
   updateAthlete?(id: string, row: Record<string, string>): Promise<void>
@@ -17,7 +18,7 @@ export class LicenceDomainError extends Error { code: string; status: number; fi
 const actorKinds: Record<string, "coach" | "officiel" | "arbitre" | "medecin"> = { TAC002: "coach", TAC003: "officiel", TAC004: "arbitre", TAC005: "medecin" }
 const date = (value: string) => { const result = formatDateForSheet(value); if (!result) throw new Error(); return result }
 const active = (a: AffiliationSnapshot, on: string) => a.statusId === "SAF001" && a.activeFrom <= on && (!a.activeUntil || a.activeUntil >= on) && a.targetExists
-const next = (prefix: string, year: string, rows: Record<string, string>[]) => `${prefix}-${year}-${String(Math.max(0, ...rows.map((r) => +(r.id_licence?.match(new RegExp(`^${prefix}-${year}-(\\d{6})$`))?.[1] || 0))) + 1).padStart(6, "0")}`
+const next = (prefix: string, year: string, rows: Record<string, string>[], reserved: string[] = []) => `${prefix}-${year}-${String(Math.max(0, ...[...rows.map(row => row.id_licence), ...reserved].map(id => +(id?.match(new RegExp(`^${prefix}-${year}-(\\d{6,})$`))?.[1] || 0))) + 1).padStart(6, "0")}`
 const text = z.string().trim()
 const actorSchema = z.object({ id_type_acteur: text.min(1), id_acteur: text.min(1), id_affiliation_acteur: text.optional().default(""), id_cycle_licence: text.min(1), numero_licence: text.min(1), date_delivrance: text.min(1), date_debut_validite: text.min(1), date_fin_validite: text.min(1), id_statut_licence: text.min(1), observations: text.optional().default("") })
 
@@ -30,6 +31,9 @@ export function createLicenceDomain(store: LicenceStore) {
     async updateActor(id: string, input: unknown) {
       const source = await store.load(true), current = source.actorLicences.find(row => row.id_licence === id)
       if (!current) throw new LicenceDomainError("LICENCE_INTROUVABLE", "Licence introuvable.", 404)
+      if (!input || typeof input !== "object") throw new LicenceDomainError("VALIDATION", "Formulaire invalide.", 422)
+      const submitted = input as Record<string, unknown>
+      for (const key of ["id_type_acteur", "id_acteur", "id_affiliation_acteur", "id_cycle_licence", "numero_licence"]) if (submitted[key] !== undefined && submitted[key] !== current[key]) throw new LicenceDomainError("LICENCE_IMMUABLE", "Le propriétaire, le rattachement, le cycle et le numéro ne se remplacent pas dans une modification ordinaire.", 422, { [key]: "Champ non modifiable." })
       const fields = parsed(actorSchema.omit({ id_type_acteur: true, id_acteur: true }), input)
       const memory: LicenceStore = { ...store, load: async () => ({ ...source, actorLicences: source.actorLicences.filter(row => row.id_licence !== id) }), appendActor: async () => {} }
       const validated = await createLicenceDomain(memory).createActor({ ...fields, id_type_acteur: current.id_type_acteur, id_acteur: current.id_acteur })
@@ -72,7 +76,7 @@ export function createLicenceDomain(store: LicenceStore) {
       if (kind !== "arbitre") { const affiliation = await store.affiliation(kind, affiliationId); if (!affiliation || affiliation.actorId !== v.id_acteur || !active(affiliation, start)) throw new LicenceDomainError("AFFILIATION_REQUISE", "Une affiliation active est obligatoire.", 409) }
       const data = await store.load(true)
       if (data.actorLicences.some((row) => row.id_type_acteur === v.id_type_acteur && row.id_acteur === v.id_acteur && row.id_statut_licence !== "STL005" && start <= row.date_fin_validite && end >= row.date_debut_validite)) throw new LicenceDomainError("CHEVAUCHEMENT", "Cette période chevauche une licence existante.", 409)
-      const row = { id_licence: next("VOL-ACL", delivery.slice(0, 4), data.actorLicences), ...v, id_affiliation_acteur: kind === "arbitre" ? "" : affiliationId, observations: v.observations ?? "", date_delivrance: delivery, date_debut_validite: start, date_fin_validite: end }
+      const row = { id_licence: next("VOL-ACL", delivery.slice(0, 4), data.actorLicences, await store.reservedIds?.() || []), ...v, id_affiliation_acteur: kind === "arbitre" ? "" : affiliationId, observations: v.observations ?? "", date_delivrance: delivery, date_debut_validite: start, date_fin_validite: end }
       await store.appendActor(row); return row
     },
   }

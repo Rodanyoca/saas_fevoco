@@ -1,4 +1,5 @@
 "use client"
+import { useRecordVersion } from "@/components/actors/record-management"
 
 import { useState } from "react"
 import { Pencil } from "lucide-react"
@@ -45,7 +46,7 @@ export function MedecinFormDialog({ medecin, sexes, specialties, onSaved }: {
     numeroPasseport: medecin?.numeroPasseport ?? "", dateDelivrancePasseport: compactDateFromSheet(medecin?.dateDelivrancePasseport ?? ""),
     dateExpirationPasseport: compactDateFromSheet(medecin?.dateExpirationPasseport ?? ""), statut: medecin?.statut || "actif",
   })
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false); const revision = useRecordVersion("actor", "medecin", medecin?.idMedecin || "", Boolean(medecin) && open)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState("")
   const [errors, setErrors] = useState<FieldErrors>({})
@@ -79,7 +80,7 @@ export function MedecinFormDialog({ medecin, sexes, specialties, onSaved }: {
     setPending(true); setError("")
     try {
       const response = await fetch(editing ? `/api/medecins/${encodeURIComponent(medecin!.idMedecin)}` : "/api/medecins", {
-        method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
+        method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json", ...(editing ? {"If-Match":revision.version} : {}) }, body: JSON.stringify(form),
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || "Enregistrement impossible.")
@@ -130,7 +131,7 @@ export function MedecinFormDialog({ medecin, sexes, specialties, onSaved }: {
           <AvatarFileField editing={editing} onFileChange={setAvatarFile} />
         </fieldset>
         {error && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
-        <SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement…" : "Enregistrer"}</Button></SheetFooter>
+        {revision.error && <p role="alert" className="text-sm text-destructive">{revision.error}</p>}<SheetFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>Annuler</Button><Button type="submit" disabled={pending || (editing && !revision.version)} className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90">{pending ? "Enregistrement…" : "Enregistrer"}</Button></SheetFooter>
       </form>
     </SheetContent>
   </Sheet>

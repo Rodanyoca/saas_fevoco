@@ -3,21 +3,23 @@ import "server-only"
 import { env } from "@/lib/env"
 import { getSheetsDataFrom, type SheetRow } from "@/lib/google-sheets"
 import { mutateSeasonalLicence } from "@/lib/sports-mutations"
-import { sportsWritesEnabled, sportsWriteBlockReason } from "@/lib/sports-atomic-store"
+import { createGoogleSportsStore, sportsWritesEnabled, sportsWriteBlockReason } from "@/lib/sports-atomic-store"
+import { licenceEligibilityIndex, assertAthleteLicenceEligible, type LicenceSelection } from "@/lib/athlete-licence-eligibility"
+import { allocateSportsLicences } from "@/lib/sports-licences-domain"
+import { SportsError } from "@/lib/sports-model"
 import { athleteAffiliationClubId, athleteAffiliationClubName } from "@/lib/athlete-affiliation-fields"
 
 const clean = (value: unknown) => String(value ?? "").trim()
 const first = (row: SheetRow, ...keys: string[]) => keys.map((key) => clean(row[key])).find(Boolean) ?? ""
 
 async function source() {
-  const [licences, affiliations, actors, structures, references] = await Promise.all([
+  const [licences, affiliations, structures, references] = await Promise.all([
     getSheetsDataFrom(env.googleSheets.licencesSpreadsheetId, ["COMPTEURS_LICENCES!A:F"]),
     getSheetsDataFrom(env.googleSheets.affiliationsSpreadsheetId, ["ATHLETE_AFFILIATIONS!A:ZZ"]),
-    getSheetsDataFrom(env.googleSheets.acteursSpreadsheetId, ["ATHLETES!A:ZZ"]),
     getSheetsDataFrom(env.googleSheets.territorialSpreadsheetId, ["CLUBS!A:ZZ", "ENTENTES!A:ZZ", "LIGUES!A:ZZ"]),
-    getSheetsDataFrom(env.googleSheets.referentielsSpreadsheetId, ["SAISON!A:ZZ", "STATUT_LICENCE!A:ZZ", "STATUTS_AFFILIATION!A:ZZ"]),
+    getSheetsDataFrom(env.googleSheets.referentielsSpreadsheetId, ["SAISON!A:ZZ", "STATUT_LICENCE!A:ZZ"]),
   ])
-  return { licences, affiliations, actors, structures, references }
+  return { licences, affiliations, structures, references }
 }
 
 export type AthleteLicenceCandidate = {
@@ -28,31 +30,36 @@ export type AthleteLicenceCandidate = {
   affiliationStatus: string
   dateDebut: string
   dateFin: string
+  renewable?: boolean
 }
 
-export async function athleteLicenceCreationOptions() {
+export async function athleteLicenceCandidates(selection: LicenceSelection) {
+  const snapshot = await createGoogleSportsStore().load(), index = licenceEligibilityIndex(snapshot, selection.seasonId, selection.date)
+  if (snapshot.businessWritePending) throw new SportsError("ECRITURE_EN_COURS", "Une écriture est en cours ou doit être vérifiée. Réessayez après sa confirmation.")
+  const names = new Map(snapshot.athletes.map(row => [row.id_athlete, row.nom_complet || row.nom_complet_athlete || row.id_athlete]))
+  const locks = new Set(snapshot.operationActorIds), previous = new Set(snapshot.licences.filter(row => row.id_saison !== selection.seasonId).map(row => row.id_athlete))
+  const candidates: AthleteLicenceCandidate[] = [], conflicts: Array<{ athleteId: string; code: string }> = []
+  for (const row of snapshot.affiliations) if (row.id_club === selection.clubId) {
+    try {
+      assertAthleteLicenceEligible(snapshot, index, row, selection.seasonId, row.id_athlete, selection.clubId)
+      if (locks.has(row.id_athlete)) throw new SportsError("ATHLETE_RESERVE", "Une opération doit être terminée ou reprise.")
+      candidates.push({ affiliationId: row.id_affiliation_athlete, athleteId: row.id_athlete, athleteName: names.get(row.id_athlete)!, clubId: row.id_club, affiliationStatus: "ACTIF", dateDebut: row.date_debut, dateFin: row.date_fin, renewable: previous.has(row.id_athlete) })
+    } catch (error) { if (!(error instanceof SportsError)) throw error; conflicts.push({ athleteId: row.id_athlete, code: error.code }) }
+  }
+  // Dry plan validates the shared club/season counter and historical numbers once, without claiming anything.
+  if (candidates.length) allocateSportsLicences(snapshot, { id_athlete: candidates[0].athleteId, id_affiliation_athlete: candidates[0].affiliationId, id_club: selection.clubId, id_saison: selection.seasonId, date_delivrance: index.date, id_statut_licence: "STL001" })
+  return { candidates: [...new Map(candidates.map(item => [item.athleteId, item])).values()].sort((a, b) => a.athleteName.localeCompare(b.athleteName, "fr")), conflicts }
+}
+export function athleteLicenceCreationOptions(selection: LicenceSelection): ReturnType<typeof athleteLicenceCandidates>
+export function athleteLicenceCreationOptions(): ReturnType<typeof initialOptions>
+export function athleteLicenceCreationOptions(selection?: LicenceSelection) { return selection ? athleteLicenceCandidates(selection) : initialOptions() }
+async function initialOptions() {
   const data = await source()
-  const athletes = new Map((data.actors.ATHLETES ?? []).map((row) => [clean(row.id_athlete), row]))
   const clubs = new Map((data.structures.CLUBS ?? []).map((row) => [clean(row.id_club), row]))
   const ententes = new Map((data.structures.ENTENTES ?? []).map(row => [clean(row.id_entente), row]))
   const ligues = new Map((data.structures.LIGUES ?? []).map(row => [clean(row.id_ligue), row]))
   const affiliationRows = data.affiliations.ATHLETE_AFFILIATIONS ?? []
-  const candidates: AthleteLicenceCandidate[] = affiliationRows.flatMap((row) => {
-    const affiliationId = first(row, "id_affiliation_athlete", "id_affiliation")
-    const athleteId = first(row, "id_athlete", "athlete_id", "id_acteur")
-    const clubId = athleteAffiliationClubId(row)
-    const athlete = athletes.get(athleteId)
-    if (!affiliationId || !athlete || !clubId) return []
-    return [{
-      affiliationId,
-      athleteId,
-      athleteName: first(athlete, "nom_complet", "nom_complet_athlete") || athleteId,
-      clubId,
-      affiliationStatus: first((data.references.STATUTS_AFFILIATION ?? []).find(item => clean(item.id_statut_affiliation) === clean(row.id_statut_affiliation)) || row, "nom_statut_affiliation", "statut_affiliation", "id_statut_affiliation", "statut") || "Non renseigné",
-      dateDebut: clean(row.date_debut),
-      dateFin: clean(row.date_fin),
-    }]
-  })
+  const candidates: AthleteLicenceCandidate[] = [] // Loaded freshly only for the selected club/season.
   const historicalClubs = affiliationRows.map((row) => {
     const id = athleteAffiliationClubId(row)
     return { id, label: athleteAffiliationClubName(row) || id }
