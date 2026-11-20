@@ -1,0 +1,22 @@
+{
+  "baselineCommit": "23c8a76",
+  "oldAffiliationOnly": {
+    "logicalReads": 18,
+    "valueBatches": 6,
+    "writes": 5,
+    "businessBatches": 1
+  },
+  "oldCompleteAffiliationAndLicence": {
+    "logicalReads": 37,
+    "valueBatches": 12,
+    "writes": 10,
+    "businessBatches": 2
+  },
+  "newCoordinatedAttachment": {
+    "logicalReads": 28,
+    "valueBatches": 7,
+    "writes": 8,
+    "businessBatches": 2
+  },
+  "productionWrites": 0
+}

@@ -19,7 +19,7 @@ async function context(kind: AffiliationKind, includeSports = false, fresh = fal
   if (!config.affiliationsSpreadsheetId || !config.acteursSpreadsheetId || !config.territorialSpreadsheetId || !config.referentielsSpreadsheetId || !config.clientEmail || !config.privateKey) throw new AffiliationDomainError("SOURCE_INDISPONIBLE", "Les classeurs des affiliations ne sont pas configurés.", 503)
   const entity = kind === "officiel" || kind === "autre"
   const [reference, territory, actors] = await Promise.all([
-    getSheetsDataFrom(config.referentielsSpreadsheetId, ["STATUTS_AFFILIATION", ...(kind === "athlete" && includeSports ? ["TYPES_TRANSFERT"] : []), ...(entity ? ["TYPES_STRUCTURES", "FEDERATION"] : []), ...(kind === "officiel" ? ["FONCTION_OFFICIEL"] : []), ...(kind === "autre" ? ["SAISON"] : [])].map(name => `${name}!A:ZZ`), {fresh}),
+    getSheetsDataFrom(config.referentielsSpreadsheetId, ["STATUTS_AFFILIATION", ...(kind === "athlete" && includeSports ? ["TYPES_TRANSFERT", "SAISON", "STATUTS_SAISON", "PARAMETRES_SYSTEME"] : []), ...(entity ? ["TYPES_STRUCTURES", "FEDERATION"] : []), ...(kind === "officiel" ? ["FONCTION_OFFICIEL"] : []), ...(kind === "autre" ? ["SAISON"] : [])].map(name => `${name}!A:ZZ`), {fresh}),
     getSheetsDataFrom(config.territorialSpreadsheetId, (entity ? ["CLUBS", "LIGUES", "ENTENTES"] : ["CLUBS"]).map(name => `${name}!A:ZZ`), {fresh}),
     referencesOnly ? Promise.resolve([]) : getSheetDataFrom(config.acteursSpreadsheetId, `${definition.actorSheet}!A:ZZ`, {fresh}),
   ])
@@ -54,7 +54,7 @@ async function context(kind: AffiliationKind, includeSports = false, fresh = fal
       else await updateSheetRecordById(config.affiliationsSpreadsheetId, definition.sheet, definition.id, row.id, record)
     },
   }
-  if (kind === "athlete") Object.assign(refs, { transferTypes: options(reference.TYPES_TRANSFERT || [], "id_type_transfert", "nom_transfert"), sportsWritesEnabled: sportsWritesEnabled(), sportsWriteBlockReason })
+  if (kind === "athlete") Object.assign(refs, { transferTypes: options(reference.TYPES_TRANSFERT || [], "id_type_transfert", "nom_transfert"), sportsWritesEnabled: sportsWritesEnabled(), sportsWriteBlockReason, operationDate: sportsToday(), currentSeason: (() => { const id = (reference.PARAMETRES_SYSTEME || []).find(row => text(row.cle_parametre) === "SAISON_COURANTE")?.valeur_parametre; return (reference.SAISON || []).find(row => text(row.id_saison) === text(id)) ? { id: text(id), label: text((reference.SAISON || []).find(row => text(row.id_saison) === text(id))?.nom_saison) || text(id) } : undefined })() })
   const names = new Map(actors.map(row => [text(row[definition.actor]), text(row.nom_complet)]))
   return { refs, store, actorName: (id: string) => names.get(id) || "", actorRows: (id: string) => readRows(false, id) }
 }
@@ -63,6 +63,10 @@ export async function listActorAffiliations(kind: AffiliationKind, actorId: stri
   const { refs, store, actorRows } = await context(kind, true)
   if (!actorId || !(await store.actorExists(kind, actorId))) throw new AffiliationDomainError("ACTEUR_INTROUVABLE", "Acteur introuvable.", 404)
   const rows = (await actorRows(actorId)).sort((a, b) => b.dateDebut.localeCompare(a.dateDebut))
+  if (kind === "athlete") {
+    const data = await getSheetsDataFrom(env.googleSheets.licencesSpreadsheetId, ["ATHLETE_LICENCES!A:ZZ"])
+    refs.activeLicences = (data.ATHLETE_LICENCES || []).filter(row => text(row.id_athlete) === actorId && text(row.id_statut_licence) === "STL001").map(row => ({ id: text(row.id_licence), number: text(row.numero_licence), club: refs.clubs.find(club => club.id === text(row.id_club_attribution))?.label || text(row.id_club_attribution), season: text(row.id_saison) }))
+  }
   const view = rows.length > 1 ? createAffiliationView(refs) : (row: typeof rows[number]) => affiliationView(row, refs)
   const raw = rows.map(row => writeAffiliationRow(row, row.statusId)), byId = new Map(raw.map(row => [row.id_affiliation_athlete, row]))
   return { affiliations: rows.map((row, index) => ({ ...view(row), ...(kind === "athlete" ? { temporalState: temporalState(raw[index], sportsToday()), transferRole: transferRole(raw[index], byId) } : {}) })), references: refs }
@@ -76,11 +80,11 @@ export async function allActorAffiliationViews(kind: AffiliationKind, includeSpo
 
 // Sérialise les écritures dans une instance ; les UUID évitent les collisions entre instances.
 const pending = new Map<string, Promise<unknown>>()
-export async function saveActorAffiliation(kind: AffiliationKind, actorId: string, input: unknown, id?: string) {
+export async function saveActorAffiliation(kind: AffiliationKind, actorId: string, input: unknown, id?: string, userId = "") {
   if (kind === "athlete") {
-    const row = await mutateAthleteTransfer(actorId, input, id)
+    const row = await mutateAthleteTransfer(actorId, input, id, userId)
     const { refs } = await context(kind, true, false, true)
-    return { affiliation: affiliationView(readAffiliationRow(kind, row, refs.statuses, formatDateForSheet), refs), created: !id }
+    return { affiliation: affiliationView(readAffiliationRow(kind, row, refs.statuses, formatDateForSheet), refs), created: !id, ...(row.numero_licence ? { licence: { numero: row.numero_licence, seasonId: row.id_saison_licence, club: refs.clubs.find(club => club.id === row.id_club)?.label || row.id_club } } : {}) }
   }
   const key = `${kind}:${actorId}`, previous = pending.get(key) || Promise.resolve()
   const task = previous.catch(() => {}).then(async () => {

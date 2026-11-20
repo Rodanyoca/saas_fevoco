@@ -1,5 +1,6 @@
 "use client"
 
+import { AthleteLicenceActions } from "@/components/licences/athlete-licence-editor"
 import type { ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
 import { formatSheetDate } from "@/lib/date-utils"
@@ -101,18 +102,19 @@ export function AffiliationSection<T extends BaseActorAffiliation>({
   )
 }
 
-export function LicenceSection({ licences, actorId, action, athlete = false, showCycle = false }: { licences: BaseActorLicence[]; actorId: string; action?: ReactNode; showId?: boolean; athlete?: boolean; showCycle?: boolean }) {
+export function LicenceSection({ licences, actorId, action, athlete = false, showCycle = false, compact = false }: { licences: BaseActorLicence[]; actorId: string; action?: ReactNode; showId?: boolean; athlete?: boolean; showCycle?: boolean; compact?: boolean }) {
   const history = licenceHistory(licences, actorId)
   const headers = athlete ? ["Saison", "Numéro", "Club d’attribution", "Club actuel", "Délivrée le", "Statut"]  : ["Numéro", "Délivrée le", "Validité", "Statut"]
+  if (athlete) headers.push("Actions")
   if (showCycle) headers.splice(1, 0, "Cycle")
   return (
-    <Card className="min-w-0">
-      <CardHeader className="items-start gap-4">
-        <CardTitle>Historique des licences</CardTitle>
+    <Card className={`min-w-0 ${compact ? "gap-3 py-3" : ""}`}>
+      {(!compact || action) && <CardHeader className={`items-start gap-4 ${compact ? "px-3 py-0" : ""}`}>
+        {!compact && <CardTitle>Historique des licences</CardTitle>}
         {action && <div className="flex flex-wrap gap-2 [&>button]:bg-brand-gold [&>button]:text-[#071827] [&>button:hover]:bg-brand-gold/90">{action}</div>}
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-hidden rounded-lg border border-border">
+      </CardHeader>}
+      <CardContent className={compact ? "px-3" : undefined}>
+        <div className="overflow-x-auto rounded-lg border border-border">
           <Table aria-label="Historique des licences">
             <TableHeader className="bg-muted/50"><TableRow>{headers.map(header => <TableHead key={header}>{header}</TableHead>)}</TableRow></TableHeader>
             <TableBody>
@@ -126,6 +128,7 @@ export function LicenceSection({ licences, actorId, action, athlete = false, sho
                   <TableCell>{date(item.dateDelivrance)}</TableCell>
                   {!athlete && <TableCell>{date(item.dateDebutValidite || item.dateDelivrance)} — {date(item.dateFinValidite)}</TableCell>}
                   <TableCell><StatusBadge status={item.statutLicence} /></TableCell>
+                  {athlete && <TableCell><AthleteLicenceActions licence={licence} /></TableCell>}
                 </TableRow>
               }) : <TableRow><TableCell colSpan={headers.length} className="h-24 text-center text-muted-foreground">Aucune licence enregistrée.</TableCell></TableRow>}
             </TableBody>

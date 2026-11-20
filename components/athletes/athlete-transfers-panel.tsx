@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Eye, Pencil, Plus, RefreshCw, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { SearchSelect } from "@/components/ui/search-select"
 import { CompactDateInput } from "@/components/ui/compact-date-input"
-import { compactDateFromSheet, formatDateForDisplay } from "@/lib/compact-date"
+import { compactDateFromSheet, formatDateForDisplay, formatDateForSheet } from "@/lib/compact-date"
 import type { ActorAffiliationView, AffiliationReferences } from "@/lib/actor-affiliation-schema"
 
 const blank = () => ({ id_club: "", id_type_transfert: "", id_affiliation_precedente: "", date_debut: "", date_fin: "", id_statut_affiliation: "SAF001", observations: "" })
@@ -48,20 +48,27 @@ export function AthleteTransfersPanel({ actorId, onChanged, onAffiliationsLoaded
     setValues(item && !loanReturn ? { id_club: item.clubId, id_type_transfert: item.transferTypeId || "", id_affiliation_precedente: item.previousAffiliationId || "", date_debut: compactDateFromSheet(item.dateDebut), date_fin: compactDateFromSheet(item.dateFin), id_statut_affiliation: item.statusId, observations: item.observations } : loanReturn && item ? { ...blank(), id_type_transfert: "TRF002", id_affiliation_precedente: item.id } : blank())
     setOpen(true)
   }
-  const set = (field: keyof Values, value: string) => { if (uncertain) return; key.current = crypto.randomUUID(); payload.current = null; setValues(current => ({ ...current, [field]: value })) }
+  const set = (field: keyof Values, value: string) => { if (uncertain) return; setErrors(current => { const next = { ...current }; delete next[field]; delete next._form; return next }); key.current = crypto.randomUUID(); payload.current = null; setValues(current => ({ ...current, [field]: value })) }
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); if (viewing || savingGuard.current || !refs.sportsWritesEnabled) return
+    if (!uncertain) {
+      try {
+        const start = formatDateForSheet(values.date_debut), end = formatDateForSheet(values.date_fin)
+        if (!start || end && end < start) { setErrors({date_debut:"Vérifiez les dates et leur ordre."}); return }
+        if (!editing && refs.operationDate && (start > refs.operationDate || end && end < refs.operationDate)) { setErrors({_form:"Ce formulaire crée une licence actuelle. Les rattachements futurs ou déjà terminés relèvent de la programmation ou de l'import historique."}); return }
+      } catch { setErrors({date_debut:"Saisissez des dates civiles valides."}); return }
+    }
     savingGuard.current = true; setSaving(true); setErrors({})
     if (!payload.current) payload.current = JSON.stringify({ ...values, actorId, idempotency_key: key.current, ...(editing ? { id: editing.id } : {}), ...(returning ? { action: "RETURN" } : {}) })
     try {
       const response = await fetch("/api/affiliations/athlete", { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json", ...(editing ? {"If-Match":revision.version} : {}) }, body: payload.current })
       const data = await response.json()
       if (!response.ok) {
-        const pending = response.status >= 500 || ["ATHLETE_RESERVE", "RESERVATION_A_REPRENDRE", "RESULTAT_INDETERMINE", "LIBERATION_A_REPRENDRE"].includes(data.code)
+        const pending = Boolean(data.uncertain) || response.status >= 500 || ["ATHLETE_RESERVE", "RESERVATION_A_REPRENDRE", "RESULTAT_INDETERMINE", "LIBERATION_A_REPRENDRE"].includes(data.code)
         setUncertain(pending); setErrors({ ...data.fields, _form: data.message || "Enregistrement impossible." }); return
       }
-      setOpen(false); setUncertain(false); toast.success(returning ? "Retour de cession confirmé." : "Mouvement confirmé.")
-      await load(); router.refresh(); if (onChanged) { try { await onChanged() } catch { toast.warning("Mouvement confirmé. Actualisez la fiche pour relire ses informations.") } }
+      setOpen(false); setUncertain(false); toast.success(data.licence ? `${data.affiliation.id} · ${data.licence.club} · ${data.licence.seasonId} · Licence ${data.licence.numero}` : "Mouvement confirmé.")
+      await load(); if (onChanged) { try { await onChanged() } catch { toast.warning("Mouvement confirmé. Actualisez la fiche pour relire ses informations.") } } else router.refresh()
     } catch { setUncertain(true); setErrors({ _form: "Résultat non confirmé. Conservez cette tentative et vérifiez son résultat avant de modifier les données." }) }
     finally { savingGuard.current = false; setSaving(false) }
   }
@@ -69,14 +76,15 @@ export function AthleteTransfersPanel({ actorId, onChanged, onAffiliationsLoaded
   const labels = ["Club", "Opération", "Précédent", "Début", "Fin", "Statut d’affiliation", "État"]
   const cells = (item: ActorAffiliationView) => [item.structure || "Structure introuvable", item.transferRole === "RETOUR" ? "Retour de cession" : item.transferRole === "SUSPENSION" ? "Interruption de cession" : item.transferType || "Non renseigné", item.previousAffiliationId || "—", formatDateForDisplay(item.dateDebut), item.dateFin ? formatDateForDisplay(item.dateFin) : "Ouverte", item.statut, item.temporalState || "Non renseigné"]
   const actions = (item: ActorAffiliationView) => <div className="flex justify-end gap-1"><DeleteRecordButton entity="affiliation" family={"athlete"} id={item.id} label={item.structure} onDeleted={() => void load()} iconOnly /><Button size="icon-sm" variant="ghost" aria-label="Consulter le mouvement" onClick={() => start(item, true)}><Eye /></Button><Button size="icon-sm" variant="ghost" aria-label="Modifier le mouvement" onClick={() => start(item)}><Pencil /></Button>{item.transferRole === "CESSION" && <Button size="icon-sm" variant="ghost" aria-label="Confirmer le retour de cession" onClick={() => start(item, false, true)}><Undo2 /></Button>}</div>
-  return <Card className="min-w-0"><CardHeader><CardTitle>Transferts</CardTitle><div className="flex flex-wrap gap-2"><Button variant="outline" size="icon" aria-label="Actualiser les transferts" onClick={() => void load()} disabled={loading}><RefreshCw className={loading ? "animate-spin" : ""} /></Button><Button className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" disabled={loading || Boolean(error)} onClick={() => start()}><Plus />Ajouter un mouvement</Button></div></CardHeader><CardContent className="space-y-4">
+  return <Card className="min-w-0 gap-2 py-2 shadow-none"><div className="flex justify-end gap-2 px-3 pt-2"><Button variant="outline" size="icon" aria-label="Actualiser les transferts" onClick={() => void load()} disabled={loading}><RefreshCw className={loading ? "animate-spin" : ""} /></Button><Button className="bg-brand-gold text-[#071827] hover:bg-brand-gold/90" disabled={loading || Boolean(error)} onClick={() => start()}><Plus />Ajouter un mouvement</Button></div><CardContent className="space-y-2 px-3 pb-3">
     {!refs.sportsWritesEnabled && !loading && <p role="status" className="rounded-lg border border-amber-500/40 p-3 text-sm">{refs.sportsWriteBlockReason || "Écritures sportives non activées."}</p>}
     {error ? <p role="alert">{error}</p> : loading ? <p role="status">Chargement des transferts…</p> : !items.length ? <p className="text-sm text-muted-foreground">Aucun rattachement enregistré.</p> : <><div className="space-y-3 md:hidden">{items.map(item => <div key={item.id} className="rounded-lg border p-3">{labels.map((label, index) => <div key={label} className="grid grid-cols-2 gap-2 py-1 text-sm"><span className="text-muted-foreground">{label}</span><span className="break-words">{cells(item)[index]}</span></div>)}{actions(item)}</div>)}</div><div className="hidden overflow-x-auto rounded-lg border md:block"><Table aria-label="Transferts"><TableHeader><TableRow>{labels.map(label => <TableHead key={label}>{label}</TableHead>)}<TableHead>Actions</TableHead></TableRow></TableHeader><TableBody>{items.map(item => <TableRow key={item.id}>{cells(item).map((cell, i) => <TableCell key={i}>{cell}</TableCell>)}<TableCell>{actions(item)}</TableCell></TableRow>)}</TableBody></Table></div></>}
-  </CardContent><Sheet open={open} onOpenChange={next => { if (!saving && !uncertain) setOpen(next) }}><SheetContent className="w-full overflow-y-auto sm:max-w-lg"><form onSubmit={submit}><SheetHeader><SheetTitle>{returning ? "Confirmer le retour de cession" : viewing ? "Consulter le mouvement" : editing ? "Modifier le mouvement" : "Nouveau mouvement"}</SheetTitle><SheetDescription>Les dates sont inclusives. Une suspension d’affiliation ne suspend pas la licence. Un transfert conserve son numéro.</SheetDescription></SheetHeader><div className="space-y-4 px-4 py-2">
+  </CardContent><Sheet open={open} onOpenChange={next => { if (!saving && !uncertain) setOpen(next) }}><SheetContent className="w-full overflow-y-auto sm:max-w-lg"><form onSubmit={submit}><SheetHeader><SheetTitle>{returning ? "Confirmer le retour de cession" : viewing ? "Consulter le mouvement" : editing ? "Modifier le mouvement" : "Nouveau mouvement"}</SheetTitle><SheetDescription>Les dates sont inclusives. Chaque nouveau rattachement actuel crée sa licence ; les anciennes licences et leurs numéros restent dans l’historique.</SheetDescription></SheetHeader><div className="space-y-4 px-4 py-2">
+    {!editing && !viewing && <div role="status" className="space-y-2 rounded-lg border p-3 text-sm"><p>L’enregistrement de cette affiliation créera automatiquement la licence de la saison courante : <strong>{refs.currentSeason?.label || "Saison non configurée"}</strong>.</p><p>Les rattachements futurs ou déjà terminés ne sont pas pris en charge ici.</p>{refs.activeLicences?.map(item => <p key={item.id}>Licence {item.number} au {item.club} : {values.id_type_transfert === "TRF002" ? "suspendue" : "clôturée"}. Nouveau club : {returning ? "club d'origine du retour" : refs.clubs.find(club => club.id === values.id_club)?.label || "à sélectionner"}. Saison : {refs.currentSeason?.label}.</p>)}</div>}
     {!returning && <>{select("id_type_transfert", "Type d’opération *", refs.transferTypes || [], Boolean(editing))}<div className="space-y-2"><Label htmlFor="transfer-club">Club bénéficiaire *</Label><SearchSelect id="transfer-club" value={values.id_club} onValueChange={value => set("id_club", value)} options={refs.clubs.filter(club => /^\d{7}$/.test(club.id))} disabled={viewing || saving || uncertain} placeholder="Rechercher un club" />{errors.id_club && <p className="text-sm text-destructive">{errors.id_club}</p>}</div></>}
     {(returning || (values.id_type_transfert && values.id_type_transfert !== "TRF001") || viewing && values.id_affiliation_precedente) && select("id_affiliation_precedente", returning ? "Cession d’origine" : "Rattachement précédent *", items.map(item => ({ id: item.id, label: `${item.structure} · ${formatDateForDisplay(item.dateDebut)}` })), Boolean(editing) || returning)}
     {(["date_debut", "date_fin"] as const).map(field => <div className="space-y-2" key={field}><Label htmlFor={`transfer-${field}`}>{field === "date_debut" ? "Date de début *" : returning ? "Fin reprise depuis le rattachement d’origine" : values.id_type_transfert === "TRF002" ? "Date de fin de cession *" : "Date de fin (facultative)"}</Label><CompactDateInput id={`transfer-${field}`} value={values[field]} onValueChange={value => set(field, value)} disabled={viewing || saving || uncertain || returning && field === "date_fin"} required={field === "date_debut" || field === "date_fin" && values.id_type_transfert === "TRF002" && !returning && !editing} optional={field === "date_fin"} />{errors[field] && <p className="text-sm text-destructive">{errors[field]}</p>}</div>)}
-    {select("id_statut_affiliation", "Statut de l’affiliation", refs.statuses, returning || !editing && values.id_type_transfert !== "TRF001")}
+    {select("id_statut_affiliation", "Statut de l’affiliation", refs.statuses, returning || !editing)}
     <div className="space-y-2"><Label htmlFor="transfer-notes">Observations</Label><Textarea id="transfer-notes" value={values.observations} onChange={event => set("observations", event.target.value)} disabled={viewing || saving || uncertain} /></div>
     {!refs.sportsWritesEnabled && !viewing && <p className="text-sm text-amber-600">{refs.sportsWriteBlockReason}</p>}
     {errors._form && <p role="alert" className="text-sm text-destructive">{errors._form}</p>}{uncertain && <p className="break-all text-xs">Clé de vérification : {key.current}. Sans reçu confirmé, aucune nouvelle écriture ne doit être forcée.</p>}

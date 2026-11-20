@@ -2,7 +2,9 @@
   {
     "viewport": "desktop",
     "entry": "profile",
-    "athleteDetailHasNoAddLicence": true
+    "athleteDetailHasNoAddLicence": true,
+    "transferHistoryLoadedInViewport": true,
+    "redundantDetailHeadingsRemoved": true
   },
   {
     "viewport": "desktop",
@@ -20,7 +22,9 @@
   {
     "viewport": "mobile",
     "entry": "profile",
-    "athleteDetailHasNoAddLicence": true
+    "athleteDetailHasNoAddLicence": true,
+    "transferHistoryLoadedInViewport": true,
+    "redundantDetailHeadingsRemoved": true
   },
   {
     "viewport": "mobile",

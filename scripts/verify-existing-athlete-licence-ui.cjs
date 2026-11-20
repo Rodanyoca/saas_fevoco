@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- Browser fixture without production access. */
-/* global require, __dirname, console, process, document, URL */
+/* global require, __dirname, console, process, document, window, URL */
 const fs = require("node:fs/promises"), path = require("node:path"), http = require("node:http"), assert = require("node:assert/strict")
 const { webpack } = require("next/dist/compiled/webpack/webpack"), { chromium } = require("@playwright/test")
 const { harness } = require("../tests/helpers/sports-harness.cjs")
@@ -46,10 +46,18 @@ async function main() {
       })
       await page.goto(`http://127.0.0.1:${server.address().port}/?${entry}`)
       if (entry === "profile") {
+        h.books.AFF.sheets.ATHLETE_AFFILIATIONS.values.push(["AFA-000001", "ATH00001", "0101001", "2026-01-01", "", "SAF001", "", "TRF001", ""])
         await page.getByRole("button", { name: /Voir|Consulter/ }).first().click()
         await page.getByRole("heading", { name: /Historique des licences/ }).waitFor()
+        await page.getByRole("heading", { name: "Historique des transferts", exact: true }).waitFor()
+        const transferState = page.getByText("Actuel", { exact: true })
+        await transferState.waitFor()
+        assert.equal(await transferState.evaluateAll(elements => elements.some(element => { const bounds = element.getBoundingClientRect(); return bounds.width > 0 && bounds.height > 0 && bounds.top >= 0 && bounds.bottom <= window.innerHeight })), true)
+        for (const heading of ["Identité civile", "Contact", "Identifiants", "Informations complémentaires"]) {
+          assert.equal(await page.getByRole("heading", { name: heading, exact: true }).count(), 0)
+        }
         assert.equal(await page.getByRole("button", { name: "Ajouter une licence", exact: true }).count(), 0)
-        results.push({ viewport: name, entry, athleteDetailHasNoAddLicence: true })
+        results.push({ viewport: name, entry, athleteDetailHasNoAddLicence: true, transferHistoryLoadedInViewport: true, redundantDetailHeadingsRemoved: true })
         await page.close()
         continue
       }

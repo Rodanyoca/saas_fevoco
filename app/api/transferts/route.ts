@@ -1,20 +1,7 @@
-import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
-import { isAffiliationsGoogleSheetsConfigured } from "@/lib/env"
-import { createAthleteAffiliation } from "@/lib/athlete-affiliation-mutations"
-
-import { SportsError } from "@/lib/sports-model"
-
+import { POST as createAffiliation } from "@/app/api/affiliations/[kind]/route"
 export async function POST(request: Request) {
-  if (!isAffiliationsGoogleSheetsConfigured()) return NextResponse.json({ message: "Le classeur Affiliations n’est pas configuré." }, { status: 503 })
-  try {
-    const result = await createAthleteAffiliation(await request.json())
-    revalidatePath("/transferts")
-    revalidatePath("/athletes")
-    return NextResponse.json({ message: "L’affiliation a été créée avec succès.", ...result }, { status: 201 })
-  } catch (error) {
-    if (error instanceof SportsError) return NextResponse.json({ message: error.message, code: error.code, fields: error.fields }, { status: error.status })
-    const message = error instanceof Error ? error.message : "Création impossible."
-    return NextResponse.json({ message }, { status: 400 })
-  }
+  let body: Record<string, unknown>
+  try { body = await request.json(); if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error() } catch { return NextResponse.json({message:"Requête invalide."},{status:400}) }
+  return createAffiliation(new Request(request.url, {method:"POST",headers:request.headers,body:JSON.stringify({...body,actorId:body.actorId || body.idAthlete || ""})}), {params:Promise.resolve({kind:"athlete"})})
 }

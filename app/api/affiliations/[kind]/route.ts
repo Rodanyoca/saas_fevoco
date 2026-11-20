@@ -6,11 +6,13 @@ import { isAffiliationKind } from "@/lib/actor-affiliation-schema"
 import { AffiliationDomainError } from "@/lib/affiliations-domain"
 import { listActorAffiliations, saveActorAffiliation } from "@/lib/actor-affiliations"
 import { SportsError } from "@/lib/sports-model"
+import { getSession, canAccess } from "@/lib/auth"
+import { isMutationOriginAllowed } from "@/lib/auth/request-origin"
 
 export const runtime = "nodejs"
 const paths = ["/athletes", "/coachs", "/medecins", "/officiels", "/autres-acteurs", "/clubs", "/ligues", "/ententes", "/licences", "/transferts", "/"]
 function failure(error: unknown) {
-  if (error instanceof AffiliationDomainError || error instanceof SportsError) return NextResponse.json({ message: error.message, code: error.code, fields: error.fields }, { status: error.status, headers: { "Cache-Control": "private, no-store" } })
+  if (error instanceof AffiliationDomainError || error instanceof SportsError) return NextResponse.json({ message: error.message, code: error.code, fields: error.fields, uncertain: error instanceof SportsError && error.uncertain }, { status: error.status, headers: { "Cache-Control": "private, no-store" } })
   return NextResponse.json({ message: "Les affiliations sont temporairement indisponibles. Réessayez.", code: "SOURCE_INDISPONIBLE" }, { status: 503 })
 }
 export async function GET(request: Request, context: { params: Promise<{ kind: string }> }) {
@@ -21,11 +23,19 @@ export async function GET(request: Request, context: { params: Promise<{ kind: s
 async function mutate(request: Request, context: { params: Promise<{ kind: string }> }, update: boolean) {
   const { kind } = await context.params
   if (!isAffiliationKind(kind)) return NextResponse.json({ message: "Type d’acteur non pris en charge." }, { status: 404 })
+  let userId = ""
+  if (kind === "athlete" && !update) {
+    if (!isMutationOriginAllowed(request)) return NextResponse.json({message:"Origine refusée."}, {status:403})
+    const session = await getSession()
+    if (!session || session.doitChangerMotDePasse) return NextResponse.json({message:"Session invalide."}, {status:401})
+    userId = session.idUser
+    if (!await canAccess("AUT-SPT", "WRITE")) return NextResponse.json({message:"Droit sportif requis."}, {status:403})
+  }
   let body: Record<string, unknown>
   try { body = await request.json(); if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error() } catch { return NextResponse.json({ message: "Requête invalide." }, { status: 400 }) }
   if (update && (typeof body.id !== "string" || !body.id)) return NextResponse.json({ message: "Affiliation manquante." }, { status: 422 })
   try {
-    const result = await saveActorAffiliation(kind, typeof body.actorId === "string" ? body.actorId : "", { ...body, ...(request.headers.get("Idempotency-Key") ? { idempotency_key: request.headers.get("Idempotency-Key") } : {}) }, update ? String(body.id) : undefined)
+    const result = await saveActorAffiliation(kind, typeof body.actorId === "string" ? body.actorId : "", { ...body, ...(request.headers.get("Idempotency-Key") ? { idempotency_key: request.headers.get("Idempotency-Key") } : {}) }, update ? String(body.id) : undefined, userId)
     paths.forEach(path => revalidatePath(path))
     return NextResponse.json({ ...result, message: update ? "Affiliation modifiée." : "Affiliation enregistrée." }, { status: result.created ? 201 : 200 })
   } catch (error) { return failure(error) }

@@ -1,0 +1,14 @@
+{
+  "commonjsTests": 92,
+  "typescriptDomainTests": 34,
+  "totalDistinctTests": 126,
+  "typescript": "passed: tsc --noEmit --incremental false",
+  "lint": "passed: npm run lint",
+  "build": "passed: npm run build",
+  "browser": "4 fixture scenarios passed: desktop/mobile, normal/partial",
+  "activeLicenceReaderAfterTransfer": "passed",
+  "diffCheck": "passed",
+  "productionWrites": 0,
+  "commit": false,
+  "push": false
+}

@@ -4,8 +4,11 @@ import { SportsError, canonicalDate, nextTechnicalIds, type SportsPlan, type Spo
 import { licenceEligibilityIndex, assertAthleteLicenceEligible } from "./athlete-licence-eligibility.ts"
 
 export type SportsLicenceInput = { id_saison: string; date_delivrance: string; id_statut_licence: string; numero_licence?: string; mode?: string; id_affiliations_athletes?: string[]; id_affiliation_athlete?: string; id_athlete?: string; id_club?: string; observations?: string }
-export function allocateSportsLicences(s: SportsSnapshot, input: SportsLicenceInput): SportsPlan {
-  const eligibility = licenceEligibilityIndex(s, input.id_saison, input.date_delivrance), date = eligibility.date
+export function allocateSportsLicences(s: SportsSnapshot, input: SportsLicenceInput, attachment = false): SportsPlan {
+  const eligibilitySource = attachment ? { ...s, licences: s.licences.filter(row => row.id_athlete !== input.id_athlete), reservedAthleteSeasons: (s.reservedAthleteSeasons || []).filter(key => key !== input.id_athlete + ":" + input.id_saison && !key.startsWith(input.id_athlete + ":")) } : s
+  if (attachment && (s.reservedAthleteSeasons || []).includes(input.id_athlete + ":" + input.id_saison) && !s.licences.some(row => row.id_athlete === input.id_athlete && row.id_saison === input.id_saison)) throw new SportsError("DELIVRANCE_RESERVEE", "Une ancienne reservation doit etre diagnostiquee avant ce rattachement.")
+
+  const eligibility = licenceEligibilityIndex(eligibilitySource, input.id_saison, input.date_delivrance), date = eligibility.date
   if (!s.licenceStatuses.some(row => row.id_statut_licence === input.id_statut_licence)) throw new SportsError("STATUT_INVALIDE", "Statut de licence inconnu.", 422)
   if (input.numero_licence) throw new SportsError("NUMERO_AUTOMATIQUE", "Le numéro est attribué par le serveur ; aucune saisie manuelle n’est acceptée.", 422)
   const ids = input.mode === "CLUB" ? input.id_affiliations_athletes : [input.id_affiliation_athlete]
@@ -18,8 +21,14 @@ export function allocateSportsLicences(s: SportsSnapshot, input: SportsLicenceIn
   if (new Set(selected.map(row => row.id_athlete)).size !== selected.length) throw new SportsError("DOUBLON", "Un athlète ne peut être sélectionné qu’une fois.")
   const seasonRows = s.licences.filter(row => row.id_saison === input.id_saison)
   const { people, numbers } = eligibility
+  const historicalNumbers = new Set<string>()
+  for (const row of seasonRows) if (row.numero_licence) {
+    if (historicalNumbers.has(row.numero_licence)) throw new SportsError("HISTORIQUE_DOUBLON", "Un numéro est dupliqué dans la saison ; vérifiez l’historique.")
+    historicalNumbers.add(row.numero_licence); numbers.add(row.numero_licence)
+  }
   const counters = new Map<string, { row: SportsRow; original?: SportsRow; next: bigint }>()
   for (const aff of selected) {
+    if (!attachment && input.id_statut_licence === "STL001" && s.licences.some(row => row.id_athlete === aff.id_athlete && row.id_statut_licence === "STL001")) throw new SportsError("LICENCE_ACTIVE_EXISTANTE", "Une licence active existe deja pour cet athlete.")
     if (people.has(aff.id_athlete)) throw new SportsError("LICENCE_EXISTANTE", "Cet athlète possède déjà une licence pour cette saison.")
     if (input.mode === "CLUB" && !s.licences.some(row => row.id_athlete === aff.id_athlete && row.id_saison !== input.id_saison)) throw new SportsError("PREMIERE_LICENCE", "Enregistrez la première licence individuellement.")
     if (counters.has(aff.id_club)) continue
@@ -56,10 +65,10 @@ export function allocateSportsLicences(s: SportsSnapshot, input: SportsLicenceIn
     const number = aff.id_club + counter.next.toString().padStart(3, "0")
     if (numbers.has(number)) throw new SportsError("NUMERO_EXISTANT", "Ce numéro est déjà réservé pour la saison.")
     numbers.add(number)
-    claims.push(`counter:${input.id_saison}:${aff.id_club}:${counter.next}`, `athlete-season:${aff.id_athlete}:${input.id_saison}`, `number:${input.id_saison}:${number}`, `record:ATHLETE_LICENCES:${technicalIds[index]}`)
+    claims.push(`counter:${input.id_saison}:${aff.id_club}:${counter.next}`, attachment ? `affiliation-season:${aff.id_affiliation_athlete}:${input.id_saison}` : `athlete-season:${aff.id_athlete}:${input.id_saison}`, `number:${input.id_saison}:${number}`, `record:ATHLETE_LICENCES:${technicalIds[index]}`)
     return { id_licence: technicalIds[index], id_athlete: aff.id_athlete, id_saison: input.id_saison, id_affiliation_athlete: aff.id_affiliation_athlete, numero_licence: number, date_delivrance: date, id_statut_licence: input.id_statut_licence, observations: input.observations || "", id_club_attribution: aff.id_club, compteur_saison: counter.next.toString() }
   })
-  return { claimReplacements: (s.recoverableLicenceClaims || []).filter(claim => selected.some(aff => claim.actorSeason === aff.id_athlete + ":" + input.id_saison)), book: "licences", table: "ATHLETE_LICENCES", claims, resultIds: technicalIds, inserts: { ATHLETE_LICENCES: rows, COMPTEURS_LICENCES: [...counters.values()].filter(c => !c.original).map(c => ({ ...c.row, dernier_compteur: c.next.toString() })) }, updates: [...counters.values()].filter(c => c.original).map(c => ({ table: "COMPTEURS_LICENCES", key: "id_compteur_licence", id: c.row.id_compteur_licence, fields: { ...c.row, dernier_compteur: c.next.toString() } })) }
+  return { claimReplacements: attachment ? [] : (s.recoverableLicenceClaims || []).filter(claim => selected.some(aff => claim.actorSeason === aff.id_athlete + ":" + input.id_saison)), book: "licences", table: "ATHLETE_LICENCES", claims, resultIds: technicalIds, inserts: { ATHLETE_LICENCES: rows, COMPTEURS_LICENCES: [...counters.values()].filter(c => !c.original).map(c => ({ ...c.row, dernier_compteur: c.next.toString() })) }, updates: [...counters.values()].filter(c => c.original).map(c => ({ table: "COMPTEURS_LICENCES", key: "id_compteur_licence", id: c.row.id_compteur_licence, fields: { ...c.row, dernier_compteur: c.next.toString() } })) }
 }
 
 export function modifySportsLicence(s: SportsSnapshot, id: string, input: SportsRow): SportsPlan {
@@ -67,6 +76,7 @@ export function modifySportsLicence(s: SportsSnapshot, id: string, input: Sports
   if (!row) throw new SportsError("LICENCE_INTROUVABLE", "Licence introuvable.", 404)
   for (const key of ["numero_licence", "id_athlete", "id_saison", "id_affiliation_athlete", "id_club_attribution", "compteur_saison"]) if (input[key] !== undefined && input[key] !== row[key]) throw new SportsError("LICENCE_IMMUABLE", "Le numéro, la saison, l’attribution et les références de licence sont immuables.", 422)
   if (!s.licenceStatuses.some(item => item.id_statut_licence === input.id_statut_licence)) throw new SportsError("STATUT_INVALIDE", "Statut de licence inconnu.", 422)
+  if (input.id_statut_licence === "STL001" && s.licences.some(other => other.id_athlete === row.id_athlete && other.id_licence !== id && other.id_statut_licence === "STL001")) throw new SportsError("LICENCE_ACTIVE_EXISTANTE", "Une autre licence active existe pour cet athlete.")
   const fields = { date_delivrance: canonicalDate(input.date_delivrance, "date_delivrance"), id_statut_licence: input.id_statut_licence, observations: input.observations || "" }
   if (fields.date_delivrance !== canonicalDate(row.date_delivrance, "date_delivrance")) throw new SportsError("DATE_ATTRIBUTION_IMMUABLE", "La date d’attribution historique ne peut pas être déplacée.", 422)
   return { book: "licences", table: "ATHLETE_LICENCES", claims: [], resultIds: [id], inserts: {}, updates: [{ table: "ATHLETE_LICENCES", key: "id_licence", id, fields }] }

@@ -16,13 +16,13 @@ export type SportsSnapshot = {
   sexes?: SportsRow[]; seasonStatuses?: SportsRow[]; affiliationStatuses?: SportsRow[]; ententes?: SportsRow[]; ligues?: SportsRow[]
 }
 export type SportsOperation = { id: string; fingerprint: string }
-export type SportsReceipt = { fingerprint: string; table: string; ids: string[]; context?: TransferContext; operationDate?: string; audit?: { userId: string; action: string; at: string } }
+export type SportsReceipt = { fingerprint: string; table: string; ids: string[]; context?: TransferContext; operationDate?: string; operationSeason?: string; audit?: { userId: string; action: string; at: string } }
 export type TransferContext = { previousEnd: string; previousStatus: string; suspensionId?: string }
 export type SportsPlan = {
   claimReplacements?: LicenceClaimReplacement[]
   book: SportsBook; table: "ATHLETE_AFFILIATIONS" | "ATHLETE_LICENCES" | "ATHLETES"
   inserts: Record<string, SportsRow[]>; updates: Array<{ table: string; key: string; id: string; fields: SportsRow }>
-  claims: string[]; resultIds: string[]; context?: TransferContext; operationDate?: string; audit?: SportsReceipt["audit"]
+  claims: string[]; resultIds: string[]; context?: TransferContext; operationDate?: string; operationSeason?: string; audit?: SportsReceipt["audit"]
 }
 export class SportsError extends Error {
   constructor(public code: string, message: string, public status = 409, public fields: Record<string, string> = {}, public uncertain = false) { super(message) }

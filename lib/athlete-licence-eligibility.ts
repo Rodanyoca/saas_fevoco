@@ -8,7 +8,7 @@ export function licenceEligibilityIndex(s: SportsSnapshot, seasonId: string, raw
   const date = canonicalDate(rawDate, "date_delivrance")
   const people = new Set<string>(), numbers = new Set<string>(), effective = new Map<string, number>()
   for (const row of s.licences) if (row.id_saison === seasonId) {
-    if (people.has(row.id_athlete) || (row.numero_licence && numbers.has(row.numero_licence))) throw new SportsError("HISTORIQUE_DOUBLON", "L'historique de la saison contient un doublon à vérifier.")
+    if ((row.numero_licence && numbers.has(row.numero_licence))) throw new SportsError("HISTORIQUE_DOUBLON", "L'historique de la saison contient un doublon à vérifier.")
     people.add(row.id_athlete); if (row.numero_licence) numbers.add(row.numero_licence)
   }
   for (const row of s.affiliations) if (affiliationAt(row, date)) effective.set(row.id_athlete, (effective.get(row.id_athlete) || 0) + 1)

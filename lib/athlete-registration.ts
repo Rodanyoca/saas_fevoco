@@ -6,7 +6,7 @@ import { SportsError, operation, hash, sportsToday, canonicalDate, type SportsSn
 import { normalizeInput, validateAthleteIdentity, athleteIdentityRecord } from "@/lib/athlete-identity"
 import { nextActorId } from "@/lib/actor-id"
 import { planAthleteTransfer } from "@/lib/athlete-transfers-domain"
-import { allocateSportsLicences } from "@/lib/sports-licences-domain"
+import { attachmentLicencePlan, currentAttachmentSeason, runAthleteAttachment } from "@/lib/athlete-attachment"
 import { mapAthleteRow } from "@/lib/mappers/athletes"
 import { mapAthleteLicence } from "@/lib/mappers/actor-records"
 import { formatDateFromSheet } from "@/lib/compact-date"
@@ -54,7 +54,7 @@ function configuredSeason(s: Pick<SportsSnapshot, "seasons" | "seasonStatuses" |
 export function registrationOptions(s: Pick<SportsSnapshot, "clubs" | "ententes" | "ligues" | "seasons" | "seasonStatuses" | "parameters">, date: string): RegistrationOptions {
   const currentSeasonId = configuredSeason(s, date)
   return { operationDate: date, currentSeasonId,
-    seasons: s.seasons.filter(row => validSeason(s, row.id_saison, date)).map(row => ({ id: row.id_saison, label: row.nom_saison || row.id_saison })),
+    seasons: s.seasons.filter(row => row.id_saison === currentSeasonId).map(row => ({ id: row.id_saison, label: row.nom_saison || row.id_saison })),
     clubs: s.clubs.flatMap(row => { const context = validClub(s, row.id_club); return context ? [{ id: row.id_club, label: row.nom_club || row.id_club, keywords: `${context.entente.nom_entente} ${context.ligue.nom_ligue}` }] : [] }).sort((a, b) => a.label.localeCompare(b.label, "fr")),
   }
 }
@@ -94,6 +94,7 @@ export async function runAthleteRegistration(store: SportsStore, userId: string,
   try {
     const [identityReceipt, affiliationReceipt, licenceReceipt] = await Promise.all([store.receipt("actors", op), store.receipt("affiliations", op), store.receipt("licences", op)])
     let snapshot = await store.load(true)
+    if (identityReceipt) snapshot.parameters = [...snapshot.parameters.filter(row => row.cle_parametre !== "SAISON_COURANTE"), { cle_parametre: "SAISON_COURANTE", valeur_parametre: identityReceipt.operationSeason || input.seasonId }]
     const receiptRow = (ids: string[] | undefined, rows: SportsRow[], key: string) => {
       if (!ids) return undefined
       const table = key === "id_athlete" ? "ATHLETES" : key === "id_licence" ? "ATHLETE_LICENCES" : "ATHLETE_AFFILIATIONS"
@@ -107,6 +108,7 @@ export async function runAthleteRegistration(store: SportsStore, userId: string,
     licence = receiptRow(licenceReceipt?.ids, snapshot.licences, "id_licence")
     const result = () => {
       if (!identity || !affiliation || !licence) throw new SportsError("PARCOURS_INCOMPLET", "Parcours incomplet.", 503)
+      if (affiliation.id_athlete !== identity.id_athlete || licence.id_athlete !== identity.id_athlete || licence.id_affiliation_athlete !== affiliation.id_affiliation_athlete || licence.id_club_attribution !== affiliation.id_club || licence.id_saison !== input.seasonId) throw new SportsError("RESULTAT_INCOHERENT", "Les relations du parcours confirmé nécessitent une vérification.", 503, {}, true)
       const club = snapshot.clubs.find(row => row.id_club === affiliation!.id_club)
       const season = snapshot.seasons.find(row => row.id_saison === licence!.id_saison)
       const sex = snapshot.sexes?.find(row => row.id_sexe === identity!.id_sexe)
@@ -135,10 +137,11 @@ export async function runAthleteRegistration(store: SportsStore, userId: string,
       const firstDate = canonicalDate(input.affiliationDate, "affiliationDate")
       if (firstDate > date) throw new SportsError("AFFILIATION_FUTURE", "La première affiliation doit être effective à la délivrance.", 422, { affiliationDate: "Date postérieure à la délivrance." })
       const withIdentity = { ...snapshot, athletes: [...snapshot.athletes.filter(item => item.id_athlete !== row.id_athlete), row] }
-      const identityPlan: SportsPlan = { book: "actors", table: "ATHLETES", inserts: { ATHLETES: [row] }, updates: [], claims: [`record:ATHLETES:${row.id_athlete}`, ...identityClaims(row)], resultIds: [row.id_athlete], operationDate: date }
+      const identityPlan: SportsPlan = { book: "actors", table: "ATHLETES", inserts: { ATHLETES: [row] }, updates: [], claims: [`record:ATHLETES:${row.id_athlete}`, ...identityClaims(row)], resultIds: [row.id_athlete], operationDate: date, operationSeason: input.seasonId }
       const affiliationPlan = affiliation ? null : planAthleteTransfer(withIdentity, row.id_athlete, { id_club: input.clubId, date_debut: firstDate, date_fin: "", id_statut_affiliation: "SAF001", id_type_transfert: "TRF001", id_affiliation_precedente: "", observations: "" }, date)
       const aff = affiliation || affiliationPlan!.inserts.ATHLETE_AFFILIATIONS[0]
-      const licencePlan = licence ? null : allocateSportsLicences({ ...withIdentity, affiliations: [...snapshot.affiliations.filter(item => item.id_affiliation_athlete !== aff.id_affiliation_athlete), aff] }, { id_athlete: row.id_athlete, id_affiliation_athlete: aff.id_affiliation_athlete, id_saison: input.seasonId, date_delivrance: date, id_statut_licence: "STL001" })
+      if (input.seasonId !== currentAttachmentSeason(withIdentity, date).id_saison) throw new SportsError("SAISON_COURANTE_REQUISE", "La licence utilise la saison courante configuree.", 422)
+      const licencePlan = licence ? null : attachmentLicencePlan({ ...withIdentity, affiliations: [...snapshot.affiliations.filter(item => item.id_affiliation_athlete !== aff.id_affiliation_athlete), aff] }, aff, date)
       store.validatePlans([...(identity ? [] : [identityPlan]), ...(affiliationPlan ? [affiliationPlan] : []), ...(licencePlan ? [licencePlan] : [])])
       return { identityPlan, affiliationPlan, licencePlan }
     }
@@ -164,9 +167,9 @@ export async function runAthleteRegistration(store: SportsStore, userId: string,
     const confirmedDate = (await store.receipt("actors", op))?.operationDate || date
     if (confirmedDate !== date || identity.id_athlete !== plans.identityPlan.resultIds[0]) { date = confirmedDate; plans = prepare() }
     leases.push(await store.acquire([identity.id_athlete], op, true))
-    if (!affiliation) affiliation = await commit("affiliation")
-    if (plans.affiliationPlan && affiliation.id_affiliation_athlete !== plans.affiliationPlan.resultIds[0]) plans = prepare()
-    if (!licence) licence = await commit("licence")
+    const attached = await runAthleteAttachment(store, op, identity.id_athlete, { id_club: input.clubId, date_debut: canonicalDate(input.affiliationDate, "affiliationDate"), date_fin: "", id_statut_affiliation: "SAF001", id_type_transfert: "TRF001", id_affiliation_precedente: "", observations: "" }, date, { ...snapshot, athletes: [...snapshot.athletes.filter(row => row.id_athlete !== identity!.id_athlete), identity] }, userId)
+    affiliation = attached.affiliation
+    licence = attached.licence
     await store.release({ owner: JSON.stringify(op), items: leases.flatMap(lease => lease.items) })
     return result()
   } catch (error) {

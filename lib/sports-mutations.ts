@@ -1,7 +1,8 @@
 import "server-only"
 import { createGoogleSportsStore, type SportsStore } from "@/lib/sports-atomic-store"
-import { operation, SportsError, sportsToday, text, type SportsBook, type SportsOperation, type SportsPlan, type SportsRow, type SportsSnapshot } from "@/lib/sports-model"
-import { allocateSportsLicences, modifySportsLicence, type SportsLicenceInput } from "@/lib/sports-licences-domain"
+import { operation, SportsError, sportsToday, type SportsBook, type SportsOperation, type SportsPlan, type SportsRow, type SportsSnapshot } from "@/lib/sports-model"
+import { modifySportsLicence } from "@/lib/sports-licences-domain"
+import { runAthleteAttachment } from "@/lib/athlete-attachment"
 import { planAthleteTransfer } from "@/lib/athlete-transfers-domain"
 
 export function sportsCommand(input: unknown) {
@@ -52,18 +53,23 @@ export async function executeSportsMutation(store: SportsStore, book: SportsBook
   return result
 }
 
-export async function mutateAthleteTransfer(actorId: string, input: unknown, currentId?: string) {
+export async function mutateAthleteTransfer(actorId: string, input: unknown, currentId?: string, userId = "") {
   const { strings } = sportsCommand(input), store = createGoogleSportsStore()
   const op = operation(strings.idempotency_key, { actorId, currentId, ...strings })
+  if (!currentId) {
+    const result = await runAthleteAttachment(store, op, actorId, strings, sportsToday(), undefined, userId)
+    return { ...result.affiliation, numero_licence: result.licence.numero_licence, id_saison_licence: result.licence.id_saison }
+  }
   const rows = await executeSportsMutation(store, "affiliations", op, [actorId], async snapshot => planAthleteTransfer(snapshot, actorId, strings, sportsToday(), currentId, currentId ? await store.contextFor(currentId) : undefined))
   return rows[0]
 }
 
 export async function mutateSeasonalLicence(input: unknown, id?: string) {
-  const { strings, ids } = sportsCommand(input), store = createGoogleSportsStore()
-  const op = operation(strings.idempotency_key, { id, ...strings, id_affiliations_athletes: ids })
-  // Resolve only the actor scope first. Re-read the full mutation snapshot after the durable reservation.
-  const source = id || strings.mode === "CLUB" ? await store.load("licence") : null
-  const actors = id ? [source?.licences.find(row => row.id_licence === id)?.id_athlete || ""] : strings.mode === "CLUB" ? (ids || []).map(affId => source?.affiliations.find(row => row.id_affiliation_athlete === affId)?.id_athlete || "") : [text(strings.id_athlete)]
-  return executeSportsMutation(store, "licences", op, actors, snapshot => id ? modifySportsLicence(snapshot, id, strings) : allocateSportsLicences(snapshot, { ...strings, id_saison: strings.id_saison, date_delivrance: strings.date_delivrance, id_statut_licence: strings.id_statut_licence, id_affiliations_athletes: ids } satisfies SportsLicenceInput))
+  if (!id) throw new SportsError("RATTACHEMENT_REQUIS", "La licence est créée automatiquement depuis un nouveau rattachement sportif.", 410)
+  const { strings } = sportsCommand(input), store = createGoogleSportsStore()
+  const op = operation(strings.idempotency_key, { id, ...strings })
+  // Resolve the immutable owner, then reload the mutation snapshot under its durable lock.
+  const source = await store.load("licence")
+  const actorId = source.licences.find(row => row.id_licence === id)?.id_athlete || ""
+  return executeSportsMutation(store, "licences", op, [actorId], snapshot => modifySportsLicence(snapshot, id, strings))
 }

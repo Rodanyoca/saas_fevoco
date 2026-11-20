@@ -133,12 +133,13 @@ test("clé de tentative, dates civiles et saison référencée sans contrôle d�
 
 test("renouvellement groupé, compteurs indépendants et compteur périmé", () => {
   const s = fixture(); apply(s, allocateSportsLicences(s, licence))
+  s.licences[0].id_statut_licence = "STL004"
   const renewal = allocateSportsLicences(s, { ...licence, mode: "CLUB", id_club: "0101001", id_saison: "SAI007", date_delivrance: "01/05/2027", id_affiliations_athletes: ["AFA-000001"] })
   apply(s, renewal); assert.equal(s.licences.length, 2); assert.equal(s.counters.length, 2)
   s.affiliations.push({ ...s.affiliations[0], id_affiliation_athlete: "AFA-000002", id_athlete: "ATH00002", id_club: "0101002" })
   const other = allocateSportsLicences(s, { ...licence, id_athlete: "ATH00002", id_affiliation_athlete: "AFA-000002" })
   assert.equal(other.inserts.ATHLETE_LICENCES[0].numero_licence, "0101002001")
-  s.counters[0].dernier_compteur = "0"; s.licences[0].id_athlete = "OLD"
+  s.counters[0].dernier_compteur = "0"; s.licences[0].id_athlete = "OLD"; s.licences[1].id_statut_licence = "STL004"
   assert.throws(() => allocateSportsLicences(s, licence), /inférieur/)
 })
 

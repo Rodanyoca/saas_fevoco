@@ -1,0 +1,42 @@
+{
+  "results": [
+    {
+      "name": "desktop",
+      "scenario": "normal",
+      "gets": 2,
+      "posts": 1,
+      "licences": 1,
+      "identityUnchanged": true,
+      "manualFormAbsent": true
+    },
+    {
+      "name": "desktop",
+      "scenario": "partial",
+      "gets": 2,
+      "posts": 2,
+      "licences": 1,
+      "identityUnchanged": true,
+      "manualFormAbsent": true
+    },
+    {
+      "name": "mobile",
+      "scenario": "normal",
+      "gets": 2,
+      "posts": 1,
+      "licences": 1,
+      "identityUnchanged": true,
+      "manualFormAbsent": true
+    },
+    {
+      "name": "mobile",
+      "scenario": "partial",
+      "gets": 2,
+      "posts": 2,
+      "licences": 1,
+      "identityUnchanged": true,
+      "manualFormAbsent": true
+    }
+  ],
+  "errors": [],
+  "productionWrites": 0
+}

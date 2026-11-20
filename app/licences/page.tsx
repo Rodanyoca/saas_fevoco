@@ -1,7 +1,11 @@
-import { canAccess } from "@/lib/auth"
 import { Header } from "@/components/dashboard/header"
 import { AthleteLicencesClient } from "@/components/licences/athlete-licences-client"
 import { athleteLicenceOverview } from "@/lib/licences-overview"
-import { athleteLicenceCreationOptions } from "@/lib/athlete-licence-creation"
 export const dynamic = "force-dynamic"
-export default async function LicencesPage() { const canWrite = await canAccess("AUT-SPT", "WRITE"); let rows: Awaited<ReturnType<typeof athleteLicenceOverview>> = [], creation: Awaited<ReturnType<typeof athleteLicenceCreationOptions>> = { clubs: [], seasons: [], statuses: [], candidates: [], sportsWritesEnabled: false, sportsWriteBlockReason: "Source indisponible.", counters: [] }, error = ""; try { [rows, creation] = await Promise.all([athleteLicenceOverview(), athleteLicenceCreationOptions()]) } catch (reason) { error = reason instanceof Error ? reason.message : "Données temporairement indisponibles." } return <><Header title="Licences des athlètes" subtitle="Licences enregistrées par saison et par structure territoriale" /><main className="space-y-6 p-4 sm:p-6"><AthleteLicencesClient rows={rows} error={error} creation={creation} canWrite={canWrite} /></main></> }
+export default async function LicencesPage() {
+  let rows: Awaited<ReturnType<typeof athleteLicenceOverview>> = [], error = ""
+  try { rows = await athleteLicenceOverview() } catch (reason) { error = reason instanceof Error ? reason.message : "Source indisponible." }
+  const clubs = [...new Map(rows.filter(row => row.clubId).map(row => [row.clubId, { id: row.clubId, label: row.club, ententeId: row.ententeId, entente: row.entente, ligueId: row.ligueId, ligue: row.ligue }])).values()]
+  const seasons = [...new Map(rows.map(row => [row.seasonId, { id: row.seasonId, label: row.saison }])).values()]
+  return <><Header title="Licences des athlètes" subtitle="Synthèse des licences. La délivrance accompagne les nouveaux rattachements sportifs." /><main className="space-y-6 p-4 sm:p-6"><AthleteLicencesClient rows={rows} error={error} creation={{ clubs, seasons }} /></main></>
+}

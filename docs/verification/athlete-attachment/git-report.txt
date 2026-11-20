@@ -1,0 +1,85 @@
+git diff --stat
+ app/api/affiliations/[kind]/route.ts               |  14 ++-
+ app/api/licences/athletes/existing/route.ts        |  34 +-----
+ app/api/licences/athletes/route.ts                 |  36 +++---
+ app/api/transferts/route.ts                        |  21 +---
+ app/licences/page.tsx                              |  10 +-
+ components/actors/record-sections.tsx              |  17 +--
+ components/athletes/athlete-detail.tsx             |  96 ++++++---------
+ components/athletes/athlete-transfers-panel.tsx    |  26 ++--
+ components/licences/athlete-licence-editor.tsx     | 111 ++++-------------
+ components/licences/athlete-licence-form.tsx       |  11 --
+ components/licences/athlete-licences-client.tsx    |  29 +----
+ .../licences/existing-athlete-licence-dialog.tsx   |  92 --------------
+ .../licences/use-athlete-licence-candidates.ts     |  22 ----
+ .../desktop-licences-affiliation.png               | Bin 98344 -> 98354 bytes
+ .../mobile-licences-affiliation.png                | Bin 39589 -> 39593 bytes
+ .../existing-athlete-licence/results.json          |   8 +-
+ lib/actor-affiliation-schema.ts                    |   3 +
+ lib/actor-affiliations.ts                          |  14 ++-
+ lib/athlete-licence-creation.ts                    |  84 -------------
+ lib/athlete-licence-eligibility.test.cjs           |  94 --------------
+ lib/athlete-licence-eligibility.ts                 |   2 +-
+ lib/athlete-registration.test.cjs                  |  29 +----
+ lib/athlete-registration.ts                        |  17 +--
+ lib/business-write-guard.ts                        |   7 +-
+ lib/existing-athlete-licence.test.cjs              |  94 --------------
+ lib/existing-athlete-licence.ts                    | 135 ---------------------
+ lib/licence-lightweight.test.cjs                   |  67 ----------
+ lib/sports-atomic-store.test.cjs                   |  11 +-
+ lib/sports-atomic-store.ts                         |  12 +-
+ lib/sports-domain.test.ts                          |   3 +-
+ lib/sports-licences-domain.ts                      |  18 ++-
+ lib/sports-model.ts                                |   4 +-
+ lib/sports-mutations.ts                            |  24 ++--
+ ...verify-athlete-licence-eligibility-readonly.cjs |  22 ----
+ scripts/verify-existing-athlete-licence-ui.cjs     |  12 +-
+ scripts/verify-licence-eligibility-ui.cjs          |  99 ---------------
+ scripts/verify-licence-lightweight-ui.cjs          |  68 -----------
+ 37 files changed, 226 insertions(+), 1120 deletions(-)
+
+git status --short
+ M app/api/affiliations/[kind]/route.ts
+ M app/api/licences/athletes/existing/route.ts
+ M app/api/licences/athletes/route.ts
+ M app/api/transferts/route.ts
+ M app/licences/page.tsx
+ M components/actors/record-sections.tsx
+ M components/athletes/athlete-detail.tsx
+ M components/athletes/athlete-transfers-panel.tsx
+ M components/licences/athlete-licence-editor.tsx
+ D components/licences/athlete-licence-form.tsx
+ M components/licences/athlete-licences-client.tsx
+ D components/licences/existing-athlete-licence-dialog.tsx
+ D components/licences/use-athlete-licence-candidates.ts
+ M docs/verification/existing-athlete-licence/desktop-licences-affiliation.png
+ M docs/verification/existing-athlete-licence/mobile-licences-affiliation.png
+ M docs/verification/existing-athlete-licence/results.json
+ M lib/actor-affiliation-schema.ts
+ M lib/actor-affiliations.ts
+ M lib/athlete-licence-creation.ts
+ D lib/athlete-licence-eligibility.test.cjs
+ M lib/athlete-licence-eligibility.ts
+ M lib/athlete-registration.test.cjs
+ M lib/athlete-registration.ts
+ M lib/business-write-guard.ts
+ D lib/existing-athlete-licence.test.cjs
+ D lib/existing-athlete-licence.ts
+ D lib/licence-lightweight.test.cjs
+ M lib/sports-atomic-store.test.cjs
+ M lib/sports-atomic-store.ts
+ M lib/sports-domain.test.ts
+ M lib/sports-licences-domain.ts
+ M lib/sports-model.ts
+ M lib/sports-mutations.ts
+ D scripts/verify-athlete-licence-eligibility-readonly.cjs
+ M scripts/verify-existing-athlete-licence-ui.cjs
+ D scripts/verify-licence-eligibility-ui.cjs
+ D scripts/verify-licence-lightweight-ui.cjs
+?? docs/rattachement-licence-automatique-2026-11-20.md
+?? docs/verification/athlete-attachment/
+?? docs/verification/existing-athlete-licence/failure.png
+?? lib/athlete-attachment.test.cjs
+?? lib/athlete-attachment.ts
+?? scripts/measure-athlete-attachment.cjs
+?? scripts/verify-athlete-attachment-ui.cjs

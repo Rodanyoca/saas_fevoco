@@ -13,7 +13,7 @@ export type SportsLease = { owner: string; items: Array<{ id: number; key: strin
 export interface SportsStore {
   acquire(actorIds: string[], operation: SportsOperation, resumeOwn?: boolean): Promise<SportsLease>
   release(lease: SportsLease): Promise<void>
-  load(onboarding?: boolean | "licence" | "affiliation"): Promise<SportsSnapshot>
+  load(onboarding?: boolean | "licence" | "affiliation" | "attachment"): Promise<SportsSnapshot>
   receipt(book: SportsBook, operation: SportsOperation): Promise<SportsReceipt | null>
   validatePlans(plans: SportsPlan[]): void
   completed(book: SportsBook, operation: SportsOperation): Promise<SportsRow[] | null>
@@ -161,13 +161,13 @@ export function createGoogleSportsStore(): SportsStore {
       await this.release({ owner: JSON.stringify(operation), items: [...new Set(actorIds)].flatMap(actorId => candidateIds(`lock:${actorId}`).map(id => ({ id, key: namespace + `lock:${actorId}` }))) })
     },
     async load(profile = false) {
-      const onboarding = profile === true, affiliationOnly = profile === "affiliation", light = profile === "licence" || affiliationOnly
+      const onboarding = profile === true, attachment = profile === "attachment", affiliationOnly = profile === "affiliation", light = profile === "licence" || affiliationOnly || attachment
       const [aff, lic, territory, actors, refs] = await Promise.all([
         readTables(config.affiliationsSpreadsheetId, ["ATHLETE_AFFILIATIONS"]),
         readTables(config.licencesSpreadsheetId, affiliationOnly ? ["ATHLETE_LICENCES"] : ["ATHLETE_LICENCES", "COMPTEURS_LICENCES"], affiliationOnly),
         readTables(config.territorialSpreadsheetId, onboarding ? ["CLUBS", "ENTENTES", "LIGUES"] : ["CLUBS"], light),
         readTables(config.acteursSpreadsheetId, ["ATHLETES"], light),
-        readTables(config.referentielsSpreadsheetId, [...(affiliationOnly ? ["TYPES_TRANSFERT", "PARAMETRES_SYSTEME"] : ["SAISON", "STATUT_LICENCE", "TYPES_TRANSFERT", "PARAMETRES_SYSTEME"]), ...(onboarding ? ["SEXES", "STATUTS_SAISON", "STATUTS_AFFILIATION"] : [])], light),
+        readTables(config.referentielsSpreadsheetId, [...(affiliationOnly ? ["TYPES_TRANSFERT", "PARAMETRES_SYSTEME"] : ["SAISON", "STATUT_LICENCE", "TYPES_TRANSFERT", "PARAMETRES_SYSTEME"]), ...(onboarding ? ["SEXES", "STATUTS_SAISON", "STATUTS_AFFILIATION"] : attachment ? ["STATUTS_SAISON"] : [])], light),
       ])
       const rows = (table: Table | undefined) => table ? table.rows.map(item => item.row) : []
       const liveLicences = rows(lic.ATHLETE_LICENCES), licenceIds = new Set(liveLicences.map(row => row.id_licence))
@@ -196,7 +196,7 @@ export function createGoogleSportsStore(): SportsStore {
         return !match || liveNumbers.has(match[1] + ":" + match[2]) ? [] : [{ id_saison: match[1], numero_licence: match[2], id_club_attribution: match[2].slice(0, 7), compteur_saison: match[2].slice(7) }]
       })
       for (const [table, required] of [[aff.ATHLETE_AFFILIATIONS, ["id_affiliation_athlete", "id_athlete", "id_club", "date_debut", "date_fin", "id_statut_affiliation", "observations", "id_type_transfert", "id_affiliation_precedente"]], [lic.ATHLETE_LICENCES, ["id_licence", "id_athlete", "id_saison", "id_affiliation_athlete", "numero_licence", "date_delivrance", "id_statut_licence", "observations", "id_club_attribution", "compteur_saison"]], [lic.COMPTEURS_LICENCES, ["id_compteur_licence", "id_club", "id_saison", "dernier_compteur", "statut_compteur", "observations"]]] as Array<[Table, string[]]>) if (table && required.some(header => !table.headers.includes(header))) throw new SportsError("SCHEMA_INCOMPLET", "Les colonnes sportives attendues sont absentes.", 503)
-      return { recoverableLicenceClaims, reservedAthleteSeasons: (metadataKeys.get(config.licencesSpreadsheetId) || []).filter(key => key.startsWith(namespace + "athlete-season:")).map(key => key.slice((namespace + "athlete-season:").length)), operationActorIds: (metadataKeys.get(config.affiliationsSpreadsheetId) || []).filter(key => key.startsWith(namespace + "lock:")).map(key => key.slice((namespace + "lock:").length)), businessWritePending: (metadataKeys.get(config.affiliationsSpreadsheetId) || []).includes("fevoco:business-write:v1"), affiliations: rows(aff.ATHLETE_AFFILIATIONS), licences: rows(lic.ATHLETE_LICENCES), counters: rows(lic.COMPTEURS_LICENCES), clubs: rows(territory.CLUBS), ententes: onboarding ? rows(territory.ENTENTES) : [], ligues: onboarding ? rows(territory.LIGUES) : [], sexes: onboarding ? rows(refs.SEXES) : [], seasonStatuses: onboarding ? rows(refs.STATUTS_SAISON) : [], affiliationStatuses: onboarding ? rows(refs.STATUTS_AFFILIATION) : [], athletes: rows(actors.ATHLETES), seasons: rows(refs.SAISON), licenceStatuses: rows(refs.STATUT_LICENCE), transferTypes: rows(refs.TYPES_TRANSFERT), parameters: rows(refs.PARAMETRES_SYSTEME), deletedRecords, deletedLicenceReservations: [...new Map([...deletedLicences, ...numberReservations].map(row => [row.id_saison + ":" + row.numero_licence, row])).values()], reservedRecordIds: {
+      return { recoverableLicenceClaims, reservedAthleteSeasons: (metadataKeys.get(config.licencesSpreadsheetId) || []).filter(key => key.startsWith(namespace + "athlete-season:")).map(key => key.slice((namespace + "athlete-season:").length)), operationActorIds: (metadataKeys.get(config.affiliationsSpreadsheetId) || []).filter(key => key.startsWith(namespace + "lock:")).map(key => key.slice((namespace + "lock:").length)), businessWritePending: (metadataKeys.get(config.affiliationsSpreadsheetId) || []).includes("fevoco:business-write:v1"), affiliations: rows(aff.ATHLETE_AFFILIATIONS), licences: rows(lic.ATHLETE_LICENCES), counters: rows(lic.COMPTEURS_LICENCES), clubs: rows(territory.CLUBS), ententes: onboarding ? rows(territory.ENTENTES) : [], ligues: onboarding ? rows(territory.LIGUES) : [], sexes: onboarding ? rows(refs.SEXES) : [], seasonStatuses: onboarding || attachment ? rows(refs.STATUTS_SAISON) : [], affiliationStatuses: onboarding ? rows(refs.STATUTS_AFFILIATION) : [], athletes: rows(actors.ATHLETES), seasons: rows(refs.SAISON), licenceStatuses: rows(refs.STATUT_LICENCE), transferTypes: rows(refs.TYPES_TRANSFERT), parameters: rows(refs.PARAMETRES_SYSTEME), deletedRecords, deletedLicenceReservations: [...new Map([...deletedLicences, ...numberReservations].map(row => [row.id_saison + ":" + row.numero_licence, row])).values()], reservedRecordIds: {
         ATHLETE_AFFILIATIONS: reservedRecords.get(config.affiliationsSpreadsheetId)?.ATHLETE_AFFILIATIONS || [],
         ATHLETE_LICENCES: reservedRecords.get(config.licencesSpreadsheetId)?.ATHLETE_LICENCES || [],
         ATHLETES: reservedRecords.get(config.acteursSpreadsheetId)?.ATHLETES || [],
@@ -224,7 +224,7 @@ export function createGoogleSportsStore(): SportsStore {
       }
       const retiredKeys = retired.map(id => "deleted:ATHLETE_LICENCES:" + id).filter(key => !existing.some(item => item.metadataKey === namespace + key))
       const keys = [receiptKey(operation), ...plan.claims, ...retiredKeys]
-      const stored: SportsReceipt = { fingerprint: operation.fingerprint, table: plan.table, ids: plan.resultIds, context: plan.context, operationDate: plan.operationDate, audit: plan.audit }
+      const stored: SportsReceipt = { fingerprint: operation.fingerprint, table: plan.table, ids: plan.resultIds, context: plan.context, operationDate: plan.operationDate, operationSeason: plan.operationSeason, audit: plan.audit }
       const replacingIds = new Set(replacements.map(item => item.metadataId))
       const metadata = chooseClaims(keys, [JSON.stringify(stored), ...plan.claims.map(() => JSON.stringify(operation)), ...retiredKeys.map(() => JSON.stringify({ reason: "missing-licence-replaced", operationId: operation.id }))], existing.filter(item => !replacingIds.has(item.metadataId)), [...replacingIds])
       const data = tables.get(bookId(plan.book))
@@ -262,7 +262,7 @@ export function createGoogleSportsStore(): SportsStore {
       const confirmed = await completed(plan.book, operation)
       if (!confirmed) throw new SportsError("RESULTAT_INDETERMINE", "Confirmation de l’écriture impossible ; reprenez la même tentative.", 503, {}, true)
       return confirmed
-      }, `${operation.id}:${plan.book}`) } catch (error) {
+      }, `${operation.id}:${plan.book}`, true) } catch (error) {
         if (error instanceof RecordManagementError) throw new SportsError(error.code === "ECRITURE_EN_COURS" ? "RESERVATION_EXISTANTE" : error.code, error.message, error.status, {}, error.uncertain)
         throw error
       }

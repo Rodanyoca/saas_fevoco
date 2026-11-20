@@ -6,6 +6,9 @@ export type AffiliationOption = { id: string; label: string }
 export type AffiliationReferences = {
   clubs: AffiliationOption[]; statuses: AffiliationOption[]; functions: AffiliationOption[]
   entityTypes: AffiliationOption[]; entities: Record<string, AffiliationOption[]>; seasons: AffiliationOption[]
+  currentSeason?: AffiliationOption
+  operationDate?: string
+  activeLicences?: Array<{ id: string; number: string; club: string; season: string }>
   transferTypes?: AffiliationOption[]; sportsWritesEnabled?: boolean; sportsWriteBlockReason?: string
 }
 export type ActorAffiliationView = AffiliationRow & { structure: string; entityType: string; fonction: string; statut: string; saison: string; anomaly: string; actorName?: string; transferType?: string; temporalState?: string; transferRole?: string }

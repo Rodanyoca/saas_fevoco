@@ -39,7 +39,7 @@ export async function releaseBusinessGuard(owner: string) {
   if (!metadata.some(item => item.metadataId === guardId && item.metadataKey === guardKey && item.metadataValue === owner)) return
   await client.spreadsheets.batchUpdate({ spreadsheetId: env.googleSheets.affiliationsSpreadsheetId, requestBody: { requests: [{ deleteDeveloperMetadata: { dataFilter: { developerMetadataLookup: { metadataId: guardId, metadataKey: guardKey, metadataValue: owner, visibility: "DOCUMENT" } } } }] } }, options)
 }
-export async function withBusinessWrite<T>(run: () => Promise<T>, owner: string = randomUUID()): Promise<T> {
+export async function withBusinessWrite<T>(run: () => Promise<T>, owner: string = randomUUID(), resumeOwn = false): Promise<T> {
   const inherited = scope.getStore()
   if (inherited) {
     try { return await run() }
@@ -47,8 +47,11 @@ export async function withBusinessWrite<T>(run: () => Promise<T>, owner: string 
   }
   const client = await sportsSheetsClient()
   const metadata = await businessMetadata()
-  if (metadata.some(item => item.metadataId === guardId || item.metadataKey === guardKey)) throw new RecordManagementError("ECRITURE_EN_COURS", "Une écriture est en cours ou doit être vérifiée avant de poursuivre. Rechargez puis réessayez.")
+  const existing = metadata.filter(item => item.metadataId === guardId || item.metadataKey === guardKey)
+  const own = resumeOwn && existing.length === 1 && existing[0].metadataId === guardId && existing[0].metadataKey === guardKey && existing[0].metadataValue === owner
+  if (existing.length && !own) throw new RecordManagementError("ECRITURE_EN_COURS", "Une écriture est en cours ou doit être vérifiée avant de poursuivre. Rechargez puis réessayez.")
   try {
+    if (!own)
     await client.spreadsheets.batchUpdate({ spreadsheetId: env.googleSheets.affiliationsSpreadsheetId, requestBody: { requests: [{ createDeveloperMetadata: { developerMetadata: { metadataId: guardId, metadataKey: guardKey, metadataValue: owner, visibility: "DOCUMENT", location: { spreadsheet: true } } } }] } }, options)
   } catch {
     const confirmed = await businessMetadata().catch(() => [])
